@@ -36,4 +36,12 @@ public class APIResponse<T> {
                 .data(null)
                 .build();
     }
+
+    public static <T> APIResponse<T> error(int code, String message, T data) {
+        return APIResponse.<T>builder()
+                .code(code)
+                .message(message)
+                .data(data)
+                .build();
+    }
 }
