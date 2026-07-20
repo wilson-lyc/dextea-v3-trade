@@ -11,7 +11,7 @@ import java.util.List;
 public interface ProductMapper {
 
     @Select("<script>" +
-            "SELECT id, name, status " +
+            "SELECT id, name, status, price " +
             "FROM products " +
             "WHERE id IN " +
             "<foreach collection='ids' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +

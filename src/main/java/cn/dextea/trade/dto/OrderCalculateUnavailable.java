@@ -11,9 +11,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderCalculateRequest {
+public class OrderCalculateUnavailable {
 
-    private Long storeId;
-
-    private List<CartItemDTO> cartItems;
+    private List<UnavailableProduct> products;
+    
+    private List<UnavailableCustomizationOption> customizationOptions;
 }
