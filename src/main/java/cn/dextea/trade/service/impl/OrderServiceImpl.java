@@ -5,7 +5,7 @@ import cn.dextea.trade.dto.CreateOrderRequest;
 import cn.dextea.trade.dto.CalculateOrderResponse;
 import cn.dextea.trade.dto.CreateOrderUnavailable;
 import cn.dextea.trade.dto.CreateOrderProductItem;
-import cn.dextea.trade.dto.CreateOrderUnavailableOption;
+import cn.dextea.trade.dto.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
@@ -84,7 +84,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
         List<CreateOrderUnavailableProduct> unavailableProducts = new ArrayList<>();
-        List<CreateOrderUnavailableOption> unavailableOptions = new ArrayList<>();
+        List<CreateOrderUnavailableCustomization> unavailableOptions = new ArrayList<>();
         Set<Long> reportedProductIds = new LinkedHashSet<>();
         Set<Long> reportedOptionIds = new LinkedHashSet<>();
 
@@ -110,7 +110,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // 选项级不可用：所属客制化项目非激活、选项全局禁用或门店禁用
-            List<CreateOrderUnavailableOption> badOptions = new ArrayList<>();
+            List<CreateOrderUnavailableCustomization> badOptions = new ArrayList<>();
             List<Long> itemIdsForItem = parsedItemIds.get(i);
             for (int j = 0; j < opts.size(); j++) {
                 Long optionId = opts.get(j);
@@ -120,11 +120,13 @@ public class OrderServiceImpl implements OrderService {
                 boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
                 if (itemUnavailable || optionUnavailable) {
                     if (reportedOptionIds.add(optionId)) {
-                        badOptions.add(CreateOrderUnavailableOption.builder()
+                        badOptions.add(CreateOrderUnavailableCustomization.builder()
                                 .optionId(optionId)
                                 .optionName(option.getName())
                                 .productId(productId)
                                 .productName(product.getName())
+                                .itemId(itemId)
+                                .itemName(customizationMap.get(itemId).getName())
                                 .build());
                     }
                 }

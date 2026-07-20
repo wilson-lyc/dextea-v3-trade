@@ -19,5 +19,5 @@ public class CreateOrderUnavailable {
     private List<CreateOrderUnavailableProduct> products;
 
     @Schema(description = "不可用的定制项列表")
-    private List<CreateOrderUnavailableOption> customizationOptions;
+    private List<CreateOrderUnavailableCustomization> customizationOptions;
 }

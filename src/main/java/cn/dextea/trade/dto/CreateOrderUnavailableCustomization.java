@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "不可用的定制项")
-public class CreateOrderUnavailableOption {
+public class CreateOrderUnavailableCustomization {
 
     @Schema(description = "定制项 ID", example = "3001")
     private Long optionId;
@@ -24,4 +24,10 @@ public class CreateOrderUnavailableOption {
 
     @Schema(description = "所属商品名称", example = "招牌奶茶")
     private String productName;
+
+    @Schema(description = "客制化项目 ID", example = "1001")
+    private Long itemId;
+
+    @Schema(description = "客制化项目名称", example = "杯型")
+    private String itemName;
 }
