@@ -42,7 +42,15 @@ public final class SkuIdParser {
         return parseLong(skuId.substring(0, hashIndex), skuId);
     }
 
-    public static List<Long> parseOptionIds(String skuId) {        String customizationPart = skuId.substring(hashIndex + 1);
+    public static List<Long> parseOptionIds(String skuId) {
+        if (skuId == null || skuId.isBlank()) {
+            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
+        }
+        int hashIndex = skuId.indexOf('#');
+        if (hashIndex <= 0) {
+            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+        }
+        String customizationPart = skuId.substring(hashIndex + 1);
         List<Long> optionIds = new ArrayList<>();
         if (customizationPart.isBlank()) {
             return optionIds;

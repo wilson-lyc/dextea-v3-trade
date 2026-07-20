@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum ProductStoreStatus {
+public enum ProductStoreStatusEnum {
 
     /** 售罄 */
     SOLD_OUT(0, "售罄"),
@@ -19,11 +19,11 @@ public enum ProductStoreStatus {
     private final int code;
     private final String description;
 
-    public static ProductStoreStatus of(Integer code) {
+    public static ProductStoreStatusEnum of(Integer code) {
         if (code == null) {
             return null;
         }
-        for (ProductStoreStatus status : values()) {
+        for (ProductStoreStatusEnum status : values()) {
             if (status.code == code) {
                 return status;
             }

@@ -11,7 +11,7 @@ import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Product;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
 import cn.dextea.trade.entity.enums.ProductGlobalStatus;
-import cn.dextea.trade.entity.enums.ProductStoreStatus;
+import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
@@ -191,7 +191,7 @@ public class OrderServiceImpl implements OrderService {
         boolean globalOffShelf = product.getStatus() == null
                 || product.getStatus() != ProductGlobalStatus.ON_SHELF.getCode();
         boolean storeSoldOut = storeStatus == null
-                || storeStatus != ProductStoreStatus.AVAILABLE.getCode();
+                || storeStatus != ProductStoreStatusEnum.AVAILABLE.getCode();
         return globalOffShelf || storeSoldOut;
     }
 
