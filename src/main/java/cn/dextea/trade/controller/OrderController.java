@@ -2,7 +2,7 @@ package cn.dextea.trade.controller;
 
 import cn.dextea.trade.common.APIResponse;
 import cn.dextea.trade.dto.CreateOrderRequest;
-import cn.dextea.trade.dto.OrderCalculateResponse;
+import cn.dextea.trade.dto.CalculateOrderResponse;
 import cn.dextea.trade.service.OrderService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,8 +20,8 @@ public class OrderController {
     }
 
     @PostMapping("/calculate")
-    public APIResponse<OrderCalculateResponse> calculate(@RequestBody CreateOrderRequest request) {
-        OrderCalculateResponse result = orderService.calculate(request);
+    public APIResponse<CalculateOrderResponse> calculate(@RequestBody CreateOrderRequest request) {
+        CalculateOrderResponse result = orderService.calculate(request);
         return APIResponse.success(result);
     }
 }

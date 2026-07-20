@@ -17,5 +17,5 @@ public class CreateOrderRequest {
 
     private String diningMethod;
 
-    private List<OrderProductItem> products;
+    private List<CreateOrderProductItem> products;
 }

@@ -2,11 +2,11 @@ package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.common.BizError;
 import cn.dextea.trade.dto.CreateOrderRequest;
-import cn.dextea.trade.dto.OrderCalculateResponse;
-import cn.dextea.trade.dto.OrderCalculateUnavailable;
-import cn.dextea.trade.dto.OrderProductItem;
-import cn.dextea.trade.dto.UnavailableCustomizationOption;
-import cn.dextea.trade.dto.UnavailableProduct;
+import cn.dextea.trade.dto.CalculateOrderResponse;
+import cn.dextea.trade.dto.CreateOrderUnavailable;
+import cn.dextea.trade.dto.CreateOrderProductItem;
+import cn.dextea.trade.dto.CreateOrderUnavailableOption;
+import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Product;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
@@ -32,12 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * 订单计算服务实现。
- *
- * <p>计算流程：解析 skuId 提取客制化选项 → 批量查询商品/门店状态/选项/选项门店状态
- * → 存在性校验（缺失抛业务异常）→ 剔除不可用商品与含不可用选项的商品 → 汇总有效商品金额。</p>
- */
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -48,8 +42,8 @@ public class OrderServiceImpl implements OrderService {
     private final CustomizationOptionStoreStatusMapper customizationOptionStoreStatusMapper;
 
     @Override
-    public OrderCalculateResponse calculate(CreateOrderRequest request) {
-        List<OrderProductItem> items = request == null ? null : request.getProducts();
+    public CalculateOrderResponse calculate(CreateOrderRequest request) {
+        List<CreateOrderProductItem> items = request == null ? null : request.getProducts();
         if (items == null || items.isEmpty()) {
             return emptyResponse();
         }
@@ -59,7 +53,7 @@ public class OrderServiceImpl implements OrderService {
         List<List<Long>> parsedOptionIds = new ArrayList<>(items.size());
         Set<Long> productIds = new LinkedHashSet<>();
         Set<Long> optionIds = new LinkedHashSet<>();
-        for (OrderProductItem item : items) {
+        for (CreateOrderProductItem item : items) {
             if (item.getId() == null) {
                 throw new BizError(OrderErrorCode.SKU_INVALID, "商品ID不能为空");
             }
@@ -82,8 +76,8 @@ public class OrderServiceImpl implements OrderService {
         Map<Long, Integer> optionStoreStatusMap = loadOptionStoreStatus(optionIds, storeId);
 
         // 6. 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
-        List<UnavailableProduct> unavailableProducts = new ArrayList<>();
-        List<UnavailableCustomizationOption> unavailableOptions = new ArrayList<>();
+        List<CreateOrderUnavailableProduct> unavailableProducts = new ArrayList<>();
+        List<CreateOrderUnavailableOption> unavailableOptions = new ArrayList<>();
         Set<Long> reportedProductIds = new LinkedHashSet<>();
         Set<Long> reportedOptionIds = new LinkedHashSet<>();
 
@@ -91,7 +85,7 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for (int i = 0; i < items.size(); i++) {
-            OrderProductItem item = items.get(i);
+            CreateOrderProductItem item = items.get(i);
             List<Long> opts = parsedOptionIds.get(i);
             Long productId = item.getId();
             Product product = productMap.get(productId);
@@ -99,7 +93,7 @@ public class OrderServiceImpl implements OrderService {
             // 商品级不可用：全局下架 或 门店售罄（含无记录）
             if (isProductUnavailable(product, productStoreStatusMap.get(productId))) {
                 if (reportedProductIds.add(productId)) {
-                    unavailableProducts.add(UnavailableProduct.builder()
+                    unavailableProducts.add(CreateOrderUnavailableProduct.builder()
                             .id(productId)
                             .name(product.getName())
                             .build());
@@ -108,12 +102,12 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // 选项级不可用：全局禁用 或 门店禁用（含无记录）
-            List<UnavailableCustomizationOption> badOptions = new ArrayList<>();
+            List<CreateOrderUnavailableOption> badOptions = new ArrayList<>();
             for (Long optionId : opts) {
                 CustomizationOption option = optionMap.get(optionId);
                 if (isOptionUnavailable(option, optionStoreStatusMap.get(optionId))) {
                     if (reportedOptionIds.add(optionId)) {
-                        badOptions.add(UnavailableCustomizationOption.builder()
+                        badOptions.add(CreateOrderUnavailableOption.builder()
                                 .optionId(optionId)
                                 .optionName(option.getName())
                                 .productId(productId)
@@ -137,8 +131,8 @@ public class OrderServiceImpl implements OrderService {
             totalPrice = totalPrice.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
         }
 
-        return OrderCalculateResponse.builder()
-                .unavailable(OrderCalculateUnavailable.builder()
+        return CalculateOrderResponse.builder()
+                .unavailable(CreateOrderUnavailable.builder()
                         .products(unavailableProducts)
                         .customizationOptions(unavailableOptions)
                         .build())
@@ -215,9 +209,9 @@ public class OrderServiceImpl implements OrderService {
         return globalDisabled || storeDisabled;
     }
 
-    private OrderCalculateResponse emptyResponse() {
-        return OrderCalculateResponse.builder()
-                .unavailable(OrderCalculateUnavailable.builder()
+    private CalculateOrderResponse emptyResponse() {
+        return CalculateOrderResponse.builder()
+                .unavailable(CreateOrderUnavailable.builder()
                         .products(new ArrayList<>())
                         .customizationOptions(new ArrayList<>())
                         .build())

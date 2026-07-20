@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UnavailableCustomizationOption {
+public class CreateOrderUnavailableOption {
 
     private Long optionId;
 

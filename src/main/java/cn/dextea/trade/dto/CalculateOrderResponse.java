@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderCalculateResponse {
+public class CalculateOrderResponse {
 
-    private OrderCalculateUnavailable unavailable;
+    private CreateOrderUnavailable unavailable;
 
     private Integer totalQuantity;
 

@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderProductItem {
+public class CreateOrderUnavailableProduct {
 
     private Long id;
 
-    private String skuId;
-
-    private Integer quantity;
+    private String name;
 }

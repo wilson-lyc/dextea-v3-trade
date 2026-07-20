@@ -5,15 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderCalculateUnavailable {
+public class CreateOrderProductItem {
 
-    private List<UnavailableProduct> products;
-    
-    private List<UnavailableCustomizationOption> customizationOptions;
+    private Long id;
+
+    private String skuId;
+
+    private Integer quantity;
 }
