@@ -43,39 +43,34 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public CalculateOrderResponse calculate(CreateOrderRequest request) {
-        List<CreateOrderProductItem> items = request == null ? null : request.getProducts();
-        if (items == null || items.isEmpty()) {
-            return emptyResponse();
-        }
+        List<CreateOrderProductItem> items = request.getProducts();
         Long storeId = request.getStoreId();
 
-        // 1. 解析 skuId，收集商品ID与客制化选项ID
+        // 解析 skuId，收集商品ID与客制化选项ID
         List<List<Long>> parsedOptionIds = new ArrayList<>(items.size());
         Set<Long> productIds = new LinkedHashSet<>();
         Set<Long> optionIds = new LinkedHashSet<>();
         for (CreateOrderProductItem item : items) {
-            if (item.getId() == null) {
-                throw new BizError(OrderErrorCode.SKU_INVALID, "商品ID不能为空");
-            }
+            Long productId = SkuIdParser.parseProductId(item.getSkuId());
             List<Long> opts = SkuIdParser.parseOptionIds(item.getSkuId());
             parsedOptionIds.add(opts);
-            productIds.add(item.getId());
+            productIds.add(productId);
             optionIds.addAll(opts);
         }
 
-        // 2. 查询商品并做存在性校验
+        // 查询商品并做存在性校验
         Map<Long, Product> productMap = loadProducts(productIds);
 
-        // 3. 查询商品门店状态（无记录=售罄）
+        // 查询商品门店状态（无记录=售罄）
         Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(productIds, storeId);
 
-        // 4. 查询客制化选项并做存在性校验
+        // 查询客制化选项并做存在性校验
         Map<Long, CustomizationOption> optionMap = loadOptions(optionIds);
 
-        // 5. 查询客制化选项门店状态（无记录=禁用）
+        // 查询客制化选项门店状态（无记录=禁用）
         Map<Long, Integer> optionStoreStatusMap = loadOptionStoreStatus(optionIds, storeId);
 
-        // 6. 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
+        // 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
         List<CreateOrderUnavailableProduct> unavailableProducts = new ArrayList<>();
         List<CreateOrderUnavailableOption> unavailableOptions = new ArrayList<>();
         Set<Long> reportedProductIds = new LinkedHashSet<>();
@@ -83,14 +78,15 @@ public class OrderServiceImpl implements OrderService {
 
         int totalQuantity = 0;
         BigDecimal totalPrice = BigDecimal.ZERO;
+        List<Long> productIdList = new ArrayList<>(productIds);
 
         for (int i = 0; i < items.size(); i++) {
             CreateOrderProductItem item = items.get(i);
             List<Long> opts = parsedOptionIds.get(i);
-            Long productId = item.getId();
+            Long productId = productIdList.get(i);
             Product product = productMap.get(productId);
 
-            // 商品级不可用：全局下架 或 门店售罄（含无记录）
+            // 商品级不可用：全局下架或门店售罄
             if (isProductUnavailable(product, productStoreStatusMap.get(productId))) {
                 if (reportedProductIds.add(productId)) {
                     unavailableProducts.add(CreateOrderUnavailableProduct.builder()
@@ -101,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
                 continue;
             }
 
-            // 选项级不可用：全局禁用 或 门店禁用（含无记录）
+            // 选项级不可用：全局禁用或门店禁用
             List<CreateOrderUnavailableOption> badOptions = new ArrayList<>();
             for (Long optionId : opts) {
                 CustomizationOption option = optionMap.get(optionId);
@@ -126,7 +122,7 @@ public class OrderServiceImpl implements OrderService {
             for (Long optionId : opts) {
                 unitPrice = unitPrice.add(nullToZero(optionMap.get(optionId).getPrice()));
             }
-            int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
+            int quantity = item.getQuantity();
             totalQuantity += quantity;
             totalPrice = totalPrice.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
         }
@@ -191,7 +187,6 @@ public class OrderServiceImpl implements OrderService {
         return map;
     }
 
-    /** 商品不可用：全局下架，或门店售罄（无记录默认售罄）。 */
     private boolean isProductUnavailable(Product product, Integer storeStatus) {
         boolean globalOffShelf = product.getStatus() == null
                 || product.getStatus() != ProductGlobalStatus.ON_SHELF.getCode();
@@ -200,24 +195,12 @@ public class OrderServiceImpl implements OrderService {
         return globalOffShelf || storeSoldOut;
     }
 
-    /** 客制化选项不可用：全局禁用，或门店禁用（无记录默认禁用）。 */
     private boolean isOptionUnavailable(CustomizationOption option, Integer storeStatus) {
         boolean globalDisabled = option.getStatus() == null
                 || option.getStatus() != CustomizationOptionGlobalStatus.ACTIVE.getCode();
         boolean storeDisabled = storeStatus == null
                 || storeStatus != CustomizationOptionGlobalStatus.ACTIVE.getCode();
         return globalDisabled || storeDisabled;
-    }
-
-    private CalculateOrderResponse emptyResponse() {
-        return CalculateOrderResponse.builder()
-                .unavailable(CreateOrderUnavailable.builder()
-                        .products(new ArrayList<>())
-                        .customizationOptions(new ArrayList<>())
-                        .build())
-                .totalQuantity(0)
-                .totalPrice(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
-                .build();
     }
 
     private static BigDecimal nullToZero(BigDecimal value) {
