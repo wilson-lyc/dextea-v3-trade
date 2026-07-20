@@ -7,12 +7,15 @@ import cn.dextea.trade.dto.CreateOrderUnavailable;
 import cn.dextea.trade.dto.CreateOrderProductItem;
 import cn.dextea.trade.dto.CreateOrderUnavailableOption;
 import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
+import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Product;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
+import cn.dextea.trade.entity.enums.CustomizationStatus;
 import cn.dextea.trade.entity.enums.ProductGlobalStatus;
 import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
+import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
 import cn.dextea.trade.mapper.ProductMapper;
@@ -38,6 +41,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final ProductMapper productMapper;
     private final ProductStoreStatusMapper productStoreStatusMapper;
+    private final CustomizationMapper customizationMapper;
     private final CustomizationOptionMapper customizationOptionMapper;
     private final CustomizationOptionStoreStatusMapper customizationOptionStoreStatusMapper;
 
@@ -46,16 +50,21 @@ public class OrderServiceImpl implements OrderService {
         List<CreateOrderProductItem> items = request.getProducts();
         Long storeId = request.getStoreId();
 
-        // 解析 skuId，收集商品ID与客制化选项ID
+        // 解析 skuId，收集商品ID、客制化项目ID与客制化选项ID
         List<List<Long>> parsedOptionIds = new ArrayList<>(items.size());
+        List<List<Long>> parsedItemIds = new ArrayList<>(items.size());
         Set<Long> productIds = new LinkedHashSet<>();
         Set<Long> optionIds = new LinkedHashSet<>();
+        Set<Long> itemIds = new LinkedHashSet<>();
         for (CreateOrderProductItem item : items) {
             Long productId = SkuIdParser.parseProductId(item.getSkuId());
             List<Long> opts = SkuIdParser.parseOptionIds(item.getSkuId());
+            List<Long> items_ = SkuIdParser.parseItemIds(item.getSkuId());
             parsedOptionIds.add(opts);
+            parsedItemIds.add(items_);
             productIds.add(productId);
             optionIds.addAll(opts);
+            itemIds.addAll(items_);
         }
 
         // 查询商品并做存在性校验
@@ -63,6 +72,9 @@ public class OrderServiceImpl implements OrderService {
 
         // 查询商品门店状态（无记录=售罄）
         Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(productIds, storeId);
+
+        // 查询客制化项目并做存在性校验
+        Map<Long, Customization> customizationMap = loadCustomizations(itemIds);
 
         // 查询客制化选项并做存在性校验
         Map<Long, CustomizationOption> optionMap = loadOptions(optionIds);
@@ -97,11 +109,16 @@ public class OrderServiceImpl implements OrderService {
                 continue;
             }
 
-            // 选项级不可用：全局禁用或门店禁用
+            // 选项级不可用：所属客制化项目非激活、选项全局禁用或门店禁用
             List<CreateOrderUnavailableOption> badOptions = new ArrayList<>();
-            for (Long optionId : opts) {
+            List<Long> itemIdsForItem = parsedItemIds.get(i);
+            for (int j = 0; j < opts.size(); j++) {
+                Long optionId = opts.get(j);
+                Long itemId = itemIdsForItem.get(j);
                 CustomizationOption option = optionMap.get(optionId);
-                if (isOptionUnavailable(option, optionStoreStatusMap.get(optionId))) {
+                boolean itemUnavailable = isCustomizationUnavailable(customizationMap.get(itemId));
+                boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
+                if (itemUnavailable || optionUnavailable) {
                     if (reportedOptionIds.add(optionId)) {
                         badOptions.add(CreateOrderUnavailableOption.builder()
                                 .optionId(optionId)
@@ -160,6 +177,23 @@ public class OrderServiceImpl implements OrderService {
         return map;
     }
 
+    private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
+        Map<Long, Customization> customizationMap = new HashMap<>();
+        if (itemIds.isEmpty()) {
+            return customizationMap;
+        }
+        customizationMapper.selectByIds(new ArrayList<>(itemIds))
+                .forEach(c -> customizationMap.put(c.getId(), c));
+        List<Long> notFound = itemIds.stream()
+                .filter(id -> !customizationMap.containsKey(id))
+                .toList();
+        if (!notFound.isEmpty()) {
+            throw new BizError(OrderErrorCode.CUSTOMIZATION_NOT_FOUND,
+                    "客制化项目 " + join(notFound) + " 不存在");
+        }
+        return customizationMap;
+    }
+
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
         Map<Long, CustomizationOption> optionMap = new HashMap<>();
         if (optionIds.isEmpty()) {
@@ -201,6 +235,12 @@ public class OrderServiceImpl implements OrderService {
         boolean storeDisabled = storeStatus == null
                 || storeStatus != CustomizationOptionGlobalStatus.ACTIVE.getCode();
         return globalDisabled || storeDisabled;
+    }
+
+    private boolean isCustomizationUnavailable(Customization customization) {
+        return customization == null
+                || customization.getStatus() == null
+                || customization.getStatus() != CustomizationStatus.ACTIVE.getCode();
     }
 
     private static BigDecimal nullToZero(BigDecimal value) {

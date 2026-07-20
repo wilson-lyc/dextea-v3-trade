@@ -70,6 +70,41 @@ public final class SkuIdParser {
         return optionIds;
     }
 
+    /**
+     * 从 skuId 中提取客制化项目ID列表（与 {@link #parseOptionIds} 一一对应）。
+     * 格式非法时抛出 {@link BizError}。
+     *
+     * @param skuId SKU 标识
+     * @return 客制化项目ID列表；无客制化时返回空列表
+     */
+    public static List<Long> parseItemIds(String skuId) {
+        if (skuId == null || skuId.isBlank()) {
+            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
+        }
+        int hashIndex = skuId.indexOf('#');
+        if (hashIndex <= 0) {
+            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+        }
+        String customizationPart = skuId.substring(hashIndex + 1);
+        List<Long> itemIds = new ArrayList<>();
+        if (customizationPart.isBlank()) {
+            return itemIds;
+        }
+
+        String[] pairs = customizationPart.split("-");
+        for (String pair : pairs) {
+            if (pair.isBlank()) {
+                throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+            }
+            String[] kv = pair.split("_");
+            if (kv.length != 2 || kv[0].isBlank() || kv[1].isBlank()) {
+                throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+            }
+            itemIds.add(parseLong(kv[0], skuId));
+        }
+        return itemIds;
+    }
+
     private static long parseLong(String value, String skuId) {
         try {
             return Long.parseLong(value.trim());

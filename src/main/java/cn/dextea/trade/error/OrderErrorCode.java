@@ -7,7 +7,8 @@ public enum OrderErrorCode implements BizErrorCode {
     PRODUCT_UNAVAILABLE(1001, "商品已下架，不可购买"),
     PRODUCT_NOT_FOUND(1002, "商品不存在"),
     SKU_INVALID(1003, "skuId 格式非法"),
-    CUSTOMIZATION_OPTION_NOT_FOUND(1004, "客制化选项不存在");
+    CUSTOMIZATION_OPTION_NOT_FOUND(1004, "客制化选项不存在"),
+    CUSTOMIZATION_NOT_FOUND(1005, "客制化项目不存在");
 
     private final int code;
 
