@@ -28,6 +28,7 @@ import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
 import cn.dextea.trade.mapper.OrderMapper;
+import cn.dextea.trade.mapper.ProductImageMapper;
 import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.mapper.StoreMapper;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
 
     private final ProductMapper productMapper;
+    private final ProductImageMapper productImageMapper;
     private final ProductStoreStatusMapper productStoreStatusMapper;
     private final CustomizationMapper customizationMapper;
     private final CustomizationOptionMapper customizationOptionMapper;
@@ -99,6 +101,7 @@ public class OrderServiceImpl implements OrderService {
                     .totalQuantity(summary.getTotalQuantity())
                     .totalPrice(summary.getTotalPrice())
                     .unavailable(summary.getUnavailable())
+                    .products(summary.getProducts())
                     .build();
         }
 
@@ -158,6 +161,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalQuantity(order.getTotalQuantity())
                 .totalPrice(order.getTotalPrice())
                 .unavailable(summary != null ? summary.getUnavailable() : null)
+                .products(summary != null ? summary.getProducts() : null)
                 .build();
     }
 
@@ -242,6 +246,9 @@ public class OrderServiceImpl implements OrderService {
         // 查询商品并做存在性校验
         Map<Long, Product> productMap = loadProducts(productIds);
 
+        // 查询商品封面图（type=1），得到 productId -> coverId 的映射
+        Map<Long, Long> productCoverMap = loadCoverIds(productIds);
+
         // 查询商品门店状态（无记录=售罄）
         Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(productIds, storeId);
 
@@ -262,6 +269,7 @@ public class OrderServiceImpl implements OrderService {
 
         int totalQuantity = 0;
         BigDecimal totalPrice = BigDecimal.ZERO;
+        List<CreateOrderProductItem> availableProducts = new ArrayList<>();
         List<Long> productIdList = new ArrayList<>(productIds);
 
         for (int i = 0; i < items.size(); i++) {
@@ -324,7 +332,19 @@ public class OrderServiceImpl implements OrderService {
             }
             int quantity = item.getQuantity();
             totalQuantity += quantity;
-            totalPrice = totalPrice.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            totalPrice = totalPrice.add(subtotal);
+
+            // 校验/计价阶段顺手构建有效商品明细，供落库复用，免去重复查表
+            availableProducts.add(CreateOrderProductItem.builder()
+                    .skuId(item.getSkuId())
+                    .quantity(quantity)
+                    .productId(productId)
+                    .productName(product.getName())
+                    .coverId(productCoverMap.get(productId))
+                    .unitPrice(unitPrice.setScale(2, RoundingMode.HALF_UP))
+                    .subtotal(subtotal.setScale(2, RoundingMode.HALF_UP))
+                    .build());
         }
 
         return PreBuildOrderResponse.builder()
@@ -332,6 +352,7 @@ public class OrderServiceImpl implements OrderService {
                         .products(unavailableProducts)
                         .customization(unavailableOptions)
                         .build())
+                .products(availableProducts)
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
@@ -383,6 +404,20 @@ public class OrderServiceImpl implements OrderService {
         }
         productStoreStatusMapper.selectByProductIdsAndStoreId(new ArrayList<>(productIds), storeId)
                 .forEach(s -> map.put(s.getProductId(), s.getStatus()));
+        return map;
+    }
+
+    /**
+     * 批量查询商品封面图（type=1），返回 productId -> coverId(即 gallery.id) 映射。
+     * 封面图至多 1 张，若存在多张则以 sort、created_at、image_id 升序的第一张为准（查询已按此排序，putIfAbsent 保留首条）。
+     */
+    private Map<Long, Long> loadCoverIds(Set<Long> productIds) {
+        Map<Long, Long> map = new HashMap<>();
+        if (productIds.isEmpty()) {
+            return map;
+        }
+        productImageMapper.selectCoverImagesByProductIds(new ArrayList<>(productIds))
+                .forEach(pi -> map.putIfAbsent(pi.getProductId(), pi.getImageId()));
         return map;
     }
 

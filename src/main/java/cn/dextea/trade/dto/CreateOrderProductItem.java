@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -24,4 +26,19 @@ public class CreateOrderProductItem {
     @Min(value = 1, message = "quantity 必须大于 0")
     @Schema(description = "购买数量", example = "2")
     private Integer quantity;
+
+    @Schema(description = "商品 ID（响应填充，请求无需传）", example = "1")
+    private Long productId;
+
+    @Schema(description = "商品名称（响应填充，请求无需传）", example = "招牌奶茶")
+    private String productName;
+
+    @Schema(description = "商品封面图 ID（响应填充，请求无需传）", example = "1")
+    private Long coverId;
+
+    @Schema(description = "商品单价，含客制化加价（响应填充，请求无需传）", example = "12.50")
+    private BigDecimal unitPrice;
+
+    @Schema(description = "商品小计，单价 × 数量（响应填充，请求无需传）", example = "25.00")
+    private BigDecimal subtotal;
 }

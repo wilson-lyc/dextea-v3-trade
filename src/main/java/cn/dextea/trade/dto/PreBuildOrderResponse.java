@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -17,6 +18,9 @@ public class PreBuildOrderResponse {
 
     @Schema(description = "不可用的商品与客制化")
     private CreateOrderUnavailable unavailable;
+
+    @Schema(description = "剔除不可用项后的有效商品列表")
+    private List<CreateOrderProductItem> products;
 
     @Schema(description = "订单商品总数量", example = "2")
     private Integer totalQuantity;
