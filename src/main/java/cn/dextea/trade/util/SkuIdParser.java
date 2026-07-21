@@ -1,6 +1,6 @@
 package cn.dextea.trade.util;
 
-import cn.dextea.trade.common.BizError;
+import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.error.OrderErrorCode;
 
 import java.util.ArrayList;

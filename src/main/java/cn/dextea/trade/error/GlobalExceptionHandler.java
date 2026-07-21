@@ -1,7 +1,7 @@
 package cn.dextea.trade.error;
 
 import cn.dextea.trade.common.APIResponse;
-import cn.dextea.trade.common.BizError;
+import cn.dextea.trade.exception.BizError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;

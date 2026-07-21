@@ -1,6 +1,6 @@
 package cn.dextea.trade.service.impl;
 
-import cn.dextea.trade.common.BizError;
+import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.dto.CreateOrderRequest;
 import cn.dextea.trade.dto.PreBuildOrderResponse;
 import cn.dextea.trade.dto.CreateOrderResponse;
@@ -8,6 +8,8 @@ import cn.dextea.trade.dto.CreateOrderUnavailable;
 import cn.dextea.trade.dto.CreateOrderProductItem;
 import cn.dextea.trade.dto.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
+import cn.dextea.trade.dto.CreateAlipayTradeRequest;
+import cn.dextea.trade.config.AlipaySdkConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Customer;
@@ -29,7 +31,7 @@ import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.mapper.StoreMapper;
-import cn.dextea.trade.service.AlipayPaymentService;
+import cn.dextea.trade.service.AlipayService;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +70,8 @@ public class OrderServiceImpl implements OrderService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final IdGenerator idGenerator;
-    private final AlipayPaymentService alipayPaymentService;
+    private final AlipayService alipayService;
+    private final AlipaySdkConfig alipayConfig;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "idem:order:";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
@@ -130,7 +133,13 @@ public class OrderServiceImpl implements OrderService {
             if (customer == null || customer.getAlipayOpenId() == null) {
                 throw new BizError(OrderErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
             }
-            String tradeNo = alipayPaymentService.createTrade(order, customer.getAlipayOpenId());
+            CreateAlipayTradeRequest alipayRequest = CreateAlipayTradeRequest.builder()
+                    .orderNo(order.getOrderNo())
+                    .totalPrice(order.getPrice())
+                    .subject(alipayConfig.getSubject())
+                    .customerAlipayOpenId(customer.getAlipayOpenId())
+                    .build();
+            String tradeNo = alipayService.createTrade(alipayRequest);
             order.setTradeNo(tradeNo);
             orderMapper.updateTradeNo(order.getId(), tradeNo);
         }
