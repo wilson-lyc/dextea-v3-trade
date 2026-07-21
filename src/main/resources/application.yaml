@@ -33,7 +33,7 @@ mybatis:
 springdoc:
   api-docs:
     enabled: true
-    path: /docs/api
+    path: /docs/json
   swagger-ui:
     enabled: true
     path: /docs/ui
