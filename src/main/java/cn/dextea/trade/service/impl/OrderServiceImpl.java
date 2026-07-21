@@ -27,12 +27,10 @@ import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
-import me.ahoo.cosid.provider.IdGeneratorProvider;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -51,14 +49,10 @@ public class OrderServiceImpl implements OrderService {
     private final CustomizationOptionMapper customizationOptionMapper;
     private final CustomizationOptionStoreStatusMapper customizationOptionStoreStatusMapper;
     private final OrderMapper orderMapper;
-    private final IdGeneratorProvider idGeneratorProvider;
 
-    /**
-     * 创建订单：复用计价逻辑，存在不可用项时不落库并返回空单号；否则生成订单号并落库。
-     */
     @Override
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
-        // 复用订单计价逻辑，得到剔除不可用项后的总数量/总金额/不可用清单
+        // 计算订单价格、数量，校验商品和客制化的可用性。
         CalculateOrderResponse summary = computeOrder(request);
 
         // 存在不可用项时不创建订单记录，id 与 tradeNo 置空返回
@@ -72,21 +66,15 @@ public class OrderServiceImpl implements OrderService {
                     .build();
         }
 
-        // 用 CosID 雪花算法（Redis 分配机器号）生成订单号
-        String orderNo = idGeneratorProvider.getShare().generateAsString();
-
-        // tradeNo 暂用 orderNo 代替，待接入微信/支付宝支付渠道后替换为渠道返回的交易号
-        LocalDateTime now = LocalDateTime.now();
+        // 订单号由 CosId 的 MyBatis 拦截器在 insert 时自动注入（雪花 ID），此处不再手动生成
+        // createdAt / updatedAt 由数据库自动维护，不在 Java 中赋值
         Order order = Order.builder()
-                .orderNo(orderNo)
-                .tradeNo(orderNo)
+                .tradeNo("123456789")
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
                 .status(OrderStatus.PENDING.getCode())
                 .payMethod(request.getPlatform().getPayMethod().getCode())
                 .price(summary.getTotalPrice())
-                .createdAt(now)
-                .updatedAt(now)
                 .build();
         orderMapper.insert(order);
 
