@@ -1,6 +1,7 @@
 package cn.dextea.trade.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,7 @@ public class CreateOrderProductItem {
     private String skuId;
 
     @NotNull(message = "quantity 不能为空")
+    @Min(value = 1, message = "quantity 必须大于 0")
     @Schema(description = "购买数量", example = "2")
     private Integer quantity;
 }

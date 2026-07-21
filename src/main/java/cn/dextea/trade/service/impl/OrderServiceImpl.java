@@ -72,10 +72,8 @@ public class OrderServiceImpl implements OrderService {
                     .build();
         }
 
-        // 订单号由 CosId 的 MyBatis 拦截器在 insert 时自动注入（雪花 ID），此处不再手动生成
-        // createdAt / updatedAt 由数据库自动维护，不在 Java 中赋值
         Order order = Order.builder()
-                .tradeNo("123456789")
+                .tradeNo("123456789") // 暂用示例值
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
                 .status(OrderStatus.PENDING.getCode())
@@ -184,16 +182,25 @@ public class OrderServiceImpl implements OrderService {
                 continue;
             }
 
-            // 选项级不可用：所属客制化项目非激活、选项全局禁用或门店禁用
+            // 选项级不可用：所属客制化项目非激活、选项全局禁用或门店禁用，
+            // 以及跨绑定异常（客制化项目不属于当前商品、客制化选项不属于当前客制化项目）
             List<CreateOrderUnavailableCustomization> badOptions = new ArrayList<>();
             List<Long> itemIdsForItem = parsedItemIds.get(i);
             for (int j = 0; j < opts.size(); j++) {
                 Long optionId = opts.get(j);
                 Long itemId = itemIdsForItem.get(j);
                 CustomizationOption option = optionMap.get(optionId);
-                boolean itemUnavailable = isCustomizationUnavailable(customizationMap.get(itemId));
+                Customization item = customizationMap.get(itemId);
+
+                // 跨绑定校验：客制化项目必须属于当前商品，客制化选项必须属于当前客制化项目
+                boolean itemNotBelongToProduct = item.getProductId() != null
+                        && !item.getProductId().equals(productId);
+                boolean optionNotBelongToItem = option.getCustomizationId() != null
+                        && !option.getCustomizationId().equals(itemId);
+
+                boolean itemUnavailable = isCustomizationUnavailable(item);
                 boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
-                if (itemUnavailable || optionUnavailable) {
+                if (itemUnavailable || optionUnavailable || itemNotBelongToProduct || optionNotBelongToItem) {
                     if (reportedOptionIds.add(optionId)) {
                         badOptions.add(CreateOrderUnavailableCustomization.builder()
                                 .optionId(optionId)
@@ -201,7 +208,7 @@ public class OrderServiceImpl implements OrderService {
                                 .productId(productId)
                                 .productName(product.getName())
                                 .itemId(itemId)
-                                .itemName(customizationMap.get(itemId).getName())
+                                .itemName(item.getName())
                                 .build());
                     }
                 }
