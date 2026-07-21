@@ -53,7 +53,9 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -216,49 +218,20 @@ public class OrderServiceImpl implements OrderService {
      * 剔除不可用项并汇总有效商品的总数量与总金额。
      */
     private PreBuildOrderResponse preBuild(CreateOrderRequest request) {
-        // 先校验门店ID与顾客ID合法性，任一不合法直接抛业务异常
+        // 1. 校验门店与顾客合法性
         validateStore(request.getStoreId());
         validateCustomer(request.getCustomerId());
 
         List<CreateOrderProductItem> items = request.getProducts();
         Long storeId = request.getStoreId();
 
-        // 解析 skuId，收集商品ID、客制化项目ID与客制化选项ID
-        List<List<Long>> parsedOptionIds = new ArrayList<>(items.size());
-        List<List<Long>> parsedItemIds = new ArrayList<>(items.size());
-        Set<Long> productIds = new LinkedHashSet<>();
-        Set<Long> optionIds = new LinkedHashSet<>();
-        Set<Long> itemIds = new LinkedHashSet<>();
-        for (CreateOrderProductItem item : items) {
-            Long productId = SkuIdParser.parseProductId(item.getSkuId());
-            List<Long> opts = SkuIdParser.parseOptionIds(item.getSkuId());
-            List<Long> items_ = SkuIdParser.parseItemIds(item.getSkuId());
-            parsedOptionIds.add(opts);
-            parsedItemIds.add(items_);
-            productIds.add(productId);
-            optionIds.addAll(opts);
-            itemIds.addAll(items_);
-        }
+        // 2. 解析 skuId，收集商品/选项/客制化项目 ID
+        SkuResolution resolution = resolveSkuIds(items);
 
-        // 查询商品并做存在性校验
-        Map<Long, Product> productMap = loadProducts(productIds);
+        // 3. 批量加载所有关联实体（商品、封面、门店状态、客制化项目、选项）
+        LoadedEntities entities = loadAllEntities(resolution, storeId);
 
-        // 查询商品封面图（type=1），得到 productId -> coverId 的映射
-        Map<Long, Long> productCoverMap = loadCoverIds(productIds);
-
-        // 查询商品门店状态（无记录=售罄）
-        Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(productIds, storeId);
-
-        // 查询客制化项目并做存在性校验
-        Map<Long, Customization> customizationMap = loadCustomizations(itemIds);
-
-        // 查询客制化选项并做存在性校验
-        Map<Long, CustomizationOption> optionMap = loadOptions(optionIds);
-
-        // 查询客制化选项门店状态（无记录=禁用）
-        Map<Long, Integer> optionStoreStatusMap = loadOptionStoreStatus(optionIds, storeId);
-
-        // 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
+        // 4. 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
         List<CreateOrderUnavailableProduct> unavailableProducts = new ArrayList<>();
         List<CreateOrderUnavailableCustomization> unavailableOptions = new ArrayList<>();
         Set<Long> reportedProductIds = new LinkedHashSet<>();
@@ -267,81 +240,41 @@ public class OrderServiceImpl implements OrderService {
         int totalQuantity = 0;
         BigDecimal totalPrice = BigDecimal.ZERO;
         List<CreateOrderProductItem> availableProducts = new ArrayList<>();
-        List<Long> productIdList = new ArrayList<>(productIds);
 
         for (int i = 0; i < items.size(); i++) {
             CreateOrderProductItem item = items.get(i);
-            List<Long> opts = parsedOptionIds.get(i);
-            Long productId = productIdList.get(i);
-            Product product = productMap.get(productId);
+            List<Long> opts = resolution.optionIds().get(i);
+            Long productId = resolution.productIds().get(i);
+            Product product = entities.productMap().get(productId);
 
             // 商品级不可用：全局下架或门店售罄
-            if (isProductUnavailable(product, productStoreStatusMap.get(productId))) {
+            Optional<CreateOrderUnavailableProduct> productUnavailable = checkProductAvailability(
+                    product, entities.productStoreStatusMap().get(productId), productId);
+            if (productUnavailable.isPresent()) {
                 if (reportedProductIds.add(productId)) {
-                    unavailableProducts.add(CreateOrderUnavailableProduct.builder()
-                            .id(productId)
-                            .name(product.getName())
-                            .build());
+                    unavailableProducts.add(productUnavailable.get());
                 }
                 continue;
             }
 
-            // 选项级不可用：所属客制化项目非激活、选项全局禁用或门店禁用，
-            // 以及跨绑定异常（客制化项目不属于当前商品、客制化选项不属于当前客制化项目）
-            List<CreateOrderUnavailableCustomization> badOptions = new ArrayList<>();
-            List<Long> itemIdsForItem = parsedItemIds.get(i);
-            for (int j = 0; j < opts.size(); j++) {
-                Long optionId = opts.get(j);
-                Long itemId = itemIdsForItem.get(j);
-                CustomizationOption option = optionMap.get(optionId);
-                Customization customization = customizationMap.get(itemId);
-
-                // 跨绑定校验：客制化项目必须属于当前商品，客制化选项必须属于当前客制化项目
-                boolean itemNotBelongToProduct = customization.getProductId() != null
-                        && !customization.getProductId().equals(productId);
-                boolean optionNotBelongToItem = option.getCustomizationId() != null
-                        && !option.getCustomizationId().equals(itemId);
-
-                boolean itemUnavailable = isCustomizationUnavailable(customization);
-                boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
-                if (itemUnavailable || optionUnavailable || itemNotBelongToProduct || optionNotBelongToItem) {
-                    if (reportedOptionIds.add(optionId)) {
-                        badOptions.add(CreateOrderUnavailableCustomization.builder()
-                                .optionId(optionId)
-                                .optionName(option.getName())
-                                .productId(productId)
-                                .productName(product.getName())
-                                .itemId(itemId)
-                                .itemName(customization.getName())
-                                .build());
+            // 选项级不可用：客制化项目非激活、选项禁用、跨绑定异常
+            List<CreateOrderUnavailableCustomization> badOptions = checkOptionAvailability(
+                    opts, resolution.itemIds().get(i), productId, product,
+                    entities.optionMap(), entities.customizationMap(), entities.optionStoreStatusMap());
+            if (!badOptions.isEmpty()) {
+                for (CreateOrderUnavailableCustomization bad : badOptions) {
+                    if (reportedOptionIds.add(bad.getOptionId())) {
+                        unavailableOptions.add(bad);
                     }
                 }
-            }
-            if (!badOptions.isEmpty()) {
-                unavailableOptions.addAll(badOptions);
                 continue;
             }
 
-            // 有效商品：累加数量与金额（(商品单价 + 选项加价之和) × 数量）
-            BigDecimal unitPrice = nullToZero(product.getPrice());
-            for (Long optionId : opts) {
-                unitPrice = unitPrice.add(nullToZero(optionMap.get(optionId).getPrice()));
-            }
-            int quantity = item.getQuantity();
-            totalQuantity += quantity;
-            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
-            totalPrice = totalPrice.add(subtotal);
-
-            // 校验/计价阶段顺手构建有效商品明细，供落库复用，免去重复查表
-            availableProducts.add(CreateOrderProductItem.builder()
-                    .skuId(item.getSkuId())
-                    .quantity(quantity)
-                    .productId(productId)
-                    .productName(product.getName())
-                    .coverId(productCoverMap.get(productId))
-                    .unitPrice(unitPrice.setScale(2, RoundingMode.HALF_UP))
-                    .subtotal(subtotal.setScale(2, RoundingMode.HALF_UP))
-                    .build());
+            // 有效商品：计价并构建明细
+            PricedItem priced = priceItem(item, product, opts, entities.optionMap(), entities.productCoverMap());
+            totalQuantity += priced.quantity();
+            totalPrice = totalPrice.add(priced.subtotal());
+            availableProducts.add(priced.detail());
         }
 
         return PreBuildOrderResponse.builder()
@@ -353,6 +286,119 @@ public class OrderServiceImpl implements OrderService {
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
+    }
+
+    /**
+     * 解析所有商品的 skuId，提取每项对应的商品ID、客制化选项ID、客制化项目ID，
+     * 并汇总去重后的全量 ID 集合供批量查询使用。
+     */
+    private SkuResolution resolveSkuIds(List<CreateOrderProductItem> items) {
+        List<Long> productIds = new ArrayList<>(items.size());
+        List<List<Long>> optionIds = new ArrayList<>(items.size());
+        List<List<Long>> itemIds = new ArrayList<>(items.size());
+        Set<Long> allProductIds = new LinkedHashSet<>();
+        Set<Long> allOptionIds = new LinkedHashSet<>();
+        Set<Long> allItemIds = new LinkedHashSet<>();
+        for (CreateOrderProductItem item : items) {
+            Long productId = SkuIdParser.parseProductId(item.getSkuId());
+            List<Long> opts = SkuIdParser.parseOptionIds(item.getSkuId());
+            List<Long> itemsForItem = SkuIdParser.parseItemIds(item.getSkuId());
+            productIds.add(productId);
+            optionIds.add(opts);
+            itemIds.add(itemsForItem);
+            allProductIds.add(productId);
+            allOptionIds.addAll(opts);
+            allItemIds.addAll(itemsForItem);
+        }
+        return new SkuResolution(productIds, optionIds, itemIds, allProductIds, allOptionIds, allItemIds);
+    }
+
+    /**
+     * 批量加载预构建所需的全部关联实体，封装为上下文对象供后续逐项分类复用。
+     */
+    private LoadedEntities loadAllEntities(SkuResolution resolution, Long storeId) {
+        Map<Long, Product> productMap = loadProducts(resolution.allProductIds());
+        Map<Long, Long> productCoverMap = loadCoverIds(resolution.allProductIds());
+        Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(resolution.allProductIds(), storeId);
+        Map<Long, Customization> customizationMap = loadCustomizations(resolution.allItemIds());
+        Map<Long, CustomizationOption> optionMap = loadOptions(resolution.allOptionIds());
+        Map<Long, Integer> optionStoreStatusMap = loadOptionStoreStatus(resolution.allOptionIds(), storeId);
+        return new LoadedEntities(productMap, productCoverMap, productStoreStatusMap,
+                customizationMap, optionMap, optionStoreStatusMap);
+    }
+
+    /**
+     * 商品级可用性校验：全局未上架或门店售罄即不可用，返回待上报的不可用商品（无则空）。
+     */
+    private Optional<CreateOrderUnavailableProduct> checkProductAvailability(
+            Product product, Integer storeStatus, Long productId) {
+        if (isProductUnavailable(product, storeStatus)) {
+            return Optional.of(CreateOrderUnavailableProduct.builder()
+                    .id(productId)
+                    .name(product.getName())
+                    .build());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 选项级可用性校验：遍历当前商品的客制化选项，检查客制化项目非激活、选项禁用及跨绑定异常，
+     * 返回本项内所有不可用的客制化选项（已构建上报对象，去重由调用方处理）。
+     */
+    private List<CreateOrderUnavailableCustomization> checkOptionAvailability(
+            List<Long> opts, List<Long> itemIdsForItem, Long productId, Product product,
+            Map<Long, CustomizationOption> optionMap, Map<Long, Customization> customizationMap,
+            Map<Long, Integer> optionStoreStatusMap) {
+        List<CreateOrderUnavailableCustomization> badOptions = new ArrayList<>();
+        for (int j = 0; j < opts.size(); j++) {
+            Long optionId = opts.get(j);
+            Long itemId = itemIdsForItem.get(j);
+            CustomizationOption option = optionMap.get(optionId);
+            Customization customization = customizationMap.get(itemId);
+
+            // 跨绑定校验：客制化项目必须属于当前商品，客制化选项必须属于当前客制化项目
+            boolean itemNotBelongToProduct = customization.getProductId() != null
+                    && !customization.getProductId().equals(productId);
+            boolean optionNotBelongToItem = option.getCustomizationId() != null
+                    && !option.getCustomizationId().equals(itemId);
+
+            boolean itemUnavailable = isCustomizationUnavailable(customization);
+            boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
+            if (itemUnavailable || optionUnavailable || itemNotBelongToProduct || optionNotBelongToItem) {
+                badOptions.add(CreateOrderUnavailableCustomization.builder()
+                        .optionId(optionId)
+                        .optionName(option.getName())
+                        .productId(productId)
+                        .productName(product.getName())
+                        .itemId(itemId)
+                        .itemName(customization.getName())
+                        .build());
+            }
+        }
+        return badOptions;
+    }
+
+    /**
+     * 有效商品计价：单价 = 商品价 + 各选项加价之和，小计 = 单价 × 数量，并构建可用商品明细。
+     */
+    private PricedItem priceItem(CreateOrderProductItem item, Product product, List<Long> opts,
+            Map<Long, CustomizationOption> optionMap, Map<Long, Long> productCoverMap) {
+        int quantity = item.getQuantity();
+        BigDecimal unitPrice = nullToZero(product.getPrice());
+        for (Long optionId : opts) {
+            unitPrice = unitPrice.add(nullToZero(optionMap.get(optionId).getPrice()));
+        }
+        BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        CreateOrderProductItem detail = CreateOrderProductItem.builder()
+                .skuId(item.getSkuId())
+                .quantity(quantity)
+                .productId(product.getId())
+                .productName(product.getName())
+                .coverId(productCoverMap.get(product.getId()))
+                .unitPrice(unitPrice.setScale(2, RoundingMode.HALF_UP))
+                .subtotal(subtotal.setScale(2, RoundingMode.HALF_UP))
+                .build();
+        return new PricedItem(detail, quantity, subtotal);
     }
 
     /**
@@ -376,19 +422,35 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 通用批量加载并校验存在性：批量查询实体、按 ID 收集为 Map，缺失任一则抛出指定业务异常。
+     */
+    private <T> Map<Long, T> loadByIds(
+            Set<Long> ids,
+            Function<List<Long>, List<T>> batchLoader,
+            Function<T, Long> idExtractor,
+            OrderErrorCode errorCode,
+            String entityName) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        List<T> entities = batchLoader.apply(new ArrayList<>(ids));
+        Map<Long, T> map = entities.stream()
+                .collect(Collectors.toMap(idExtractor, e -> e, (a, b) -> a));
+        List<Long> notFound = ids.stream()
+                .filter(id -> !map.containsKey(id))
+                .toList();
+        if (!notFound.isEmpty()) {
+            throw new BizError(errorCode, entityName + "ID错误: " + join(notFound));
+        }
+        return map;
+    }
+
+    /**
      * 批量查询商品并校验存在性，缺失则抛出商品不存在异常。
      */
     private Map<Long, Product> loadProducts(Set<Long> productIds) {
-        List<Product> products = productMapper.selectByIds(new ArrayList<>(productIds));
-        Map<Long, Product> productMap = products.stream()
-                .collect(Collectors.toMap(Product::getId, p -> p, (a, b) -> a));
-        List<Long> notFound = productIds.stream()
-                .filter(id -> !productMap.containsKey(id))
-                .toList();
-        if (!notFound.isEmpty()) {
-            throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品ID错误: " + join(notFound));
-        }
-        return productMap;
+        return loadByIds(productIds, productMapper::selectByIds, Product::getId,
+                OrderErrorCode.PRODUCT_NOT_FOUND, "商品");
     }
 
     /**
@@ -422,40 +484,16 @@ public class OrderServiceImpl implements OrderService {
      * 批量查询客制化项目并校验存在性，缺失则抛出异常。
      */
     private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
-        Map<Long, Customization> customizationMap = new HashMap<>();
-        if (itemIds.isEmpty()) {
-            return customizationMap;
-        }
-        customizationMapper.selectByIds(new ArrayList<>(itemIds))
-                .forEach(c -> customizationMap.put(c.getId(), c));
-        List<Long> notFound = itemIds.stream()
-                .filter(id -> !customizationMap.containsKey(id))
-                .toList();
-        if (!notFound.isEmpty()) {
-            throw new BizError(OrderErrorCode.CUSTOMIZATION_NOT_FOUND,
-                    "客制化项目ID错误: " + join(notFound));
-        }
-        return customizationMap;
+        return loadByIds(itemIds, customizationMapper::selectByIds, Customization::getId,
+                OrderErrorCode.CUSTOMIZATION_NOT_FOUND, "客制化项目");
     }
 
     /**
      * 批量查询客制化选项并校验存在性，缺失则抛出异常。
      */
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
-        Map<Long, CustomizationOption> optionMap = new HashMap<>();
-        if (optionIds.isEmpty()) {
-            return optionMap;
-        }
-        customizationOptionMapper.selectByIds(new ArrayList<>(optionIds))
-                .forEach(o -> optionMap.put(o.getId(), o));
-        List<Long> notFound = optionIds.stream()
-                .filter(id -> !optionMap.containsKey(id))
-                .toList();
-        if (!notFound.isEmpty()) {
-            throw new BizError(OrderErrorCode.CUSTOMIZATION_OPTION_NOT_FOUND,
-                    "客制化选项ID错误: " + join(notFound));
-        }
-        return optionMap;
+        return loadByIds(optionIds, customizationOptionMapper::selectByIds, CustomizationOption::getId,
+                OrderErrorCode.CUSTOMIZATION_OPTION_NOT_FOUND, "客制化选项");
     }
 
     /**
@@ -515,4 +553,31 @@ public class OrderServiceImpl implements OrderService {
     private static String join(List<Long> ids) {
         return ids.stream().map(String::valueOf).collect(Collectors.joining("、"));
     }
+
+    /**
+     * skuId 解析结果：按商品项索引的逐项 ID 列表，以及去重后的全量 ID 集合。
+     */
+    private record SkuResolution(
+            List<Long> productIds,
+            List<List<Long>> optionIds,
+            List<List<Long>> itemIds,
+            Set<Long> allProductIds,
+            Set<Long> allOptionIds,
+            Set<Long> allItemIds) {}
+
+    /**
+     * 预构建阶段批量加载的关联实体上下文，供逐项分类与计价复用，避免重复查表。
+     */
+    private record LoadedEntities(
+            Map<Long, Product> productMap,
+            Map<Long, Long> productCoverMap,
+            Map<Long, Integer> productStoreStatusMap,
+            Map<Long, Customization> customizationMap,
+            Map<Long, CustomizationOption> optionMap,
+            Map<Long, Integer> optionStoreStatusMap) {}
+
+    /**
+     * 单个有效商品的计价结果：明细对象、数量与小计。
+     */
+    private record PricedItem(CreateOrderProductItem detail, int quantity, BigDecimal subtotal) {}
 }
