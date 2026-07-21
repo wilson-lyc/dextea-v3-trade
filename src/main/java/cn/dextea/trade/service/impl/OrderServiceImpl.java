@@ -95,14 +95,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 存在不可用项时不创建订单记录，也不占用幂等键，允许修正购物车后正常重试
         if (hasUnavailable(summary.getUnavailable())) {
-            return CreateOrderResponse.builder()
-                    .id(null)
-                    .tradeNo(null)
-                    .totalQuantity(summary.getTotalQuantity())
-                    .totalPrice(summary.getTotalPrice())
-                    .unavailable(summary.getUnavailable())
-                    .products(summary.getProducts())
-                    .build();
+            return toCreateOrderResponse(summary, null);
         }
 
         // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
@@ -148,20 +141,24 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 5. 缓存首次结果，后续携带相同幂等键的请求直接返回，无需再查 DB
-        CreateOrderResponse response = toResponse(order, summary);
+        CreateOrderResponse response = toCreateOrderResponse(summary, order);
         cacheResult(redisKey, response);
         return response;
     }
 
-    private CreateOrderResponse toResponse(Order order, PreBuildOrderResponse summary) {
+    /**
+     * 统一将预构建结果映射为创建订单响应。
+     * order 为 null 表示未落库（如存在不可用项），此时订单标识字段（id/orderNo/tradeNo）置空。
+     */
+    private CreateOrderResponse toCreateOrderResponse(PreBuildOrderResponse summary, Order order) {
         return CreateOrderResponse.builder()
-                .id(order.getId())
-                .orderNo(order.getOrderNo())
-                .tradeNo(order.getTradeNo())
-                .totalQuantity(order.getTotalQuantity())
-                .totalPrice(order.getTotalPrice())
-                .unavailable(summary != null ? summary.getUnavailable() : null)
-                .products(summary != null ? summary.getProducts() : null)
+                .id(order != null ? order.getId() : null)
+                .orderNo(order != null ? order.getOrderNo() : null)
+                .tradeNo(order != null ? order.getTradeNo() : null)
+                .totalQuantity(summary.getTotalQuantity())
+                .totalPrice(summary.getTotalPrice())
+                .unavailable(summary.getUnavailable())
+                .products(summary.getProducts())
                 .build();
     }
 
