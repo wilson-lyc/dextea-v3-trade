@@ -1,5 +1,6 @@
 package cn.dextea.trade.dto;
 
+import cn.dextea.trade.entity.enums.Platform;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,14 @@ public class CreateOrderRequest {
     @NotNull(message = "storeId 不能为空")
     @Schema(description = "门店 ID", example = "1001")
     private Long storeId;
+
+    @NotNull(message = "customerId 不能为空")
+    @Schema(description = "用户 ID", example = "1001")
+    private Long customerId;
+
+    @NotNull(message = "platform 不能为空")
+    @Schema(description = "支付平台：weixin（微信）/ alipay（支付宝）", example = "weixin")
+    private Platform platform;
 
     @NotBlank(message = "diningMethod 不能为空")
     @Schema(description = "就餐方式，如 dine_in（堂食）/ takeout（外带）", example = "dine_in")

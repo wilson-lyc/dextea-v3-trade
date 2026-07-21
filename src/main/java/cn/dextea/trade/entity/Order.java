@@ -20,6 +20,8 @@ public class Order {
 
     private String orderNo;
 
+    private String tradeNo;
+
     private Long customerId;
 
     private Long storeId;

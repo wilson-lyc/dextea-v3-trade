@@ -2,6 +2,7 @@ package cn.dextea.trade.controller;
 
 import cn.dextea.trade.common.APIResponse;
 import cn.dextea.trade.dto.CreateOrderRequest;
+import cn.dextea.trade.dto.CreateOrderResponse;
 import cn.dextea.trade.dto.CalculateOrderResponse;
 import cn.dextea.trade.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +22,14 @@ public class OrderController {
 
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @PostMapping
+    @Operation(summary = "创建订单", description = "用雪花算法生成订单号并创建订单，返回订单 ID、交易号（暂用订单号代替）、总价、总数量与不可用项")
+    public APIResponse<CreateOrderResponse> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "创建订单请求参数") @Valid @RequestBody CreateOrderRequest request) {
+        CreateOrderResponse result = orderService.createOrder(request);
+        return APIResponse.success(result);
     }
 
     @PostMapping("/calculate")

@@ -3,30 +3,36 @@ package cn.dextea.trade.service.impl;
 import cn.dextea.trade.common.BizError;
 import cn.dextea.trade.dto.CreateOrderRequest;
 import cn.dextea.trade.dto.CalculateOrderResponse;
+import cn.dextea.trade.dto.CreateOrderResponse;
 import cn.dextea.trade.dto.CreateOrderUnavailable;
 import cn.dextea.trade.dto.CreateOrderProductItem;
 import cn.dextea.trade.dto.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
+import cn.dextea.trade.entity.Order;
 import cn.dextea.trade.entity.Product;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
 import cn.dextea.trade.entity.enums.CustomizationStatus;
+import cn.dextea.trade.entity.enums.OrderStatus;
 import cn.dextea.trade.entity.enums.ProductGlobalStatus;
 import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
 import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
+import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
+import cn.dextea.trade.util.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -44,9 +50,80 @@ public class OrderServiceImpl implements OrderService {
     private final CustomizationMapper customizationMapper;
     private final CustomizationOptionMapper customizationOptionMapper;
     private final CustomizationOptionStoreStatusMapper customizationOptionStoreStatusMapper;
+    private final OrderMapper orderMapper;
+    private final SnowflakeIdGenerator snowflakeIdGenerator;
 
+    /**
+     * 创建订单：复用计价逻辑，存在不可用项时不落库并返回空单号；否则生成订单号并落库。
+     */
+    @Override
+    public CreateOrderResponse createOrder(CreateOrderRequest request) {
+        // 复用订单计价逻辑，得到剔除不可用项后的总数量/总金额/不可用清单
+        CalculateOrderResponse summary = computeOrder(request);
+
+        // 存在不可用项时不创建订单记录，id 与 tradeNo 置空返回
+        if (hasUnavailable(summary.getUnavailable())) {
+            return CreateOrderResponse.builder()
+                    .id(null)
+                    .tradeNo(null)
+                    .totalQuantity(summary.getTotalQuantity())
+                    .totalPrice(summary.getTotalPrice())
+                    .unavailable(summary.getUnavailable())
+                    .build();
+        }
+
+        // 用雪花算法生成订单号
+        String orderNo = String.valueOf(snowflakeIdGenerator.nextId());
+
+        // tradeNo 暂用 orderNo 代替，待接入微信/支付宝支付渠道后替换为渠道返回的交易号
+        LocalDateTime now = LocalDateTime.now();
+        Order order = Order.builder()
+                .orderNo(orderNo)
+                .tradeNo(orderNo)
+                .customerId(request.getCustomerId())
+                .storeId(request.getStoreId())
+                .status(OrderStatus.PENDING.getCode())
+                .payMethod(request.getPlatform().getPayMethod().getCode())
+                .price(summary.getTotalPrice())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        orderMapper.insert(order);
+
+        return CreateOrderResponse.builder()
+                .id(order.getId())
+                .tradeNo(order.getTradeNo())
+                .totalQuantity(summary.getTotalQuantity())
+                .totalPrice(summary.getTotalPrice())
+                .unavailable(summary.getUnavailable())
+                .build();
+    }
+
+    /**
+     * 判断是否存在不可用项（下架/缺货商品或禁用客制化选项）。
+     */
+    private static boolean hasUnavailable(CreateOrderUnavailable unavailable) {
+        if (unavailable == null) {
+            return false;
+        }
+        boolean products = unavailable.getProducts() != null && !unavailable.getProducts().isEmpty();
+        boolean customization = unavailable.getCustomization() != null && !unavailable.getCustomization().isEmpty();
+        return products || customization;
+    }
+
+    /**
+     * 计算订单价格：直接复用内部计价逻辑，返回可用项汇总与不可用清单。
+     */
     @Override
     public CalculateOrderResponse calculate(CreateOrderRequest request) {
+        return computeOrder(request);
+    }
+
+    /**
+     * 订单计价核心逻辑：解析 skuId、校验商品与客制化选项的存在性与门店状态，
+     * 剔除不可用项并汇总有效商品的总数量与总金额。
+     */
+    private CalculateOrderResponse computeOrder(CreateOrderRequest request) {
         List<CreateOrderProductItem> items = request.getProducts();
         Long storeId = request.getStoreId();
 
@@ -149,13 +226,16 @@ public class OrderServiceImpl implements OrderService {
         return CalculateOrderResponse.builder()
                 .unavailable(CreateOrderUnavailable.builder()
                         .products(unavailableProducts)
-                        .customizationOptions(unavailableOptions)
+                        .customization(unavailableOptions)
                         .build())
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
     }
 
+    /**
+     * 批量查询商品并校验存在性，缺失则抛出商品不存在异常。
+     */
     private Map<Long, Product> loadProducts(Set<Long> productIds) {
         List<Product> products = productMapper.selectByIds(new ArrayList<>(productIds));
         Map<Long, Product> productMap = products.stream()
@@ -169,6 +249,9 @@ public class OrderServiceImpl implements OrderService {
         return productMap;
     }
 
+    /**
+     * 查询商品在指定门店的库存状态，无记录视为售罄。
+     */
     private Map<Long, Integer> loadProductStoreStatus(Set<Long> productIds, Long storeId) {
         Map<Long, Integer> map = new HashMap<>();
         if (productIds.isEmpty()) {
@@ -179,6 +262,9 @@ public class OrderServiceImpl implements OrderService {
         return map;
     }
 
+    /**
+     * 批量查询客制化项目并校验存在性，缺失则抛出异常。
+     */
     private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
         Map<Long, Customization> customizationMap = new HashMap<>();
         if (itemIds.isEmpty()) {
@@ -196,6 +282,9 @@ public class OrderServiceImpl implements OrderService {
         return customizationMap;
     }
 
+    /**
+     * 批量查询客制化选项并校验存在性，缺失则抛出异常。
+     */
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
         Map<Long, CustomizationOption> optionMap = new HashMap<>();
         if (optionIds.isEmpty()) {
@@ -213,6 +302,9 @@ public class OrderServiceImpl implements OrderService {
         return optionMap;
     }
 
+    /**
+     * 查询客制化选项在指定门店的状态，无记录视为禁用。
+     */
     private Map<Long, Integer> loadOptionStoreStatus(Set<Long> optionIds, Long storeId) {
         Map<Long, Integer> map = new HashMap<>();
         if (optionIds.isEmpty()) {
@@ -223,6 +315,9 @@ public class OrderServiceImpl implements OrderService {
         return map;
     }
 
+    /**
+     * 判断商品是否不可用：全局未上架或门店售罄即不可用。
+     */
     private boolean isProductUnavailable(Product product, Integer storeStatus) {
         boolean globalOffShelf = product.getStatus() == null
                 || product.getStatus() != ProductGlobalStatus.ON_SHELF.getCode();
@@ -231,6 +326,9 @@ public class OrderServiceImpl implements OrderService {
         return globalOffShelf || storeSoldOut;
     }
 
+    /**
+     * 判断客制化选项是否不可用：全局禁用或门店禁用即不可用。
+     */
     private boolean isOptionUnavailable(CustomizationOption option, Integer storeStatus) {
         boolean globalDisabled = option.getStatus() == null
                 || option.getStatus() != CustomizationOptionGlobalStatus.ACTIVE.getCode();
@@ -239,16 +337,25 @@ public class OrderServiceImpl implements OrderService {
         return globalDisabled || storeDisabled;
     }
 
+    /**
+     * 判断客制化项目是否不可用：空或非激活状态即不可用。
+     */
     private boolean isCustomizationUnavailable(Customization customization) {
         return customization == null
                 || customization.getStatus() == null
                 || customization.getStatus() != CustomizationStatus.ACTIVE.getCode();
     }
 
+    /**
+     * 将 null 金额转换为 0，避免空指针。
+     */
     private static BigDecimal nullToZero(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
     }
 
+    /**
+     * 将 ID 列表以顿号拼接为字符串，用于异常信息展示。
+     */
     private static String join(List<Long> ids) {
         return ids.stream().map(String::valueOf).collect(Collectors.joining("、"));
     }
