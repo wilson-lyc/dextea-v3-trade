@@ -12,12 +12,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "不可用项（下架/缺货的商品与定制项）")
+@Schema(description = "不可用的商品和客制化列表")
 public class CreateOrderUnavailable {
 
     @Schema(description = "不可用的商品列表")
     private List<CreateOrderUnavailableProduct> products;
 
-    @Schema(description = "不可用的定制项列表")
+    @Schema(description = "不可用的客制化列表")
     private List<CreateOrderUnavailableCustomization> customization;
 }

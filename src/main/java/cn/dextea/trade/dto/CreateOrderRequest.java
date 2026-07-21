@@ -21,27 +21,27 @@ import java.util.List;
 public class CreateOrderRequest {
 
     @NotNull(message = "storeId 不能为空")
-    @Schema(description = "门店 ID", example = "1001")
+    @Schema(description = "门店 ID", example = "1")
     private Long storeId;
 
     @NotNull(message = "customerId 不能为空")
-    @Schema(description = "用户 ID", example = "1001")
+    @Schema(description = "用户 ID", example = "1")
     private Long customerId;
 
     @NotNull(message = "platform 不能为空")
-    @Schema(description = "支付平台：weixin（微信）/ alipay（支付宝）", example = "weixin")
+    @Schema(description = "仅支持 weixin 和 alipay", example = "alipay")
     private Platform platform;
 
     @NotBlank(message = "diningMethod 不能为空")
-    @Schema(description = "就餐方式，如 dine_in（堂食）/ takeout（外带）", example = "dine_in")
+    @Schema(description = "仅支持 dine_in 和 takeout", example = "dine_in")
     private String diningMethod;
 
     @NotBlank(message = "idempotencyKey 不能为空")
-    @Schema(description = "幂等键：由前端在一次结算会话中生成的 UUID，提交与重试需复用同一值", example = "f47ac10b-58cc-4372-a567-0e02b2c3d479")
+    @Schema(description = "由客户端生成", example = "f47ac10b58cc4372a5670e02b2c3d479")
     private String idempotencyKey;
 
-    @NotEmpty(message = "products 不能为空")
     @Valid
+    @NotEmpty(message = "products 不能为空")
     @Schema(description = "商品明细列表")
     private List<CreateOrderProductItem> products;
 }

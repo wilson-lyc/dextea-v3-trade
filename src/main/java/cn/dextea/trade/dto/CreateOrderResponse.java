@@ -20,10 +20,10 @@ public class CreateOrderResponse {
     @Schema(description = "订单ID", example = "1")
     private Long id;
 
-    @Schema(description = "订单号（内部雪花单号，创建成功时返回）", example = "1789000000000000001")
+    @Schema(description = "订单号", example = "20150320010101001")
     private String orderNo;
 
-    @Schema(description = "交易号（支付宝支付渠道回传，创建订单时尚未生成，为空）")
+    @Schema(description = "交易号", example = "2015042321001004720200028594")
     private String tradeNo;
 
     @Schema(description = "订单商品总数量", example = "2")

@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Schema(description = "预构建订单响应")
 public class PreBuildOrderResponse {
 
-    @Schema(description = "不可用的商品与客制化选项")
+    @Schema(description = "不可用的商品与客制化")
     private CreateOrderUnavailable unavailable;
 
     @Schema(description = "订单商品总数量", example = "2")

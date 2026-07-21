@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "下单商品明细项")
+@Schema(description = "创建订单商品项")
 public class CreateOrderProductItem {
 
     @NotBlank(message = "skuId 不能为空")
-    @Schema(description = "商品 SKU 编码", example = "1001-2001-0")
+    @Schema(description = "商品 SKU 编码", example = "1#1_1-2_6_3_7")
     private String skuId;
 
     @NotNull(message = "quantity 不能为空")
