@@ -9,6 +9,22 @@ spring:
     username: dextea
     password: REDACTED
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # 运行前替换为云端 Redis 实际密码
+      password: REPLACE_ME
+
+# CosID：雪花算法 + Redis 机器号分配
+cosid:
+  namespace: ${spring.application.name}
+  machine:
+    enabled: true
+    distributor:
+      type: redis
+  snowflake:
+    enabled: true
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

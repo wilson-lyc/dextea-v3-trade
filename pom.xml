@@ -28,6 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <cosid.version>3.2.0</cosid.version>
     </properties>
     <dependencies>
         <dependency>
@@ -77,6 +78,16 @@
             <groupId>com.alipay.sdk</groupId>
             <artifactId>alipay-sdk-java-v3</artifactId>
             <version>3.1.78.ALL</version>
+        </dependency>
+        <dependency>
+            <groupId>me.ahoo.cosid</groupId>
+            <artifactId>cosid-spring-boot-starter</artifactId>
+            <version>${cosid.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>me.ahoo.cosid</groupId>
+            <artifactId>cosid-spring-redis</artifactId>
+            <version>${cosid.version}</version>
         </dependency>
     </dependencies>
 

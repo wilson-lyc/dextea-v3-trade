@@ -26,8 +26,8 @@ import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
-import cn.dextea.trade.util.SnowflakeIdGenerator;
 import lombok.RequiredArgsConstructor;
+import me.ahoo.cosid.provider.IdGeneratorProvider;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -51,7 +51,7 @@ public class OrderServiceImpl implements OrderService {
     private final CustomizationOptionMapper customizationOptionMapper;
     private final CustomizationOptionStoreStatusMapper customizationOptionStoreStatusMapper;
     private final OrderMapper orderMapper;
-    private final SnowflakeIdGenerator snowflakeIdGenerator;
+    private final IdGeneratorProvider idGeneratorProvider;
 
     /**
      * 创建订单：复用计价逻辑，存在不可用项时不落库并返回空单号；否则生成订单号并落库。
@@ -72,8 +72,8 @@ public class OrderServiceImpl implements OrderService {
                     .build();
         }
 
-        // 用雪花算法生成订单号
-        String orderNo = String.valueOf(snowflakeIdGenerator.nextId());
+        // 用 CosID 雪花算法（Redis 分配机器号）生成订单号
+        String orderNo = idGeneratorProvider.getShare().generateAsString();
 
         // tradeNo 暂用 orderNo 代替，待接入微信/支付宝支付渠道后替换为渠道返回的交易号
         LocalDateTime now = LocalDateTime.now();
