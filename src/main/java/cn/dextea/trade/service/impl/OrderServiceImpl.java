@@ -111,8 +111,8 @@ public class OrderServiceImpl implements OrderService {
                 .storeId(request.getStoreId())
                 .status(OrderStatus.PENDING.getCode())
                 .payMethod(request.getPlatform().getPayMethod().getCode())
-                .price(summary.getTotalPrice())
-                .quantity(summary.getTotalQuantity())
+                .totalPrice(summary.getTotalPrice())
+                .totalQuantity(summary.getTotalQuantity())
                 .build();
 
         try {
@@ -135,7 +135,7 @@ public class OrderServiceImpl implements OrderService {
             }
             CreateAlipayTradeRequest alipayRequest = CreateAlipayTradeRequest.builder()
                     .orderNo(order.getOrderNo())
-                    .totalPrice(order.getPrice())
+                    .totalPrice(order.getTotalPrice())
                     .subject(alipayConfig.getSubject())
                     .customerAlipayOpenId(customer.getAlipayOpenId())
                     .build();
@@ -155,8 +155,8 @@ public class OrderServiceImpl implements OrderService {
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
-                .totalQuantity(order.getQuantity())
-                .totalPrice(order.getPrice())
+                .totalQuantity(order.getTotalQuantity())
+                .totalPrice(order.getTotalPrice())
                 .unavailable(summary != null ? summary.getUnavailable() : null)
                 .build();
     }

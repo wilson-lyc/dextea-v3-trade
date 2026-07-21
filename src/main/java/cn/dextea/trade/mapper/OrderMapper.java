@@ -10,8 +10,8 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface OrderMapper {
 
-    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, status, pay_method, price, quantity) " +
-            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{price}, #{quantity})")
+    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, status, pay_method, total_price, total_quantity) " +
+            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{totalPrice}, #{totalQuantity})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Order order);
 

@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,6 +40,10 @@ public class CreateOrderRequest {
     @NotBlank(message = "idempotencyKey 不能为空")
     @Schema(description = "由客户端生成", example = "f47ac10b58cc4372a5670e02b2c3d479")
     private String idempotencyKey;
+
+    @Size(max = 500, message = "备注不能超过 500 字")
+    @Schema(description = "订单备注（选填）", example = "少放辣椒，不要香菜")
+    private String note;
 
     @Valid
     @NotEmpty(message = "products 不能为空")
