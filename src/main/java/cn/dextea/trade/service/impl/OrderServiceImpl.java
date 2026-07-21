@@ -17,6 +17,7 @@ import cn.dextea.trade.entity.Store;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
 import cn.dextea.trade.entity.enums.CustomizationStatus;
 import cn.dextea.trade.entity.enums.OrderStatus;
+import cn.dextea.trade.entity.enums.PayMethod;
 import cn.dextea.trade.entity.enums.ProductGlobalStatus;
 import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
@@ -28,9 +29,11 @@ import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.mapper.StoreMapper;
+import cn.dextea.trade.service.AlipayPaymentService;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
+import me.ahoo.cosid.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -64,6 +67,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+    private final IdGenerator idGenerator;
+    private final AlipayPaymentService alipayPaymentService;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "idem:order:";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
@@ -96,7 +101,8 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
         Order order = Order.builder()
-                .tradeNo(null) // 支付宝交易号在调用支付组件时回填，创建订单时尚未生成
+                .orderNo(idGenerator.generate()) // 订单号在代码中显式生成，作为支付宝 out_trade_no
+                .tradeNo(null) // 支付宝交易号在调用 alipay.trade.create 后回填
                 .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
@@ -106,20 +112,31 @@ public class OrderServiceImpl implements OrderService {
                 .quantity(summary.getTotalQuantity())
                 .build();
 
-        CreateOrderResponse response;
         try {
             orderMapper.insert(order);
-            response = toResponse(order, summary);
         } catch (DuplicateKeyException e) {
-            // Redis 快校验过期但 DB 已有记录：查回已存在订单并返回，同样不报错
+            // Redis 快校验过期但 DB 已有记录：查回已存在订单，复用其订单号与交易号
             Order existing = orderMapper.selectByIdempotencyKey(idempotencyKey);
             if (existing == null) {
                 throw new BizError(OrderErrorCode.ORDER_CREATE_FAILED, "订单创建冲突，请稍后重试");
             }
-            response = toResponse(existing, summary);
+            order = existing;
         }
 
-        // 4. 缓存首次结果，后续携带相同幂等键的请求直接返回，无需再查 DB
+        // 4. 支付宝支付：创建交易并回填 trade_no。
+        //    幂等保证：已存在且已生成 trade_no 则跳过；否则用订单号(out_trade_no)创建，失败不缓存可重试。
+        if (PayMethod.ALIPAY.getCode().equals(order.getPayMethod()) && order.getTradeNo() == null) {
+            Customer customer = customerMapper.selectById(order.getCustomerId());
+            if (customer == null || customer.getAlipayOpenId() == null) {
+                throw new BizError(OrderErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
+            }
+            String tradeNo = alipayPaymentService.createTrade(order, customer.getAlipayOpenId());
+            order.setTradeNo(tradeNo);
+            orderMapper.updateTradeNo(order.getId(), tradeNo);
+        }
+
+        // 5. 缓存首次结果，后续携带相同幂等键的请求直接返回，无需再查 DB
+        CreateOrderResponse response = toResponse(order, summary);
         cacheResult(redisKey, response);
         return response;
     }
@@ -130,8 +147,8 @@ public class OrderServiceImpl implements OrderService {
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
                 .totalQuantity(order.getQuantity())
-                .totalPrice(summary.getTotalPrice())
-                .unavailable(summary.getUnavailable())
+                .totalPrice(order.getPrice())
+                .unavailable(summary != null ? summary.getUnavailable() : null)
                 .build();
     }
 
@@ -263,15 +280,15 @@ public class OrderServiceImpl implements OrderService {
                 Long optionId = opts.get(j);
                 Long itemId = itemIdsForItem.get(j);
                 CustomizationOption option = optionMap.get(optionId);
-                Customization item = customizationMap.get(itemId);
+                Customization customization = customizationMap.get(itemId);
 
                 // 跨绑定校验：客制化项目必须属于当前商品，客制化选项必须属于当前客制化项目
-                boolean itemNotBelongToProduct = item.getProductId() != null
-                        && !item.getProductId().equals(productId);
+                boolean itemNotBelongToProduct = customization.getProductId() != null
+                        && !customization.getProductId().equals(productId);
                 boolean optionNotBelongToItem = option.getCustomizationId() != null
                         && !option.getCustomizationId().equals(itemId);
 
-                boolean itemUnavailable = isCustomizationUnavailable(item);
+                boolean itemUnavailable = isCustomizationUnavailable(customization);
                 boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
                 if (itemUnavailable || optionUnavailable || itemNotBelongToProduct || optionNotBelongToItem) {
                     if (reportedOptionIds.add(optionId)) {
@@ -281,7 +298,7 @@ public class OrderServiceImpl implements OrderService {
                                 .productId(productId)
                                 .productName(product.getName())
                                 .itemId(itemId)
-                                .itemName(item.getName())
+                                .itemName(customization.getName())
                                 .build());
                     }
                 }

@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: dextea-trade
+  # 从 Nacos 配置中心导入配置（支付宝密钥等敏感信息统一在 Nacos 维护）。
+  # dataId 默认取 ${spring.application.name}.yaml，group 可按环境区分。
+  config:
+    import:
+      - optional:nacos:${spring.application.name}.yaml?group=${NACOS_CONFIG_GROUP:DEFAULT_GROUP}
+  nacos:
+    config:
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      namespace: ${NACOS_NAMESPACE:}
+      username: ${NACOS_USERNAME:}
+      password: ${NACOS_PASSWORD:}
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:dextea}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
@@ -23,6 +34,14 @@ cosid:
       type: redis
   snowflake:
     enabled: true
+
+# 支付宝配置：以下仅为非敏感项的本地兜底默认值。
+# app-id / private-key / alipay-public-key / notify-url / op-app-id 等敏感数据
+# 统一在 Nacos 配置中心（dataId: dextea-trade.yaml）以 alipay.* 维护，运行时覆盖此处。
+alipay:
+  server-url: https://openapi.alipay.com
+  subject: 德贤茶庄订单
+  product-code: JSAPI_PAY
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
