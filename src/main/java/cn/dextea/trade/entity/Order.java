@@ -28,6 +28,12 @@ public class Order {
 
     private String tradeNo;
 
+    /**
+     * 幂等键：由前端生成的 UUID，一次结算会话内复用。
+     * 数据库层对该列建唯一索引，作为订单创建的最终兜底。
+     */
+    private String idempotencyKey;
+
     private Long customerId;
 
     private Long storeId;
@@ -35,6 +41,11 @@ public class Order {
     private Integer status;
 
     private BigDecimal price;
+
+    /**
+     * 订单商品总数量。
+     */
+    private Integer quantity;
 
     private Integer payMethod;
 

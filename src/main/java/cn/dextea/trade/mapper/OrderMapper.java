@@ -4,12 +4,17 @@ import cn.dextea.trade.entity.Order;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface OrderMapper {
 
-    @Insert("INSERT INTO orders (order_no, trade_no, customer_id, store_id, status, pay_method, price) " +
-            "VALUES (#{orderNo}, #{tradeNo}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{price})")
+    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, status, pay_method, price, quantity) " +
+            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{price}, #{quantity})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Order order);
+
+    @Select("SELECT * FROM orders WHERE idempotency_key = #{idempotencyKey}")
+    Order selectByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 }

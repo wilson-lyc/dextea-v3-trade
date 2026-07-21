@@ -9,7 +9,8 @@ public enum OrderErrorCode implements BizErrorCode {
     CUSTOMIZATION_OPTION_NOT_FOUND(1004, "客制化选项ID错误"),
     CUSTOMIZATION_NOT_FOUND(1005, "客制化项目ID错误"),
     STORE_ID_INVALID(1006, "门店ID错误"),
-    CUSTOMER_ID_INVALID(1007, "顾客ID错误");
+    CUSTOMER_ID_INVALID(1007, "顾客ID错误"),
+    ORDER_CREATE_FAILED(1009, "订单创建失败");
 
     private final int code;
 

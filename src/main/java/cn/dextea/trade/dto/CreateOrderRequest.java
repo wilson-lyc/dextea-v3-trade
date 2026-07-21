@@ -36,6 +36,10 @@ public class CreateOrderRequest {
     @Schema(description = "就餐方式，如 dine_in（堂食）/ takeout（外带）", example = "dine_in")
     private String diningMethod;
 
+    @NotBlank(message = "idempotencyKey 不能为空")
+    @Schema(description = "幂等键：由前端在一次结算会话中生成的 UUID，提交与重试需复用同一值", example = "f47ac10b-58cc-4372-a567-0e02b2c3d479")
+    private String idempotencyKey;
+
     @NotEmpty(message = "products 不能为空")
     @Valid
     @Schema(description = "商品明细列表")

@@ -31,7 +31,14 @@ import cn.dextea.trade.mapper.StoreMapper;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.time.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -55,13 +62,28 @@ public class OrderServiceImpl implements OrderService {
     private final StoreMapper storeMapper;
     private final CustomerMapper customerMapper;
     private final OrderMapper orderMapper;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
+
+    private static final String IDEMPOTENCY_KEY_PREFIX = "idem:order:";
+    private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
+    private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Override
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
-        // 预构建订单：校验数据合法性，计算价格与数量，校验商品和客制化的可用性。
+        String idempotencyKey = request.getIdempotencyKey();
+        String redisKey = IDEMPOTENCY_KEY_PREFIX + idempotencyKey;
+
+        // 1. Redis 快校验：命中说明已创建过，直接返回首次结果（真正幂等，不报错）
+        CreateOrderResponse cached = getCachedResult(redisKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        // 2. 预构建：校验数据合法性并计价
         PreBuildOrderResponse summary = preBuild(request);
 
-        // 存在不可用项时不创建订单记录，id 与 tradeNo 置空返回
+        // 存在不可用项时不创建订单记录，也不占用幂等键，允许修正购物车后正常重试
         if (hasUnavailable(summary.getUnavailable())) {
             return CreateOrderResponse.builder()
                     .id(null)
@@ -72,23 +94,74 @@ public class OrderServiceImpl implements OrderService {
                     .build();
         }
 
+        // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
         Order order = Order.builder()
-                .tradeNo("123456789") // 暂用示例值
+                .tradeNo(null) // 支付宝交易号在调用支付组件时回填，创建订单时尚未生成
+                .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
                 .status(OrderStatus.PENDING.getCode())
                 .payMethod(request.getPlatform().getPayMethod().getCode())
                 .price(summary.getTotalPrice())
+                .quantity(summary.getTotalQuantity())
                 .build();
-        orderMapper.insert(order);
 
+        CreateOrderResponse response;
+        try {
+            orderMapper.insert(order);
+            response = toResponse(order, summary);
+        } catch (DuplicateKeyException e) {
+            // Redis 快校验过期但 DB 已有记录：查回已存在订单并返回，同样不报错
+            Order existing = orderMapper.selectByIdempotencyKey(idempotencyKey);
+            if (existing == null) {
+                throw new BizError(OrderErrorCode.ORDER_CREATE_FAILED, "订单创建冲突，请稍后重试");
+            }
+            response = toResponse(existing, summary);
+        }
+
+        // 4. 缓存首次结果，后续携带相同幂等键的请求直接返回，无需再查 DB
+        cacheResult(redisKey, response);
+        return response;
+    }
+
+    private CreateOrderResponse toResponse(Order order, PreBuildOrderResponse summary) {
         return CreateOrderResponse.builder()
                 .id(order.getId())
+                .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
-                .totalQuantity(summary.getTotalQuantity())
+                .totalQuantity(order.getQuantity())
                 .totalPrice(summary.getTotalPrice())
                 .unavailable(summary.getUnavailable())
                 .build();
+    }
+
+    /**
+     * 读取幂等缓存结果。Redis 不可用或反序列化失败时降级为 null，交由 MySQL 唯一索引兜底。
+     */
+    private CreateOrderResponse getCachedResult(String redisKey) {
+        try {
+            String json = redisTemplate.opsForValue().get(redisKey);
+            if (json == null) {
+                return null;
+            }
+            return objectMapper.readValue(json, CreateOrderResponse.class);
+        } catch (RuntimeException | IOException e) {
+            log.warn("Redis 读取幂等结果失败，降级至 MySQL 唯一索引: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 缓存首次创建结果（JSON，含订单 id/orderNo/数量/金额），TTL 覆盖正常重试窗口。
+     * Redis 不可用时忽略，不影响下单。
+     */
+    private void cacheResult(String redisKey, CreateOrderResponse response) {
+        try {
+            String json = objectMapper.writeValueAsString(response);
+            redisTemplate.opsForValue().set(redisKey, json, IDEMPOTENCY_TTL);
+        } catch (RuntimeException | IOException e) {
+            log.warn("Redis 缓存幂等结果失败（不影响下单）: {}", e.getMessage());
+        }
     }
 
     /**
