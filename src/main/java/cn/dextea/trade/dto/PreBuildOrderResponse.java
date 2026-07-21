@@ -12,8 +12,8 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "订单计价响应")
-public class CalculateOrderResponse {
+@Schema(description = "预构建订单响应")
+public class PreBuildOrderResponse {
 
     @Schema(description = "不可用的商品与客制化选项")
     private CreateOrderUnavailable unavailable;

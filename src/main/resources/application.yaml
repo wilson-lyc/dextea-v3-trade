@@ -12,11 +12,9 @@ spring:
   data:
     redis:
       host: localhost
-      port: 6379
-      # 运行前替换为云端 Redis 实际密码
-      password: REPLACE_ME
+      port: 3486
+      password: REDACTED
 
-# CosID：雪花算法 + Redis 机器号分配
 cosid:
   namespace: ${spring.application.name}
   machine:

@@ -2,7 +2,7 @@ package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.common.BizError;
 import cn.dextea.trade.dto.CreateOrderRequest;
-import cn.dextea.trade.dto.CalculateOrderResponse;
+import cn.dextea.trade.dto.PreBuildOrderResponse;
 import cn.dextea.trade.dto.CreateOrderResponse;
 import cn.dextea.trade.dto.CreateOrderUnavailable;
 import cn.dextea.trade.dto.CreateOrderProductItem;
@@ -10,20 +10,24 @@ import cn.dextea.trade.dto.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
+import cn.dextea.trade.entity.Customer;
 import cn.dextea.trade.entity.Order;
 import cn.dextea.trade.entity.Product;
+import cn.dextea.trade.entity.Store;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
 import cn.dextea.trade.entity.enums.CustomizationStatus;
 import cn.dextea.trade.entity.enums.OrderStatus;
 import cn.dextea.trade.entity.enums.ProductGlobalStatus;
 import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
+import cn.dextea.trade.mapper.CustomerMapper;
 import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
 import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
+import cn.dextea.trade.mapper.StoreMapper;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
@@ -48,12 +52,14 @@ public class OrderServiceImpl implements OrderService {
     private final CustomizationMapper customizationMapper;
     private final CustomizationOptionMapper customizationOptionMapper;
     private final CustomizationOptionStoreStatusMapper customizationOptionStoreStatusMapper;
+    private final StoreMapper storeMapper;
+    private final CustomerMapper customerMapper;
     private final OrderMapper orderMapper;
 
     @Override
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
-        // 计算订单价格、数量，校验商品和客制化的可用性。
-        CalculateOrderResponse summary = computeOrder(request);
+        // 预构建订单：校验数据合法性，计算价格与数量，校验商品和客制化的可用性。
+        PreBuildOrderResponse summary = preBuild(request);
 
         // 存在不可用项时不创建订单记录，id 与 tradeNo 置空返回
         if (hasUnavailable(summary.getUnavailable())) {
@@ -100,18 +106,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 计算订单价格：直接复用内部计价逻辑，返回可用项汇总与不可用清单。
+     * 预构建订单：对外暴露的预构建入口，直接复用内部预构建逻辑，返回可用项汇总与不可用清单。
      */
     @Override
-    public CalculateOrderResponse calculate(CreateOrderRequest request) {
-        return computeOrder(request);
+    public PreBuildOrderResponse preBuildOrder(CreateOrderRequest request) {
+        return preBuild(request);
     }
 
     /**
-     * 订单计价核心逻辑：解析 skuId、校验商品与客制化选项的存在性与门店状态，
+     * 预构建核心逻辑：校验门店与顾客合法性，解析 skuId、校验商品与客制化选项的存在性与门店状态，
      * 剔除不可用项并汇总有效商品的总数量与总金额。
      */
-    private CalculateOrderResponse computeOrder(CreateOrderRequest request) {
+    private PreBuildOrderResponse preBuild(CreateOrderRequest request) {
+        // 先校验门店ID与顾客ID合法性，任一不合法直接抛业务异常
+        validateStore(request.getStoreId());
+        validateCustomer(request.getCustomerId());
+
         List<CreateOrderProductItem> items = request.getProducts();
         Long storeId = request.getStoreId();
 
@@ -211,7 +221,7 @@ public class OrderServiceImpl implements OrderService {
             totalPrice = totalPrice.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
         }
 
-        return CalculateOrderResponse.builder()
+        return PreBuildOrderResponse.builder()
                 .unavailable(CreateOrderUnavailable.builder()
                         .products(unavailableProducts)
                         .customization(unavailableOptions)
@@ -219,6 +229,26 @@ public class OrderServiceImpl implements OrderService {
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
+    }
+
+    /**
+     * 校验门店ID合法性，不存在则抛出业务异常。
+     */
+    private void validateStore(Long storeId) {
+        Store store = storeMapper.selectById(storeId);
+        if (store == null) {
+            throw new BizError(OrderErrorCode.STORE_ID_INVALID, "门店ID错误: " + storeId);
+        }
+    }
+
+    /**
+     * 校验顾客ID合法性，不存在则抛出业务异常。
+     */
+    private void validateCustomer(Long customerId) {
+        Customer customer = customerMapper.selectById(customerId);
+        if (customer == null) {
+            throw new BizError(OrderErrorCode.CUSTOMER_ID_INVALID, "顾客ID错误: " + customerId);
+        }
     }
 
     /**
@@ -232,7 +262,7 @@ public class OrderServiceImpl implements OrderService {
                 .filter(id -> !productMap.containsKey(id))
                 .toList();
         if (!notFound.isEmpty()) {
-            throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品 " + join(notFound) + " 不存在");
+            throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品ID错误: " + join(notFound));
         }
         return productMap;
     }
@@ -265,7 +295,7 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
         if (!notFound.isEmpty()) {
             throw new BizError(OrderErrorCode.CUSTOMIZATION_NOT_FOUND,
-                    "客制化项目 " + join(notFound) + " 不存在");
+                    "客制化项目ID错误: " + join(notFound));
         }
         return customizationMap;
     }
@@ -285,7 +315,7 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
         if (!notFound.isEmpty()) {
             throw new BizError(OrderErrorCode.CUSTOMIZATION_OPTION_NOT_FOUND,
-                    "客制化选项 " + join(notFound) + " 不存在");
+                    "客制化选项ID错误: " + join(notFound));
         }
         return optionMap;
     }
