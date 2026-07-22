@@ -1,7 +1,9 @@
 package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.model.AbstractOrderRequest;
 import cn.dextea.trade.model.CreateOrderRequest;
+import cn.dextea.trade.model.PreBuildOrderRequest;
 import cn.dextea.trade.model.PreBuildOrderResponse;
 import cn.dextea.trade.model.CreateOrderResponse;
 import cn.dextea.trade.model.CreateOrderUnavailable;
@@ -93,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
      * @return 预构建订单响应
      */
     @Override
-    public PreBuildOrderResponse preBuildOrder(CreateOrderRequest request) {
+    public PreBuildOrderResponse preBuildOrder(PreBuildOrderRequest request) {
         return preBuild(request);
     }
 
@@ -294,7 +296,7 @@ public class OrderServiceImpl implements OrderService {
      * @param request 创建订单请求
      * @return 预构建订单响应
      */
-    private PreBuildOrderResponse preBuild(CreateOrderRequest request) {
+    private PreBuildOrderResponse preBuild(AbstractOrderRequest request) {
         Long storeId = request.getStoreId();
         Long customerId = request.getCustomerId();
         List<CreateOrderProductItem> items = request.getProducts();
