@@ -36,6 +36,8 @@ public class Order {
 
     private Integer payMethod;
 
+    private Integer diningMethod;
+
     private String note;
 
     private LocalDateTime createdAt;

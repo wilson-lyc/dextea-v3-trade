@@ -14,12 +14,15 @@ import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Customer;
 import cn.dextea.trade.entity.Order;
+import cn.dextea.trade.entity.OrderItem;
 import cn.dextea.trade.entity.Product;
 import cn.dextea.trade.entity.Store;
 import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
 import cn.dextea.trade.entity.enums.CustomizationStatus;
+import cn.dextea.trade.entity.enums.DiningMethod;
 import cn.dextea.trade.entity.enums.OrderStatus;
 import cn.dextea.trade.entity.enums.PayMethod;
+import cn.dextea.trade.entity.enums.Platform;
 import cn.dextea.trade.entity.enums.ProductGlobalStatus;
 import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
@@ -27,6 +30,7 @@ import cn.dextea.trade.mapper.CustomerMapper;
 import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
+import cn.dextea.trade.mapper.OrderItemMapper;
 import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.ProductImageMapper;
 import cn.dextea.trade.mapper.ProductMapper;
@@ -71,6 +75,7 @@ public class OrderServiceImpl implements OrderService {
     private final StoreMapper storeMapper;
     private final CustomerMapper customerMapper;
     private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final IdGenerator idGenerator;
@@ -100,6 +105,17 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
+        // 0. 支付方式拦截：微信支付暂未实现，识别到后直接抛业务异常
+        if (Platform.WEIXIN.equals(request.getPlatform())) {
+            throw new BizError(OrderErrorCode.PAY_PLATFORM_NOT_SUPPORTED, "微信支付暂不支持");
+        }
+
+        // 校验用餐方式合法性
+        DiningMethod diningMethod = DiningMethod.of(request.getDiningMethod());
+        if (diningMethod == null) {
+            throw new BizError(OrderErrorCode.DINING_METHOD_INVALID, "用餐方式错误: " + request.getDiningMethod());
+        }
+
         String idempotencyKey = request.getIdempotencyKey();
         String redisKey = IDEMPOTENCY_KEY_PREFIX + idempotencyKey;
 
@@ -126,10 +142,13 @@ public class OrderServiceImpl implements OrderService {
                 .storeId(request.getStoreId())
                 .status(OrderStatus.PENDING.getCode())
                 .payMethod(request.getPlatform().getPayMethod().getCode())
+                .diningMethod(diningMethod.getCode())
+                .note(request.getNote())
                 .totalPrice(summary.getTotalPrice())
                 .totalQuantity(summary.getTotalQuantity())
                 .build();
 
+        boolean newlyCreated = true;
         try {
             orderMapper.insert(order);
         } catch (DuplicateKeyException e) {
@@ -139,6 +158,15 @@ public class OrderServiceImpl implements OrderService {
                 throw new BizError(OrderErrorCode.ORDER_CREATE_FAILED, "订单创建冲突，请稍后重试");
             }
             order = existing;
+            newlyCreated = false;
+        }
+
+        // 3.1 仅首次创建时写入订单明细，重复请求命中已存在订单时跳过，避免重复插入
+        if (newlyCreated) {
+            List<OrderItem> orderItems = buildOrderItems(order.getId(), summary.getProducts());
+            if (!orderItems.isEmpty()) {
+                orderItemMapper.batchInsert(orderItems);
+            }
         }
 
         // 4. 支付宝支付：创建交易并回填 trade_no。
@@ -182,6 +210,33 @@ public class OrderServiceImpl implements OrderService {
                 .unavailable(summary.getUnavailable())
                 .products(summary.getProducts())
                 .build();
+    }
+
+    /**
+     * 由预构建计价结果构建订单明细列表
+     *
+     * @param orderId 订单ID
+     * @param products 预构建的有效商品明细
+     * @return 订单明细列表
+     */
+    private List<OrderItem> buildOrderItems(Long orderId, List<CreateOrderProductItem> products) {
+        List<OrderItem> items = new ArrayList<>();
+        if (products == null) {
+            return items;
+        }
+        for (CreateOrderProductItem product : products) {
+            items.add(OrderItem.builder()
+                    .orderId(orderId)
+                    .productId(product.getProductId())
+                    .skuId(product.getSkuId())
+                    .productName(product.getProductName())
+                    .coverId(product.getCoverId())
+                    .quantity(product.getQuantity())
+                    .unitPrice(product.getUnitPrice())
+                    .subtotal(product.getSubtotal())
+                    .build());
+        }
+        return items;
     }
 
     /**

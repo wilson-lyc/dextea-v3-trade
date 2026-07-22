@@ -14,6 +14,6 @@ public interface CustomerMapper {
      * @param id 顾客ID
      * @return 顾客（无则 null）
      */
-    @Select("SELECT id, name, status FROM customers WHERE id = #{id}")
+    @Select("SELECT id, name, status, alipay_open_id, weixin_open_id FROM customers WHERE id = #{id}")
     Customer selectById(@Param("id") Long id);
 }

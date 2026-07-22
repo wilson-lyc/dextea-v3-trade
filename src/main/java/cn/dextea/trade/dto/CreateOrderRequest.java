@@ -33,9 +33,9 @@ public class CreateOrderRequest {
     @Schema(description = "仅支持 weixin 和 alipay", example = "alipay")
     private Platform platform;
 
-    @NotBlank(message = "diningMethod 不能为空")
-    @Schema(description = "仅支持 dine_in 和 takeout", example = "dine_in")
-    private String diningMethod;
+    @NotNull(message = "diningMethod 不能为空")
+    @Schema(description = "用餐方式：0 堂食，1 外带", example = "0")
+    private Integer diningMethod;
 
     @NotBlank(message = "idempotencyKey 不能为空")
     @Schema(description = "由客户端生成", example = "f47ac10b58cc4372a5670e02b2c3d479")

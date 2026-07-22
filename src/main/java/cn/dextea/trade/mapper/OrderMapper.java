@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface OrderMapper {
@@ -16,8 +17,8 @@ public interface OrderMapper {
      * @param order 订单
      * @return 影响行数
      */
-    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, status, pay_method, total_price, total_quantity) " +
-            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{totalPrice}, #{totalQuantity})")
+    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, status, pay_method, dining_method, note, total_price, total_quantity) " +
+            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Order order);
 
