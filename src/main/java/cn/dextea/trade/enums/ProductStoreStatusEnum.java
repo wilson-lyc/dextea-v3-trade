@@ -1,4 +1,4 @@
-package cn.dextea.trade.entity.enums;
+package cn.dextea.trade.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

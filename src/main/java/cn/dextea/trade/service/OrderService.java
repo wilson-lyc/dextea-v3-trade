@@ -1,8 +1,8 @@
 package cn.dextea.trade.service;
 
-import cn.dextea.trade.dto.CreateOrderRequest;
-import cn.dextea.trade.dto.CreateOrderResponse;
-import cn.dextea.trade.dto.PreBuildOrderResponse;
+import cn.dextea.trade.model.CreateOrderRequest;
+import cn.dextea.trade.model.CreateOrderResponse;
+import cn.dextea.trade.model.PreBuildOrderResponse;
 
 public interface OrderService {
 

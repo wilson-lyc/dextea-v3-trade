@@ -1,4 +1,4 @@
-package cn.dextea.trade.dto;
+package cn.dextea.trade.model;
 
 import com.alipay.v3.model.AlipayTradeCreateModel;
 import io.swagger.v3.oas.annotations.media.Schema;

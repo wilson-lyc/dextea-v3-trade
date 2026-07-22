@@ -1,4 +1,4 @@
-package cn.dextea.trade.entity.enums;
+package cn.dextea.trade.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum OrderStatus {
+public enum OrderStatusEnum {
 
     /** 待支付 */
     PENDING(0, "待支付"),
@@ -22,11 +22,11 @@ public enum OrderStatus {
     private final int code;
     private final String description;
 
-    public static OrderStatus of(Integer code) {
+    public static OrderStatusEnum of(Integer code) {
         if (code == null) {
             return null;
         }
-        for (OrderStatus status : values()) {
+        for (OrderStatusEnum status : values()) {
             if (status.code == code) {
                 return status;
             }

@@ -1,14 +1,14 @@
-package cn.dextea.trade.entity.enums;
+package cn.dextea.trade.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 客制化选项全局状态枚举，对应 {@code customization_options.status} 字段（tinyint）。
+ * 客制化项目全局状态枚举，对应 {@code customizations.status} 字段（tinyint）。
  */
 @Getter
 @RequiredArgsConstructor
-public enum CustomizationOptionGlobalStatus {
+public enum CustomizationStatusEnum {
 
     /** 禁用 */
     DISABLED(0, "禁用"),
@@ -18,15 +18,15 @@ public enum CustomizationOptionGlobalStatus {
     private final int code;
     private final String description;
 
-    public static CustomizationOptionGlobalStatus of(Integer code) {
+    public static CustomizationStatusEnum of(Integer code) {
         if (code == null) {
             return null;
         }
-        for (CustomizationOptionGlobalStatus status : values()) {
+        for (CustomizationStatusEnum status : values()) {
             if (status.code == code) {
                 return status;
             }
         }
-        throw new IllegalArgumentException("未知客制化选项全局状态: " + code);
+        throw new IllegalArgumentException("未知客制化项目全局状态: " + code);
     }
 }

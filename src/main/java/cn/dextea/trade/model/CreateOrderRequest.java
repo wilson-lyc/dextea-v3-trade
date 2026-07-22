@@ -1,6 +1,6 @@
-package cn.dextea.trade.dto;
+package cn.dextea.trade.model;
 
-import cn.dextea.trade.entity.enums.Platform;
+import cn.dextea.trade.enums.PlatformEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -31,7 +31,7 @@ public class CreateOrderRequest {
 
     @NotNull(message = "platform 不能为空")
     @Schema(description = "仅支持 weixin 和 alipay", example = "alipay")
-    private Platform platform;
+    private PlatformEnum platform;
 
     @NotNull(message = "diningMethod 不能为空")
     @Schema(description = "用餐方式：0 堂食，1 外带", example = "0")

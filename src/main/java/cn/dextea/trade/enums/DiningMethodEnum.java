@@ -1,4 +1,4 @@
-package cn.dextea.trade.entity.enums;
+package cn.dextea.trade.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum DiningMethod {
+public enum DiningMethodEnum {
 
     /** 堂食 */
     DINE_IN(0, "堂食"),
@@ -26,11 +26,11 @@ public enum DiningMethod {
      * @param code 数值（0 堂食 / 1 外带）
      * @return 用餐方式（空则 null）
      */
-    public static DiningMethod of(Integer code) {
+    public static DiningMethodEnum of(Integer code) {
         if (code == null) {
             return null;
         }
-        for (DiningMethod method : values()) {
+        for (DiningMethodEnum method : values()) {
             if (method.code == code) {
                 return method;
             }

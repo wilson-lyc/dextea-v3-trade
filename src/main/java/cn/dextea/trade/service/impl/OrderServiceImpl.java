@@ -1,14 +1,14 @@
 package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.exception.BizError;
-import cn.dextea.trade.dto.CreateOrderRequest;
-import cn.dextea.trade.dto.PreBuildOrderResponse;
-import cn.dextea.trade.dto.CreateOrderResponse;
-import cn.dextea.trade.dto.CreateOrderUnavailable;
-import cn.dextea.trade.dto.CreateOrderProductItem;
-import cn.dextea.trade.dto.CreateOrderUnavailableCustomization;
-import cn.dextea.trade.dto.CreateOrderUnavailableProduct;
-import cn.dextea.trade.dto.CreateAlipayTradeRequest;
+import cn.dextea.trade.model.CreateOrderRequest;
+import cn.dextea.trade.model.PreBuildOrderResponse;
+import cn.dextea.trade.model.CreateOrderResponse;
+import cn.dextea.trade.model.CreateOrderUnavailable;
+import cn.dextea.trade.model.CreateOrderProductItem;
+import cn.dextea.trade.model.CreateOrderUnavailableCustomization;
+import cn.dextea.trade.model.CreateOrderUnavailableProduct;
+import cn.dextea.trade.model.CreateAlipayTradeRequest;
 import cn.dextea.trade.config.AlipaySdkConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
@@ -17,14 +17,14 @@ import cn.dextea.trade.entity.Order;
 import cn.dextea.trade.entity.OrderItem;
 import cn.dextea.trade.entity.Product;
 import cn.dextea.trade.entity.Store;
-import cn.dextea.trade.entity.enums.CustomizationOptionGlobalStatus;
-import cn.dextea.trade.entity.enums.CustomizationStatus;
-import cn.dextea.trade.entity.enums.DiningMethod;
-import cn.dextea.trade.entity.enums.OrderStatus;
-import cn.dextea.trade.entity.enums.PayMethod;
-import cn.dextea.trade.entity.enums.Platform;
-import cn.dextea.trade.entity.enums.ProductGlobalStatus;
-import cn.dextea.trade.entity.enums.ProductStoreStatusEnum;
+import cn.dextea.trade.enums.CustomizationOptionGlobalStatusEnum;
+import cn.dextea.trade.enums.CustomizationStatusEnum;
+import cn.dextea.trade.enums.DiningMethodEnum;
+import cn.dextea.trade.enums.OrderStatusEnum;
+import cn.dextea.trade.enums.PayMethodEnum;
+import cn.dextea.trade.enums.PlatformEnum;
+import cn.dextea.trade.enums.ProductGlobalStatusEnum;
+import cn.dextea.trade.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
 import cn.dextea.trade.mapper.CustomerMapper;
 import cn.dextea.trade.mapper.CustomizationMapper;
@@ -106,12 +106,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
         // 0. 支付方式拦截：微信支付暂未实现，识别到后直接抛业务异常
-        if (Platform.WEIXIN.equals(request.getPlatform())) {
+        if (PlatformEnum.WEIXIN.equals(request.getPlatform())) {
             throw new BizError(OrderErrorCode.PAY_PLATFORM_NOT_SUPPORTED, "微信支付暂不支持");
         }
 
         // 校验用餐方式合法性
-        DiningMethod diningMethod = DiningMethod.of(request.getDiningMethod());
+        DiningMethodEnum diningMethod = DiningMethodEnum.of(request.getDiningMethod());
         if (diningMethod == null) {
             throw new BizError(OrderErrorCode.DINING_METHOD_INVALID, "用餐方式错误: " + request.getDiningMethod());
         }
@@ -140,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
                 .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
-                .status(OrderStatus.PENDING.getCode())
+                .status(OrderStatusEnum.PENDING.getCode())
                 .payMethod(request.getPlatform().getPayMethod().getCode())
                 .diningMethod(diningMethod.getCode())
                 .note(request.getNote())
@@ -171,7 +171,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. 支付宝支付：创建交易并回填 trade_no。
         //    幂等保证：已存在且已生成 trade_no 则跳过；否则用订单号(out_trade_no)创建，失败不缓存可重试。
-        if (PayMethod.ALIPAY.getCode().equals(order.getPayMethod()) && order.getTradeNo() == null) {
+        if (PayMethodEnum.ALIPAY.getCode().equals(order.getPayMethod()) && order.getTradeNo() == null) {
             Customer customer = customerMapper.selectById(order.getCustomerId());
             if (customer == null || customer.getAlipayOpenId() == null) {
                 throw new BizError(OrderErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
@@ -652,7 +652,7 @@ public class OrderServiceImpl implements OrderService {
      */
     private boolean isProductUnavailable(Product product, Integer storeStatus) {
         boolean globalOffShelf = product.getStatus() == null
-                || product.getStatus() != ProductGlobalStatus.ON_SHELF.getCode();
+                || product.getStatus() != ProductGlobalStatusEnum.ON_SHELF.getCode();
         boolean storeSoldOut = storeStatus == null
                 || storeStatus != ProductStoreStatusEnum.AVAILABLE.getCode();
         return globalOffShelf || storeSoldOut;
@@ -667,9 +667,9 @@ public class OrderServiceImpl implements OrderService {
      */
     private boolean isOptionUnavailable(CustomizationOption option, Integer storeStatus) {
         boolean globalDisabled = option.getStatus() == null
-                || option.getStatus() != CustomizationOptionGlobalStatus.ACTIVE.getCode();
+                || option.getStatus() != CustomizationOptionGlobalStatusEnum.ACTIVE.getCode();
         boolean storeDisabled = storeStatus == null
-                || storeStatus != CustomizationOptionGlobalStatus.ACTIVE.getCode();
+                || storeStatus != CustomizationOptionGlobalStatusEnum.ACTIVE.getCode();
         return globalDisabled || storeDisabled;
     }
 
@@ -682,7 +682,7 @@ public class OrderServiceImpl implements OrderService {
     private boolean isCustomizationUnavailable(Customization customization) {
         return customization == null
                 || customization.getStatus() == null
-                || customization.getStatus() != CustomizationStatus.ACTIVE.getCode();
+                || customization.getStatus() != CustomizationStatusEnum.ACTIVE.getCode();
     }
 
     /**

@@ -1,4 +1,4 @@
-package cn.dextea.trade.entity.enums;
+package cn.dextea.trade.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum ProductGlobalStatus {
+public enum ProductGlobalStatusEnum {
 
     /** 下架 */
     OFF_SHELF(0, "下架"),
@@ -18,11 +18,11 @@ public enum ProductGlobalStatus {
     private final int code;
     private final String description;
 
-    public static ProductGlobalStatus of(Integer code) {
+    public static ProductGlobalStatusEnum of(Integer code) {
         if (code == null) {
             return null;
         }
-        for (ProductGlobalStatus status : values()) {
+        for (ProductGlobalStatusEnum status : values()) {
             if (status.code == code) {
                 return status;
             }

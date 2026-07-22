@@ -1,6 +1,6 @@
 package cn.dextea.trade.service.impl;
 
-import cn.dextea.trade.dto.CreateAlipayTradeRequest;
+import cn.dextea.trade.model.CreateAlipayTradeRequest;
 import cn.dextea.trade.error.OrderErrorCode;
 import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.service.AlipayService;

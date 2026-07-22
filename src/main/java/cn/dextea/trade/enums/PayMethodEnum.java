@@ -1,4 +1,4 @@
-package cn.dextea.trade.entity.enums;
+package cn.dextea.trade.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Getter
 @RequiredArgsConstructor
-public enum PayMethod {
+public enum PayMethodEnum {
 
     /** 未指定 */
     NONE(0, "未指定"),
@@ -22,11 +22,11 @@ public enum PayMethod {
     private final int code;
     private final String description;
 
-    public static PayMethod of(Integer code) {
+    public static PayMethodEnum of(Integer code) {
         if (code == null) {
             return null;
         }
-        for (PayMethod method : values()) {
+        for (PayMethodEnum method : values()) {
             if (method.code == code) {
                 return method;
             }

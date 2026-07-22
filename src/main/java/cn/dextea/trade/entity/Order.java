@@ -1,7 +1,5 @@
 package cn.dextea.trade.entity;
 
-import cn.dextea.trade.entity.enums.OrderStatus;
-import cn.dextea.trade.entity.enums.PayMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
