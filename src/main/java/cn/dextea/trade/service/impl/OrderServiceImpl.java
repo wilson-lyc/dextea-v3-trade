@@ -15,6 +15,7 @@ import cn.dextea.trade.config.AlipaySdkConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Customer;
+import cn.dextea.trade.entity.Gallery;
 import cn.dextea.trade.entity.Order;
 import cn.dextea.trade.entity.OrderItem;
 import cn.dextea.trade.entity.Product;
@@ -27,11 +28,14 @@ import cn.dextea.trade.enums.PayMethodEnum;
 import cn.dextea.trade.enums.PlatformEnum;
 import cn.dextea.trade.enums.ProductGlobalStatusEnum;
 import cn.dextea.trade.enums.ProductStoreStatusEnum;
+import cn.dextea.trade.enums.StoreStatusEnum;
+import cn.dextea.trade.enums.CustomerStatusEnum;
 import cn.dextea.trade.error.OrderErrorCode;
 import cn.dextea.trade.mapper.CustomerMapper;
 import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
 import cn.dextea.trade.mapper.CustomizationOptionStoreStatusMapper;
+import cn.dextea.trade.mapper.GalleryMapper;
 import cn.dextea.trade.mapper.OrderItemMapper;
 import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.ProductImageMapper;
@@ -56,6 +60,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +75,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final ProductMapper productMapper;
     private final ProductImageMapper productImageMapper;
+    private final GalleryMapper galleryMapper;
     private final ProductStoreStatusMapper productStoreStatusMapper;
     private final CustomizationMapper customizationMapper;
     private final CustomizationOptionMapper customizationOptionMapper;
@@ -134,6 +140,14 @@ public class OrderServiceImpl implements OrderService {
 
         // 2. 构建订单：校验数据合法性并计价
         PreBuildOrderResponse summary = preBuild(request);
+
+        // 门店或顾客不可用时直接拒绝下单，保证不会为无效主体创建订单
+        if (!Boolean.TRUE.equals(summary.getStoreAvailable())) {
+            throw new BizError(OrderErrorCode.STORE_NOT_OPEN, "门店不可下单: " + request.getStoreId());
+        }
+        if (!Boolean.TRUE.equals(summary.getCustomerAvailable())) {
+            throw new BizError(OrderErrorCode.CUSTOMER_NOT_ACTIVE, "顾客不可下单: " + request.getCustomerId());
+        }
 
         // 存在不可用项时不创建订单记录，也不占用幂等键，允许修正购物车后正常重试
         if (hasUnavailable(summary.getUnavailable())) {
@@ -216,6 +230,8 @@ public class OrderServiceImpl implements OrderService {
                 .totalPrice(summary.getTotalPrice())
                 .unavailable(summary.getUnavailable())
                 .products(summary.getProducts())
+                .storeAvailable(summary.getStoreAvailable())
+                .customerAvailable(summary.getCustomerAvailable())
                 .build();
     }
 
@@ -306,9 +322,15 @@ public class OrderServiceImpl implements OrderService {
         Long customerId = request.getCustomerId();
         List<CreateOrderProductItem> items = request.getProducts();
 
-        // 1. 校验门店与顾客合法性
-        validateStore(storeId);
-        validateCustomer(customerId);
+        // 1. 校验门店与顾客可用性
+        boolean storeAvailable = isStoreAvailable(storeId);
+        boolean customerAvailable = isCustomerAvailable(customerId);
+        if (!storeAvailable || !customerAvailable) {
+            return PreBuildOrderResponse.builder()
+                    .storeAvailable(storeAvailable)
+                    .customerAvailable(customerAvailable)
+                    .build();
+        }
 
         // 2. 解析 skuId，获取商品/选项/客制化项目 ID
         SkuResolution resolution = resolveSkuIds(items);
@@ -356,7 +378,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // 有效商品：计价并构建明细
-            PricedItem priced = priceItem(item, product, opts, entities.optionMap(), entities.productCoverMap());
+            PricedItem priced = priceItem(item, product, opts, entities.optionMap(), entities.productCoverMap(), entities.productCoverUrlMap());
             totalQuantity += priced.quantity();
             totalPrice = totalPrice.add(priced.subtotal());
             availableProducts.add(priced.detail());
@@ -368,6 +390,8 @@ public class OrderServiceImpl implements OrderService {
                         .customization(unavailableOptions)
                         .build())
                 .products(availableProducts)
+                .storeAvailable(true)
+                .customerAvailable(true)
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
@@ -410,12 +434,13 @@ public class OrderServiceImpl implements OrderService {
     private LoadedEntities loadAllEntities(SkuResolution resolution, Long storeId) {
         Map<Long, Product> productMap = loadProducts(resolution.allProductIds());
         Map<Long, Long> productCoverMap = loadCoverIds(resolution.allProductIds());
+        Map<Long, String> productCoverUrlMap = loadCoverUrls(productCoverMap);
         Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(resolution.allProductIds(), storeId);
         Map<Long, Customization> customizationMap = loadCustomizations(resolution.allItemIds());
         Map<Long, CustomizationOption> optionMap = loadOptions(resolution.allOptionIds());
         Map<Long, Integer> optionStoreStatusMap = loadOptionStoreStatus(resolution.allOptionIds(), storeId);
-        return new LoadedEntities(productMap, productCoverMap, productStoreStatusMap,
-                customizationMap, optionMap, optionStoreStatusMap);
+        return new LoadedEntities(productMap, productCoverMap, productCoverUrlMap,
+                productStoreStatusMap, customizationMap, optionMap, optionStoreStatusMap);
     }
 
     /**
@@ -493,19 +518,28 @@ public class OrderServiceImpl implements OrderService {
      * @return 计价结果
      */
     private PricedItem priceItem(CreateOrderProductItem item, Product product, List<Long> opts,
-            Map<Long, CustomizationOption> optionMap, Map<Long, Long> productCoverMap) {
+            Map<Long, CustomizationOption> optionMap, Map<Long, Long> productCoverMap,
+            Map<Long, String> productCoverUrlMap) {
         int quantity = item.getQuantity();
         BigDecimal unitPrice = nullToZero(product.getPrice());
         for (Long optionId : opts) {
             unitPrice = unitPrice.add(nullToZero(optionMap.get(optionId).getPrice()));
         }
         BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        String customizationText = opts.stream()
+                .map(optionMap::get)
+                .filter(Objects::nonNull)
+                .map(CustomizationOption::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.joining(" / "));
         CreateOrderProductItem detail = CreateOrderProductItem.builder()
                 .skuId(item.getSkuId())
                 .quantity(quantity)
                 .productId(product.getId())
                 .productName(product.getName())
                 .coverId(productCoverMap.get(product.getId()))
+                .coverUrl(productCoverUrlMap.get(product.getId()))
+                .customizationText(customizationText.isEmpty() ? null : customizationText)
                 .unitPrice(unitPrice.setScale(2, RoundingMode.HALF_UP))
                 .subtotal(subtotal.setScale(2, RoundingMode.HALF_UP))
                 .build();
@@ -517,11 +551,13 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param storeId 门店ID
      */
-    private void validateStore(Long storeId) {
+    private boolean isStoreAvailable(Long storeId) {
         Store store = storeMapper.selectById(storeId);
         if (store == null) {
-            throw new BizError(OrderErrorCode.STORE_ID_INVALID, "门店ID错误: " + storeId);
+            return false;
         }
+        Integer status = store.getStatus();
+        return status != null && status == StoreStatusEnum.OPEN.getCode();
     }
 
     /**
@@ -529,11 +565,13 @@ public class OrderServiceImpl implements OrderService {
      *
      * @param customerId 顾客ID
      */
-    private void validateCustomer(Long customerId) {
+    private boolean isCustomerAvailable(Long customerId) {
         Customer customer = customerMapper.selectById(customerId);
         if (customer == null) {
-            throw new BizError(OrderErrorCode.CUSTOMER_ID_INVALID, "顾客ID错误: " + customerId);
+            return false;
         }
+        Integer status = customer.getStatus();
+        return status != null && status == CustomerStatusEnum.ACTIVE.getCode();
     }
 
     /**
@@ -608,6 +646,33 @@ public class OrderServiceImpl implements OrderService {
         }
         productImageMapper.selectCoverImagesByProductIds(new ArrayList<>(productIds))
                 .forEach(pi -> map.putIfAbsent(pi.getProductId(), pi.getImageId()));
+        return map;
+    }
+
+    /**
+     * 批量加载商品封面图 URL
+     * <p>基于商品ID到封面图ID的映射，关联 {@code gallery} 表解析出图片访问地址。</p>
+     *
+     * @param productCoverMap 商品ID到封面图ID的映射
+     * @return 商品ID到封面图 URL 的映射（无封面或找不到图片的不包含）
+     */
+    private Map<Long, String> loadCoverUrls(Map<Long, Long> productCoverMap) {
+        Map<Long, String> map = new HashMap<>();
+        if (productCoverMap == null || productCoverMap.isEmpty()) {
+            return map;
+        }
+        Set<Long> imageIds = new LinkedHashSet<>(productCoverMap.values());
+        if (imageIds.isEmpty()) {
+            return map;
+        }
+        Map<Long, String> urlMap = galleryMapper.selectByIds(new ArrayList<>(imageIds)).stream()
+                .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a));
+        productCoverMap.forEach((productId, imageId) -> {
+            String url = urlMap.get(imageId);
+            if (url != null) {
+                map.put(productId, url);
+            }
+        });
         return map;
     }
 
@@ -729,6 +794,7 @@ public class OrderServiceImpl implements OrderService {
     private record LoadedEntities(
             Map<Long, Product> productMap,
             Map<Long, Long> productCoverMap,
+            Map<Long, String> productCoverUrlMap,
             Map<Long, Integer> productStoreStatusMap,
             Map<Long, Customization> customizationMap,
             Map<Long, CustomizationOption> optionMap,

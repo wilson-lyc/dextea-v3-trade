@@ -18,4 +18,18 @@ public interface GalleryMapper {
             "FROM gallery " +
             "WHERE id = #{id}")
     Gallery selectById(@Param("id") Long id);
+
+    /**
+     * 按主键批量查询图片
+     *
+     * @param ids 图片ID列表
+     * @return 图片列表（无则空列表）
+     */
+    @Select("<script>" +
+            "SELECT id, url, object_key AS objectKey, created_at AS createdAt, name " +
+            "FROM gallery " +
+            "WHERE id IN " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<Gallery> selectByIds(@Param("ids") List<Long> ids);
 }

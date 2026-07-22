@@ -36,6 +36,12 @@ public class CreateOrderProductItem {
     @Schema(description = "商品封面图 ID（响应填充，请求无需传）", example = "1")
     private Long coverId;
 
+    @Schema(description = "商品封面图 URL（响应填充，请求无需传）", example = "https://cdn.example.com/cover/1.jpg")
+    private String coverUrl;
+
+    @Schema(description = "客制化选项文本，由选项名称拼接而成（响应填充，请求无需传）", example = "少冰 / 少甜 / 茉莉花茶")
+    private String customizationText;
+
     @Schema(description = "商品单价，含客制化加价（响应填充，请求无需传）", example = "12.50")
     private BigDecimal unitPrice;
 
