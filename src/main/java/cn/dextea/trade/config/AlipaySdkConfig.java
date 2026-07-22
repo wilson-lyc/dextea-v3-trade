@@ -1,7 +1,7 @@
 package cn.dextea.trade.config;
 
 import com.alipay.v3.ApiClient;
-import com.alipay.v3.Configuration;
+import com.alipay.v3.ApiException;
 import com.alipay.v3.util.model.AlipayConfig;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,13 +32,17 @@ public class AlipaySdkConfig {
 
     @Bean
     public ApiClient alipayApiClient() {
-        ApiClient client = Configuration.getDefaultApiClient();
+        ApiClient client = com.alipay.v3.Configuration.getDefaultApiClient();
         AlipayConfig config = new AlipayConfig();
         config.setServerUrl(serverUrl);
         config.setAppId(appId);
         config.setPrivateKey(privateKey);
         config.setAlipayPublicKey(alipayPublicKey);
-        client.setAlipayConfig(config);
+        try {
+            client.setAlipayConfig(config);
+        } catch (ApiException e) {
+            throw new IllegalStateException("初始化支付宝 SDK 配置失败", e);
+        }
         return client;
     }
 }

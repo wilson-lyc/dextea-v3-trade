@@ -135,7 +135,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
         Order order = Order.builder()
-                .orderNo(idGenerator.generate()) // 订单号在代码中显式生成，作为支付宝 out_trade_no
+                .orderNo(String.valueOf(idGenerator.generate())) // 订单号在代码中显式生成，作为支付宝 out_trade_no
                 .tradeNo(null) // 支付宝交易号在调用 alipay.trade.create 后回填
                 .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
@@ -171,7 +171,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. 支付宝支付：创建交易并回填 trade_no。
         //    幂等保证：已存在且已生成 trade_no 则跳过；否则用订单号(out_trade_no)创建，失败不缓存可重试。
-        if (PayMethodEnum.ALIPAY.getCode().equals(order.getPayMethod()) && order.getTradeNo() == null) {
+        if (Integer.valueOf(PayMethodEnum.ALIPAY.getCode()).equals(order.getPayMethod()) && order.getTradeNo() == null) {
             Customer customer = customerMapper.selectById(order.getCustomerId());
             if (customer == null || customer.getAlipayOpenId() == null) {
                 throw new BizError(OrderErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
