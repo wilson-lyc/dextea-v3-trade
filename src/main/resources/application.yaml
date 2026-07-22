@@ -32,10 +32,12 @@ cosid:
       type: redis
   snowflake:
     enabled: true
+    # 命名生成器：按业务分配。后续新增 ID 类型（退款单号、流水号等）只需在此追加条目，
+    # 代码中通过 IdGeneratorProvider.getRequired(name) 获取，无需改动生成器实现。
+    provider:
+      order:
+        namespace: ${spring.application.name}
 
-# 支付宝配置：以下仅为非敏感项的本地兜底默认值。
-# app-id / private-key / alipay-public-key 等敏感数据
-# 统一在 Nacos 配置中心（dataId: dextea-trade.yaml）以 alipay.* 维护，运行时覆盖此处。
 alipay:
   server-url: https://openapi.alipay.com
   subject: 德贤茶庄订单

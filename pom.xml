@@ -99,11 +99,6 @@
             <artifactId>cosid-spring-redis</artifactId>
             <version>${cosid.version}</version>
         </dependency>
-        <dependency>
-            <groupId>me.ahoo.cosid</groupId>
-            <artifactId>cosid-mybatis</artifactId>
-            <version>${cosid.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

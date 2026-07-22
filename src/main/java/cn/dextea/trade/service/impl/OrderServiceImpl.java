@@ -42,7 +42,7 @@ import cn.dextea.trade.service.AlipayService;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
-import me.ahoo.cosid.IdGenerator;
+import me.ahoo.cosid.provider.IdGeneratorProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -80,12 +80,17 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemMapper orderItemMapper;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
-    private final IdGenerator idGenerator;
+    private final IdGeneratorProvider idGeneratorProvider;
     private final AlipayService alipayService;
     private final AlipaySdkConfig alipayConfig;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
+    /**
+     * 订单号生成器名称，对应 cosid.snowflake.provider.order。
+     * 后续如有更多 ID 类型（如退款单号、流水号），在 YAML 中追加命名生成器并改用对应名称即可。
+     */
+    private static final String ORDER_ID_GENERATOR = "order";
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     /**
@@ -137,7 +142,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
         Order order = Order.builder()
-                .orderNo(String.valueOf(idGenerator.generate())) // 订单号在代码中显式生成，作为支付宝 out_trade_no
+                .orderNo(idGeneratorProvider.getRequired(ORDER_ID_GENERATOR).generateAsString()) // 订单号在代码中显式生成，作为支付宝 out_trade_no
                 .tradeNo(null) // 支付宝交易号在调用 alipay.trade.create 后回填
                 .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
