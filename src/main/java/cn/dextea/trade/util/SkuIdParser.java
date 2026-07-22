@@ -7,12 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * skuId 解析工具。
+ * skuId 解析工具
  *
- * <p>skuId 格式：{@code 商品ID#客制化项目ID_客制化选项ID-客制化项目ID_客制化选项ID...}。</p>
- * <p>例如 {@code 1#1_1} 表示：商品ID=1，客制化项目ID=1，客制化选项ID=1。</p>
- * <p>{@code #} 之后为客制化部分，可为空（无客制化）；多个「项目_选项」对以 {@code -} 分隔，
- * 每对以 {@code _} 分隔，本接口仅需提取「客制化选项ID」。</p>
+ * skuId 格式：商品ID#客制化项目ID_客制化选项ID-客制化项目ID_客制化选项ID...
  */
 public final class SkuIdParser {
 
@@ -20,13 +17,7 @@ public final class SkuIdParser {
     }
 
     /**
-     * 从 skuId 中提取客制化选项ID列表。格式非法时抛出 {@link BizError}。
-     *
-     * @param skuId SKU 标识
-     * @return 客制化选项ID列表；无客制化时返回空列表
-     */
-    /**
-     * 从 skuId 中提取商品ID。格式非法时抛出 {@link BizError}。
+     * 提取商品ID
      *
      * @param skuId SKU 标识
      * @return 商品ID
@@ -42,40 +33,11 @@ public final class SkuIdParser {
         return parseLong(skuId.substring(0, hashIndex), skuId);
     }
 
-    public static List<Long> parseOptionIds(String skuId) {
-        if (skuId == null || skuId.isBlank()) {
-            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
-        }
-        int hashIndex = skuId.indexOf('#');
-        if (hashIndex <= 0) {
-            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
-        }
-        String customizationPart = skuId.substring(hashIndex + 1);
-        List<Long> optionIds = new ArrayList<>();
-        if (customizationPart.isBlank()) {
-            return optionIds;
-        }
-
-        String[] pairs = customizationPart.split("-");
-        for (String pair : pairs) {
-            if (pair.isBlank()) {
-                throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
-            }
-            String[] kv = pair.split("_");
-            if (kv.length != 2 || kv[0].isBlank() || kv[1].isBlank()) {
-                throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
-            }
-            optionIds.add(parseLong(kv[1], skuId));
-        }
-        return optionIds;
-    }
-
     /**
-     * 从 skuId 中提取客制化项目ID列表（与 {@link #parseOptionIds} 一一对应）。
-     * 格式非法时抛出 {@link BizError}。
+     * 提取客制化项目ID列表
      *
      * @param skuId SKU 标识
-     * @return 客制化项目ID列表；无客制化时返回空列表
+     * @return 客制化项目ID列表
      */
     public static List<Long> parseItemIds(String skuId) {
         if (skuId == null || skuId.isBlank()) {
@@ -105,6 +67,47 @@ public final class SkuIdParser {
         return itemIds;
     }
 
+    /**
+     * 提取客制化选项ID列表
+     *
+     * @param skuId SKU 标识
+     * @return 客制化选项ID列表
+     */
+    public static List<Long> parseOptionIds(String skuId) {
+        if (skuId == null || skuId.isBlank()) {
+            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
+        }
+        int hashIndex = skuId.indexOf('#');
+        if (hashIndex <= 0) {
+            throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+        }
+        String customizationPart = skuId.substring(hashIndex + 1);
+        List<Long> optionIds = new ArrayList<>();
+        if (customizationPart.isBlank()) {
+            return optionIds;
+        }
+
+        String[] pairs = customizationPart.split("-");
+        for (String pair : pairs) {
+            if (pair.isBlank()) {
+                throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+            }
+            String[] kv = pair.split("_");
+            if (kv.length != 2 || kv[0].isBlank() || kv[1].isBlank()) {
+                throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 格式非法: " + skuId);
+            }
+            optionIds.add(parseLong(kv[1], skuId));
+        }
+        return optionIds;
+    }
+    
+    /**
+     * 字符串转长整型
+     *
+     * @param value 待转换字符串
+     * @param skuId SKU 标识
+     * @return 长整型数值
+     */
     private static long parseLong(String value, String skuId) {
         try {
             return Long.parseLong(value.trim());

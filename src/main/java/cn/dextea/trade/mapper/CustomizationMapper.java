@@ -11,7 +11,10 @@ import java.util.List;
 public interface CustomizationMapper {
 
     /**
-     * 批量查询客制化项目（含名称、全局状态）。
+     * 批量查询客制化项目
+     *
+     * @param ids 客制化项目ID列表
+     * @return 客制化项目列表
      */
     @Select("<script>" +
             "SELECT id, product_id AS productId, name, status " +

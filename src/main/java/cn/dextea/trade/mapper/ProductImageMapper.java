@@ -11,8 +11,10 @@ import java.util.List;
 public interface ProductImageMapper {
 
     /**
-     * 批量查询商品的封面图（type=1）。封面图至多 1 张，若数据库存在多张则按 sort、created_at、image_id 升序取第一张。
-     * 返回结果由调用方按 product_id 去重保留首条，得到 productId -> imageId(coverId) 的映射。
+     * 批量查询商品封面图
+     *
+     * @param productIds 商品ID列表
+     * @return 商品封面图列表
      */
     @Select("<script>" +
             "SELECT product_id AS productId, image_id AS imageId, type, sort, created_at AS createdAt " +

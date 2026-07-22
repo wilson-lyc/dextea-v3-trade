@@ -10,6 +10,12 @@ import java.util.List;
 @Mapper
 public interface ProductMapper {
 
+    /**
+     * 批量查询商品
+     *
+     * @param ids 商品ID列表
+     * @return 商品列表
+     */
     @Select("<script>" +
             "SELECT id, name, status, price " +
             "FROM products " +

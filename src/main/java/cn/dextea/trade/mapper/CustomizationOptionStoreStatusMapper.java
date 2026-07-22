@@ -11,7 +11,11 @@ import java.util.List;
 public interface CustomizationOptionStoreStatusMapper {
 
     /**
-     * 批量查询指定门店下客制化选项的门店状态。采用懒加载，无记录表示禁用，由调用方处理默认值。
+     * 批量查询客制化选项门店状态
+     *
+     * @param optionIds 客制化选项ID列表
+     * @param storeId 门店ID
+     * @return 客制化选项门店状态列表
      */
     @Select("<script>" +
             "SELECT customization_option_id AS customizationOptionId, store_id AS storeId, status " +

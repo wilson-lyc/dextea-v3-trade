@@ -11,7 +11,10 @@ import java.util.List;
 public interface CustomizationOptionMapper {
 
     /**
-     * 批量查询客制化选项（含名称、价格、全局状态）。
+     * 批量查询客制化选项
+     *
+     * @param ids 客制化选项ID列表
+     * @return 客制化选项列表
      */
     @Select("<script>" +
             "SELECT id, customization_id AS customizationId, name, price, status " +

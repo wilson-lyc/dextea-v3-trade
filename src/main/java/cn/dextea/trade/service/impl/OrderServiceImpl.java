@@ -77,22 +77,39 @@ public class OrderServiceImpl implements OrderService {
     private final AlipayService alipayService;
     private final AlipaySdkConfig alipayConfig;
 
-    private static final String IDEMPOTENCY_KEY_PREFIX = "idem:order:";
+    private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
+    /**
+     * 预构建订单（对外入口）
+     *
+     * @param request 创建订单请求
+     * @return 预构建订单响应
+     */
+    @Override
+    public PreBuildOrderResponse preBuildOrder(CreateOrderRequest request) {
+        return preBuild(request);
+    }
+
+    /**
+     * 创建订单
+     *
+     * @param request 创建订单请求
+     * @return 创建订单响应
+     */
     @Override
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
         String idempotencyKey = request.getIdempotencyKey();
         String redisKey = IDEMPOTENCY_KEY_PREFIX + idempotencyKey;
 
-        // 1. Redis 快校验：命中说明已创建过，直接返回首次结果（真正幂等，不报错）
+        // 1. Redis 快校验：命中说明已创建过，直接返回结果
         CreateOrderResponse cached = getCachedResult(redisKey);
         if (cached != null) {
             return cached;
         }
 
-        // 2. 预构建：校验数据合法性并计价
+        // 2. 构建订单：校验数据合法性并计价
         PreBuildOrderResponse summary = preBuild(request);
 
         // 存在不可用项时不创建订单记录，也不占用幂等键，允许修正购物车后正常重试
@@ -149,8 +166,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 统一将预构建结果映射为创建订单响应。
-     * order 为 null 表示未落库（如存在不可用项），此时订单标识字段（id/orderNo/tradeNo）置空。
+     * 映射创建订单响应
+     *
+     * @param summary 预构建结果
+     * @param order 订单（无则空）
+     * @return 创建订单响应
      */
     private CreateOrderResponse toCreateOrderResponse(PreBuildOrderResponse summary, Order order) {
         return CreateOrderResponse.builder()
@@ -165,7 +185,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 读取幂等缓存结果。Redis 不可用或反序列化失败时降级为 null，交由 MySQL 唯一索引兜底。
+     * 读取幂等缓存结果
+     *
+     * @param redisKey 幂等缓存键
+     * @return 缓存的创建订单响应（无则 null）
      */
     private CreateOrderResponse getCachedResult(String redisKey) {
         try {
@@ -181,8 +204,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 缓存首次创建结果（JSON，含订单 id/orderNo/数量/金额），TTL 覆盖正常重试窗口。
-     * Redis 不可用时忽略，不影响下单。
+     * 缓存创建结果
+     *
+     * @param redisKey 幂等缓存键
+     * @param response 创建订单响应
      */
     private void cacheResult(String redisKey, CreateOrderResponse response) {
         try {
@@ -194,7 +219,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 判断是否存在不可用项（下架/缺货商品或禁用客制化选项）。
+     * 判断是否存在不可用项
+     *
+     * @param unavailable 不可用清单
+     * @return 是否存在不可用项
      */
     private static boolean hasUnavailable(CreateOrderUnavailable unavailable) {
         if (unavailable == null) {
@@ -206,26 +234,21 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 预构建订单：对外暴露的预构建入口，直接复用内部预构建逻辑，返回可用项汇总与不可用清单。
-     */
-    @Override
-    public PreBuildOrderResponse preBuildOrder(CreateOrderRequest request) {
-        return preBuild(request);
-    }
-
-    /**
-     * 预构建核心逻辑：校验门店与顾客合法性，解析 skuId、校验商品与客制化选项的存在性与门店状态，
-     * 剔除不可用项并汇总有效商品的总数量与总金额。
+     * 预构建订单
+     *
+     * @param request 创建订单请求
+     * @return 预构建订单响应
      */
     private PreBuildOrderResponse preBuild(CreateOrderRequest request) {
-        // 1. 校验门店与顾客合法性
-        validateStore(request.getStoreId());
-        validateCustomer(request.getCustomerId());
-
-        List<CreateOrderProductItem> items = request.getProducts();
         Long storeId = request.getStoreId();
+        Long customerId = request.getCustomerId();
+        List<CreateOrderProductItem> items = request.getProducts();
 
-        // 2. 解析 skuId，收集商品/选项/客制化项目 ID
+        // 1. 校验门店与顾客合法性
+        validateStore(storeId);
+        validateCustomer(customerId);
+
+        // 2. 解析 skuId，获取商品/选项/客制化项目 ID
         SkuResolution resolution = resolveSkuIds(items);
 
         // 3. 批量加载所有关联实体（商品、封面、门店状态、客制化项目、选项）
@@ -289,8 +312,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 解析所有商品的 skuId，提取每项对应的商品ID、客制化选项ID、客制化项目ID，
-     * 并汇总去重后的全量 ID 集合供批量查询使用。
+     * 解析商品 skuId
+     *
+     * @param items 商品项列表
+     * @return skuId 解析结果
      */
     private SkuResolution resolveSkuIds(List<CreateOrderProductItem> items) {
         List<Long> productIds = new ArrayList<>(items.size());
@@ -314,7 +339,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 批量加载预构建所需的全部关联实体，封装为上下文对象供后续逐项分类复用。
+     * 批量加载关联实体
+     *
+     * @param resolution skuId 解析结果
+     * @param storeId 门店ID
+     * @return 关联实体上下文
      */
     private LoadedEntities loadAllEntities(SkuResolution resolution, Long storeId) {
         Map<Long, Product> productMap = loadProducts(resolution.allProductIds());
@@ -328,7 +357,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 商品级可用性校验：全局未上架或门店售罄即不可用，返回待上报的不可用商品（无则空）。
+     * 商品级可用性校验
+     *
+     * @param product 商品
+     * @param storeStatus 门店库存状态
+     * @param productId 商品ID
+     * @return 不可用商品（无则空）
      */
     private Optional<CreateOrderUnavailableProduct> checkProductAvailability(
             Product product, Integer storeStatus, Long productId) {
@@ -342,8 +376,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 选项级可用性校验：遍历当前商品的客制化选项，检查客制化项目非激活、选项禁用及跨绑定异常，
-     * 返回本项内所有不可用的客制化选项（已构建上报对象，去重由调用方处理）。
+     * 选项级可用性校验
+     *
+     * @param opts 选项ID列表
+     * @param itemIdsForItem 客制化项目ID列表
+     * @param productId 商品ID
+     * @param product 商品
+     * @param optionMap 选项映射
+     * @param customizationMap 客制化项目映射
+     * @param optionStoreStatusMap 选项门店状态映射
+     * @return 不可用客制化选项列表
      */
     private List<CreateOrderUnavailableCustomization> checkOptionAvailability(
             List<Long> opts, List<Long> itemIdsForItem, Long productId, Product product,
@@ -379,7 +421,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 有效商品计价：单价 = 商品价 + 各选项加价之和，小计 = 单价 × 数量，并构建可用商品明细。
+     * 有效商品计价
+     *
+     * @param item 商品项
+     * @param product 商品
+     * @param opts 选项ID列表
+     * @param optionMap 选项映射
+     * @param productCoverMap 商品封面映射
+     * @return 计价结果
      */
     private PricedItem priceItem(CreateOrderProductItem item, Product product, List<Long> opts,
             Map<Long, CustomizationOption> optionMap, Map<Long, Long> productCoverMap) {
@@ -402,7 +451,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 校验门店ID合法性，不存在则抛出业务异常。
+     * 校验门店
+     *
+     * @param storeId 门店ID
      */
     private void validateStore(Long storeId) {
         Store store = storeMapper.selectById(storeId);
@@ -412,7 +463,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 校验顾客ID合法性，不存在则抛出业务异常。
+     * 校验顾客
+     *
+     * @param customerId 顾客ID
      */
     private void validateCustomer(Long customerId) {
         Customer customer = customerMapper.selectById(customerId);
@@ -422,7 +475,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 通用批量加载并校验存在性：批量查询实体、按 ID 收集为 Map，缺失任一则抛出指定业务异常。
+     * 批量加载并校验存在性
+     *
+     * @param ids ID集合
+     * @param batchLoader 批量加载器
+     * @param idExtractor ID提取器
+     * @param errorCode 异常码
+     * @param entityName 实体名称
+     * @return ID到实体的映射
      */
     private <T> Map<Long, T> loadByIds(
             Set<Long> ids,
@@ -446,7 +506,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 批量查询商品并校验存在性，缺失则抛出商品不存在异常。
+     * 批量加载商品
+     *
+     * @param productIds 商品ID集合
+     * @return 商品ID到商品的映射
      */
     private Map<Long, Product> loadProducts(Set<Long> productIds) {
         return loadByIds(productIds, productMapper::selectByIds, Product::getId,
@@ -454,7 +517,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 查询商品在指定门店的库存状态，无记录视为售罄。
+     * 加载商品门店库存状态
+     *
+     * @param productIds 商品ID集合
+     * @param storeId 门店ID
+     * @return 商品ID到门店库存状态的映射
      */
     private Map<Long, Integer> loadProductStoreStatus(Set<Long> productIds, Long storeId) {
         Map<Long, Integer> map = new HashMap<>();
@@ -467,8 +534,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 批量查询商品封面图（type=1），返回 productId -> coverId(即 gallery.id) 映射。
-     * 封面图至多 1 张，若存在多张则以 sort、created_at、image_id 升序的第一张为准（查询已按此排序，putIfAbsent 保留首条）。
+     * 加载商品封面图
+     *
+     * @param productIds 商品ID集合
+     * @return 商品ID到封面图ID的映射
      */
     private Map<Long, Long> loadCoverIds(Set<Long> productIds) {
         Map<Long, Long> map = new HashMap<>();
@@ -481,7 +550,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 批量查询客制化项目并校验存在性，缺失则抛出异常。
+     * 批量加载客制化项目
+     *
+     * @param itemIds 客制化项目ID集合
+     * @return 客制化项目ID到客制化项目的映射
      */
     private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
         return loadByIds(itemIds, customizationMapper::selectByIds, Customization::getId,
@@ -489,7 +561,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 批量查询客制化选项并校验存在性，缺失则抛出异常。
+     * 批量加载客制化选项
+     *
+     * @param optionIds 客制化选项ID集合
+     * @return 选项ID到客制化选项的映射
      */
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
         return loadByIds(optionIds, customizationOptionMapper::selectByIds, CustomizationOption::getId,
@@ -497,7 +572,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 查询客制化选项在指定门店的状态，无记录视为禁用。
+     * 加载客制化选项门店状态
+     *
+     * @param optionIds 选项ID集合
+     * @param storeId 门店ID
+     * @return 选项ID到门店状态的映射
      */
     private Map<Long, Integer> loadOptionStoreStatus(Set<Long> optionIds, Long storeId) {
         Map<Long, Integer> map = new HashMap<>();
@@ -510,7 +589,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 判断商品是否不可用：全局未上架或门店售罄即不可用。
+     * 判断商品是否不可用
+     *
+     * @param product 商品
+     * @param storeStatus 门店库存状态
+     * @return 是否不可用
      */
     private boolean isProductUnavailable(Product product, Integer storeStatus) {
         boolean globalOffShelf = product.getStatus() == null
@@ -521,7 +604,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 判断客制化选项是否不可用：全局禁用或门店禁用即不可用。
+     * 判断客制化选项是否不可用
+     *
+     * @param option 客制化选项
+     * @param storeStatus 门店状态
+     * @return 是否不可用
      */
     private boolean isOptionUnavailable(CustomizationOption option, Integer storeStatus) {
         boolean globalDisabled = option.getStatus() == null
@@ -532,7 +619,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 判断客制化项目是否不可用：空或非激活状态即不可用。
+     * 判断客制化项目是否不可用
+     *
+     * @param customization 客制化项目
+     * @return 是否不可用
      */
     private boolean isCustomizationUnavailable(Customization customization) {
         return customization == null
@@ -541,14 +631,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * 将 null 金额转换为 0，避免空指针。
+     * 空金额转零
+     *
+     * @param value 金额
+     * @return 金额（空则为零）
      */
     private static BigDecimal nullToZero(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
     }
 
     /**
-     * 将 ID 列表以顿号拼接为字符串，用于异常信息展示。
+     * ID列表拼接
+     *
+     * @param ids ID列表
+     * @return 拼接后的字符串
      */
     private static String join(List<Long> ids) {
         return ids.stream().map(String::valueOf).collect(Collectors.joining("、"));

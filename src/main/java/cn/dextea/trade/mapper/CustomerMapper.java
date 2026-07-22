@@ -9,7 +9,10 @@ import org.apache.ibatis.annotations.Select;
 public interface CustomerMapper {
 
     /**
-     * 按主键查询顾客，无记录返回 null，由调用方判定顾客ID合法性。
+     * 按主键查询顾客
+     *
+     * @param id 顾客ID
+     * @return 顾客（无则 null）
      */
     @Select("SELECT id, name, status FROM customers WHERE id = #{id}")
     Customer selectById(@Param("id") Long id);

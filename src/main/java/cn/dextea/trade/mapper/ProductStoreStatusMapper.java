@@ -11,7 +11,11 @@ import java.util.List;
 public interface ProductStoreStatusMapper {
 
     /**
-     * 批量查询指定门店下商品的门店状态。采用懒加载，无记录表示售罄，由调用方处理默认值。
+     * 批量查询商品门店状态
+     *
+     * @param productIds 商品ID列表
+     * @param storeId 门店ID
+     * @return 商品门店状态列表
      */
     @Select("<script>" +
             "SELECT product_id AS productId, store_id AS storeId, status " +
