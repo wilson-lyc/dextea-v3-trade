@@ -3,6 +3,7 @@ package cn.dextea.trade.controller;
 import cn.dextea.trade.common.APIResponse;
 import cn.dextea.trade.model.CreateOrderRequest;
 import cn.dextea.trade.model.CreateOrderResponse;
+import cn.dextea.trade.model.PreBuildOrderRequest;
 import cn.dextea.trade.model.PreBuildOrderResponse;
 import cn.dextea.trade.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +34,7 @@ public class OrderController {
 
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
-    public APIResponse<PreBuildOrderResponse> preBuildOrder(@Valid @RequestBody CreateOrderRequest request) {
+    public APIResponse<PreBuildOrderResponse> preBuildOrder(@Valid @RequestBody PreBuildOrderRequest request) {
         PreBuildOrderResponse result = orderService.preBuildOrder(request);
         return APIResponse.success(result);
     }
