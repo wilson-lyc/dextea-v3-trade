@@ -90,7 +90,7 @@ public class OrderServiceImpl implements OrderService {
     private final AlipayService alipayService;
     private final AlipaySdkConfig alipayConfig;
 
-    private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem";
+    private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem:";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
     /**
      * 订单号生成器名称，对应 cosid.snowflake.provider.order。
@@ -201,6 +201,7 @@ public class OrderServiceImpl implements OrderService {
                     .orderNo(order.getOrderNo())
                     .totalPrice(order.getTotalPrice())
                     .subject(alipayConfig.getSubject())
+                    .appId(alipayConfig.getAppId())
                     .customerAlipayOpenId(customer.getAlipayOpenId())
                     .build();
             String tradeNo = alipayService.createTrade(alipayRequest);
