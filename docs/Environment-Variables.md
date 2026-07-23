@@ -64,6 +64,7 @@ These params already reference env vars directly in `application.yaml`, making t
 | `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | App private key (multi-line) |
 | `ALIPAY_ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
 | `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | Order title prefix |
+| `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发环境强制固定订单金额（元）；非空时覆盖真实金额，避免真实扣款。生产环境置空 |
 | `COSID_NAMESPACE` | `dextea-trade` | No | CosId namespace |
 | `COSID_MACHINE_ENABLED` | `true` | No | Machine id enabled |
 | `COSID_MACHINE_DISTRIBUTOR_TYPE` | `redis` | No | Machine id distribution |

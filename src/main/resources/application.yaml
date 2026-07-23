@@ -42,6 +42,9 @@ alipay:
   server-url: https://openapi.alipay.com
   subject: 德贤茶庄订单
   product-code: JSAPI_PAY
+  # 开发环境：创建支付宝交易时强制将订单总额限制为 0.01 元，避免产生真实交易金额。
+  # 生产环境（Nacos 配置）应将其置空（alipay.force-amount:）以使用真实金额。
+  force-amount: 0.01
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

@@ -6,6 +6,8 @@ import com.alipay.v3.util.model.AlipayConfig;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.math.BigDecimal;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,6 +31,14 @@ public class AlipaySdkConfig {
 
     /** 订单标题前缀 */
     private String subject = "德贤茶庄订单";
+
+    /**
+     * 开发/测试环境下强制使用的固定订单金额（元）。
+     * 当该值非空时，创建支付宝交易会把订单总额覆盖为此固定值，
+     * 避免开发联调或沙箱环境误产生真实交易金额。生产环境应置空以使用真实金额。
+     * 对应配置项 {@code alipay.force-amount} / 环境变量 {@code ALIPAY_FORCE_AMOUNT}。
+     */
+    private BigDecimal forceAmount;
 
     @Bean
     public ApiClient alipayApiClient() {
