@@ -11,6 +11,7 @@ import cn.dextea.trade.model.CreateOrderProductItem;
 import cn.dextea.trade.model.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.model.CreateOrderUnavailableProduct;
 import cn.dextea.trade.model.CreateAlipayTradeRequest;
+import cn.dextea.trade.model.OrderSummary;
 import cn.dextea.trade.config.AlipaySdkConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
@@ -55,6 +56,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -213,6 +215,64 @@ public class OrderServiceImpl implements OrderService {
         CreateOrderResponse response = toCreateOrderResponse(summary, order);
         cacheResult(redisKey, response);
         return response;
+    }
+
+    /**
+     * 获取用户近3个月内的订单列表
+     *
+     * @param customerId 用户ID
+     * @return 订单概要列表（无订单则空列表）
+     */
+    @Override
+    public List<OrderSummary> getOrdersByCustomer(Long customerId) {
+        // 1. 查询近3个月内的订单，按下单时间倒序
+        LocalDateTime since = LocalDateTime.now().minusMonths(3);
+        List<Order> orders = orderMapper.selectByCustomerIdAndCreatedAtAfter(customerId, since);
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 批量查询订单明细中的封面图ID，并按订单分组
+        List<Long> orderIds = orders.stream().map(Order::getId).toList();
+        Map<Long, List<Long>> coverIdsByOrder = new HashMap<>();
+        Set<Long> allCoverIds = new LinkedHashSet<>();
+        for (OrderItem item : orderItemMapper.selectByOrderIds(orderIds)) {
+            Long coverId = item.getCoverId();
+            coverIdsByOrder
+                    .computeIfAbsent(item.getOrderId(), k -> new ArrayList<>())
+                    .add(coverId);
+            if (coverId != null) {
+                allCoverIds.add(coverId);
+            }
+        }
+
+        // 3. 批量解析封面图URL（去重后一次查询）
+        Map<Long, String> coverUrlMap = new HashMap<>();
+        if (!allCoverIds.isEmpty()) {
+            coverUrlMap.putAll(galleryMapper.selectByIds(new ArrayList<>(allCoverIds)).stream()
+                    .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a)));
+        }
+
+        // 4. 组装响应：每个订单解析门店名称与封面图URL
+        List<OrderSummary> result = new ArrayList<>(orders.size());
+        for (Order order : orders) {
+            List<String> coverUrls = coverIdsByOrder.getOrDefault(order.getId(), List.of()).stream()
+                    .filter(Objects::nonNull)
+                    .map(coverUrlMap::get)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+            Store store = storeMapper.selectById(order.getStoreId());
+            result.add(OrderSummary.builder()
+                    .storeName(store != null ? store.getName() : null)
+                    .orderTime(order.getCreatedAt())
+                    .status(order.getStatus())
+                    .totalPrice(order.getTotalPrice())
+                    .totalQuantity(order.getTotalQuantity())
+                    .coverUrls(coverUrls)
+                    .build());
+        }
+        return result;
     }
 
     /**

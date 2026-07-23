@@ -3,15 +3,19 @@ package cn.dextea.trade.controller;
 import cn.dextea.trade.common.APIResponse;
 import cn.dextea.trade.model.CreateOrderRequest;
 import cn.dextea.trade.model.CreateOrderResponse;
+import cn.dextea.trade.model.OrderSummary;
 import cn.dextea.trade.model.PreBuildOrderRequest;
 import cn.dextea.trade.model.PreBuildOrderResponse;
 import cn.dextea.trade.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -36,6 +40,13 @@ public class OrderController {
     @Operation(summary = "订单预构建")
     public APIResponse<PreBuildOrderResponse> preBuildOrder(@Valid @RequestBody PreBuildOrderRequest request) {
         PreBuildOrderResponse result = orderService.preBuildOrder(request);
+        return APIResponse.success(result);
+    }
+
+    @GetMapping
+    @Operation(summary = "获取用户近3个月订单")
+    public APIResponse<List<OrderSummary>> getOrdersByCustomer(@RequestParam Long customerId) {
+        List<OrderSummary> result = orderService.getOrdersByCustomer(customerId);
         return APIResponse.success(result);
     }
 }

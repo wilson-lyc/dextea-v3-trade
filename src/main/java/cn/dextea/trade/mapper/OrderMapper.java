@@ -8,6 +8,9 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Mapper
 public interface OrderMapper {
 
@@ -40,4 +43,14 @@ public interface OrderMapper {
      */
     @Update("UPDATE orders SET trade_no = #{tradeNo}, updated_at = NOW() WHERE id = #{id}")
     int updateTradeNo(@Param("id") Long id, @Param("tradeNo") String tradeNo);
+
+    /**
+     * 按用户ID查询指定时间之后创建的订单（按下单时间倒序）
+     *
+     * @param customerId 用户ID
+     * @param since 起始时间（含）
+     * @return 订单列表（无则空列表）
+     */
+    @Select("SELECT * FROM orders WHERE customer_id = #{customerId} AND created_at >= #{since} ORDER BY created_at DESC")
+    List<Order> selectByCustomerIdAndCreatedAtAfter(@Param("customerId") Long customerId, @Param("since") LocalDateTime since);
 }

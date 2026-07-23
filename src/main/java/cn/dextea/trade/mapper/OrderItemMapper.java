@@ -23,4 +23,16 @@ public interface OrderItemMapper {
             "</foreach>" +
             "</script>")
     int batchInsert(@Param("items") List<OrderItem> items);
+
+    /**
+     * 按订单ID批量查询明细（仅取订单ID与封面图ID）
+     *
+     * @param orderIds 订单ID列表
+     * @return 订单明细列表（无则空列表）
+     */
+    @Select("<script>" +
+            "SELECT order_id, cover_id FROM order_items WHERE order_id IN " +
+            "<foreach collection='orderIds' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<OrderItem> selectByOrderIds(@Param("orderIds") List<Long> orderIds);
 }
