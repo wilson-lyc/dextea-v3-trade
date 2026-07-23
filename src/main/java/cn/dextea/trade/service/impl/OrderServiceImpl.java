@@ -12,6 +12,9 @@ import cn.dextea.trade.model.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.model.CreateOrderUnavailableProduct;
 import cn.dextea.trade.model.CreateAlipayTradeRequest;
 import cn.dextea.trade.model.OrderSummary;
+import cn.dextea.trade.model.OrderDetailItem;
+import cn.dextea.trade.model.OrderDetailResponse;
+import cn.dextea.trade.model.StoreInfo;
 import cn.dextea.trade.config.AlipaySdkConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
@@ -69,6 +72,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -273,6 +277,148 @@ public class OrderServiceImpl implements OrderService {
                     .build());
         }
         return result;
+    }
+
+    /**
+     * 获取订单详情
+     *
+     * @param orderId 订单ID（数据库主键）
+     * @param customerId 顾客ID（用于归属校验）
+     * @return 订单详情响应
+     */
+    @Override
+    public OrderDetailResponse getOrderDetail(Long orderId, Long customerId) {
+        // 1. 查询订单，不存在则直接报错
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_FOUND, "订单不存在: " + orderId);
+        }
+
+        // 2. 归属校验：订单所属顾客必须等于入参顾客ID
+        if (!Objects.equals(order.getCustomerId(), customerId)) {
+            throw new BizError(OrderErrorCode.ORDER_ACCESS_DENIED, "订单不属于该顾客: " + orderId);
+        }
+
+        // 3. 组装门店信息
+        StoreInfo storeInfo = null;
+        Store store = storeMapper.selectById(order.getStoreId());
+        if (store != null) {
+            storeInfo = StoreInfo.builder()
+                    .id(store.getId())
+                    .name(store.getName())
+                    .address(store.getAddress())
+                    .phone(store.getPhone())
+                    .businessHours(store.getBusinessHours())
+                    .build();
+        }
+
+        // 4. 查询订单明细，并批量解析封面图 URL 与客制化文本
+        List<OrderItem> items = orderItemMapper.selectFullByOrderId(orderId);
+        Map<Long, String> coverUrlMap = resolveCoverUrls(items);
+        Map<Long, String> customizationTextMap = resolveCustomizationTexts(items);
+
+        List<OrderDetailItem> detailItems = items.stream()
+                .map(item -> OrderDetailItem.builder()
+                        .productId(item.getProductId())
+                        .productName(item.getProductName())
+                        .skuId(item.getSkuId())
+                        .coverUrl(item.getCoverId() != null ? coverUrlMap.get(item.getCoverId()) : null)
+                        .customizationText(customizationTextMap.get(item.getId()))
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice())
+                        .subtotal(item.getSubtotal())
+                        .build())
+                .toList();
+
+        // 5. 组装响应，枚举 code 回填可读文案
+        return OrderDetailResponse.builder()
+                .id(order.getId())
+                .orderNo(order.getOrderNo())
+                .tradeNo(order.getTradeNo())
+                .status(order.getStatus())
+                .statusDesc(safeEnumDesc(() -> OrderStatusEnum.of(order.getStatus()).getDescription()))
+                .totalPrice(order.getTotalPrice())
+                .totalQuantity(order.getTotalQuantity())
+                .payMethod(order.getPayMethod())
+                .payMethodDesc(safeEnumDesc(() -> PayMethodEnum.of(order.getPayMethod()).getDescription()))
+                .diningMethod(order.getDiningMethod())
+                .diningMethodDesc(safeEnumDesc(() -> DiningMethodEnum.of(order.getDiningMethod()).getDescription()))
+                .note(order.getNote())
+                .createdAt(order.getCreatedAt())
+                .paidAt(order.getPaidAt())
+                .refundedAt(order.getRefundedAt())
+                .updatedAt(order.getUpdatedAt())
+                .store(storeInfo)
+                .items(detailItems)
+                .build();
+    }
+
+    /**
+     * 批量解析订单明细的封面图 URL（按 coverId 去重后一次查询 gallery）
+     *
+     * @param items 订单明细列表
+     * @return coverId 到封面图 URL 的映射
+     */
+    private Map<Long, String> resolveCoverUrls(List<OrderItem> items) {
+        Set<Long> coverIds = items.stream()
+                .map(OrderItem::getCoverId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (coverIds.isEmpty()) {
+            return Map.of();
+        }
+        return galleryMapper.selectByIds(new ArrayList<>(coverIds)).stream()
+                .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a));
+    }
+
+    /**
+     * 由明细的 skuId 批量解析客制化文本（选项名称以「 / 」拼接）。
+     * <p>order_items 仅持久化 skuId，不单独存储客制化文本，故在此由 skuId 还原，无需改动表结构。</p>
+     *
+     * @param items 订单明细列表
+     * @return 订单明细ID到客制化文本的映射（无选项则对应值为 null）
+     */
+    private Map<Long, String> resolveCustomizationTexts(List<OrderItem> items) {
+        Set<Long> optionIds = new LinkedHashSet<>();
+        for (OrderItem item : items) {
+            if (item.getSkuId() != null) {
+                optionIds.addAll(SkuIdParser.parseOptionIds(item.getSkuId()));
+            }
+        }
+        Map<Long, String> nameMap = new HashMap<>();
+        if (!optionIds.isEmpty()) {
+            for (CustomizationOption opt : customizationOptionMapper.selectByIds(new ArrayList<>(optionIds))) {
+                nameMap.put(opt.getId(), opt.getName());
+            }
+        }
+        Map<Long, String> result = new HashMap<>();
+        for (OrderItem item : items) {
+            if (item.getSkuId() == null) {
+                result.put(item.getId(), null);
+                continue;
+            }
+            String text = SkuIdParser.parseOptionIds(item.getSkuId()).stream()
+                    .map(nameMap::get)
+                    .filter(Objects::nonNull)
+                    .filter(n -> !n.isBlank())
+                    .collect(Collectors.joining(" / "));
+            result.put(item.getId(), text.isEmpty() ? null : text);
+        }
+        return result;
+    }
+
+    /**
+     * 安全获取枚举文案：code 未知时返回 null，避免脏数据导致 500
+     *
+     * @param supplier 枚举文案获取逻辑
+     * @return 文案（获取失败返回 null）
+     */
+    private static String safeEnumDesc(Supplier<String> supplier) {
+        try {
+            return supplier.get();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /**

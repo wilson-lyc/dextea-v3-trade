@@ -2,6 +2,7 @@ package cn.dextea.trade.service;
 
 import cn.dextea.trade.model.CreateOrderRequest;
 import cn.dextea.trade.model.CreateOrderResponse;
+import cn.dextea.trade.model.OrderDetailResponse;
 import cn.dextea.trade.model.OrderSummary;
 import cn.dextea.trade.model.PreBuildOrderRequest;
 import cn.dextea.trade.model.PreBuildOrderResponse;
@@ -15,4 +16,6 @@ public interface OrderService {
     CreateOrderResponse createOrder(CreateOrderRequest request);
 
     List<OrderSummary> getOrdersByCustomer(Long customerId);
+
+    OrderDetailResponse getOrderDetail(Long orderId, Long customerId);
 }

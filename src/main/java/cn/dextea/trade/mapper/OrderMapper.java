@@ -35,6 +35,15 @@ public interface OrderMapper {
     Order selectByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 
     /**
+     * 按主键查询订单
+     *
+     * @param id 订单ID
+     * @return 订单（无则 null）
+     */
+    @Select("SELECT * FROM orders WHERE id = #{id}")
+    Order selectById(@Param("id") Long id);
+
+    /**
      * 更新订单交易号
      *
      * @param id 订单ID

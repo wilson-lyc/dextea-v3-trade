@@ -35,4 +35,13 @@ public interface OrderItemMapper {
             "<foreach collection='orderIds' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
             "</script>")
     List<OrderItem> selectByOrderIds(@Param("orderIds") List<Long> orderIds);
+
+    /**
+     * 按订单ID查询完整明细（含商品名、SKU、客制化文本、价格等全部字段）
+     *
+     * @param orderId 订单ID
+     * @return 订单明细列表（无则空列表）
+     */
+    @Select("SELECT * FROM order_items WHERE order_id = #{orderId} ORDER BY id ASC")
+    List<OrderItem> selectFullByOrderId(@Param("orderId") Long orderId);
 }
