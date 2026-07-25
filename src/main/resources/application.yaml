@@ -43,15 +43,6 @@ cosid:
       order:
         namespace: ${COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE:${spring.application.name}}
 
-alipay:
-  server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
-  subject: ${ALIPAY_SUBJECT:德贤茶庄订单}
-  product-code: ${ALIPAY_PRODUCT_CODE:JSAPI_PAY}
-  # 开发环境强制订单金额为 0.01 元避免真实扣款；生产环境置空改用真实金额
-  force-amount: ${ALIPAY_FORCE_AMOUNT:0.01}
-  # 异步回调地址，留空则不设置；非空时作为支付宝 notify_url
-  notify-url: ${ALIPAY_NOTIFY_URL:}
-
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
   type-aliases-package: cn.dextea.trade.entity

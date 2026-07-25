@@ -39,6 +39,10 @@ public class CreateAlipayTradeRequest {
     @Schema(description = "支付宝应用 AppId，对应 op_app_id", example = "2021000000000000")
     private String appId;
 
+    @NotBlank(message = "productCode 不能为空")
+    @Schema(description = "支付产品码，对应 product_code", example = "JSAPI_PAY")
+    private String productCode;
+
     /**
      * 转换为支付宝 SDK 所需的 {@link AlipayTradeCreateModel}。
      * 仅填充必填字段，其余字段留空。
@@ -47,7 +51,7 @@ public class CreateAlipayTradeRequest {
         return new AlipayTradeCreateModel()
                 .outTradeNo(orderNo)
                 .totalAmount(totalPrice.toPlainString())
-                .productCode("JSAPI_PAY")
+                .productCode(productCode)
                 .subject(subject)
                 .opAppId(appId)
                 .buyerOpenId(customerAlipayOpenId);

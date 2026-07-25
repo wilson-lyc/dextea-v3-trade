@@ -59,7 +59,7 @@ These params already reference env vars directly in `application.yaml`, making t
 | `NACOS_USERNAME` | (empty) | ❌ | Username |
 | `NACOS_PASSWORD` | (empty) | ❌ | Password |
 | `NACOS_CONFIG_GROUP` | `DEFAULT_GROUP` | ❌ | Config group |
-| `ALIPAY_GATEWAY` | `https://openapi.alipay.com` | No | Gateway |
+| `ALIPAY_OPENAPI_GATEWAY` | `https://openapi.alipay.com` | No | Gateway |
 | `ALIPAY_APP_ID` | (empty) | ⚠️ required if using Alipay | App ID |
 | `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | App private key (multi-line) |
 | `ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |

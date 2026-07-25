@@ -52,18 +52,20 @@ Enabled after setting `NACOS_SERVER_ADDR`; when not set, it auto-skips via the `
 
 ## 5. Alipay
 
-`alipay.*` supports Spring relaxed binding, so both Nacos `alipay.app-id` and env var `ALIPAY_APP_ID` work.
+支付宝配置**统一收敛在 `AlipaySdkConfig` 一个类中**，每个配置项对应一个环境变量，全部通过 `System.getenv(...)` 读取（默认值在类中定义），不再依赖 `application.yaml` 或 Spring relaxed binding。因此配置项**只有环境变量名，没有 `alipay.*` 这样的 Spring 配置键**。
 
-| Config Key | Env Var | Default | Required | Description |
-|--------|----------|--------|------|------|
-| `alipay.server-url` | `ALIPAY_GATEWAY` | `https://openapi.alipay.com` | No | Gateway (change for sandbox) |
-| `alipay.app-id` | `ALIPAY_APP_ID` | (empty) | ⚠️ required if using Alipay | Open platform app ID |
-| `alipay.private-key` | `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | App private key (multi-line, quote it) |
-| `alipay.alipay-public-key` | `ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
-| `alipay.subject` | `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | Order title prefix |
-| `alipay.product-code` | `ALIPAY_PRODUCT_CODE` | `JSAPI_PAY` | No | Payment product code |
-| `alipay.force-amount` | `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
-| `alipay.notify-url` | `ALIPAY_NOTIFY_URL` | (empty) | No | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
+> 后续接入 Nacos 等统一配置中心时，只需在 Nacos 中将配置以环境变量形式下发（或在 `AlipaySdkConfig` 扩展读取来源），无需改动 `application.yaml`。
+
+| Env Var | Default | Required | Description |
+|--------|--------|------|------|
+| `ALIPAY_OPENAPI_GATEWAY` | `https://openapi.alipay.com` | No | 支付宝网关地址（沙箱环境需替换） |
+| `ALIPAY_APP_ID` | (empty) | ⚠️ required if using Alipay | 开放平台应用 AppId |
+| `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | 应用私钥（多行内容需用双引号包裹） |
+| `ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | 支付宝公钥 |
+| `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | 订单标题前缀 |
+| `ALIPAY_PRODUCT_CODE` | `JSAPI_PAY` | No | 支付产品码 |
+| `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
+| `ALIPAY_NOTIFY_URL` | (empty) | No | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
 
 ## 6. CosId (Distributed ID)
 

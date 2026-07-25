@@ -208,6 +208,7 @@ public class OrderServiceImpl implements OrderService {
                     .totalPrice(order.getTotalPrice())
                     .subject(alipayConfig.getSubject())
                     .appId(alipayConfig.getAppId())
+                    .productCode(alipayConfig.getProductCode())
                     .customerAlipayOpenId(customer.getAlipayOpenId())
                     .build();
             String tradeNo = alipayService.createTrade(alipayRequest);

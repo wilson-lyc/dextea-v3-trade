@@ -55,10 +55,12 @@ spring:
       port: 6379
       password: ${REDIS_PASSWORD}
 
+# 支付宝配置已统一收敛在 AlipaySdkConfig，全部通过环境变量注入。
+# Nacos 中只需下发以下环境变量（敏感项如私钥仍可用 ${ENV} 引用，避免明文落库）：
 alipay:
   app-id: 2021xxxxxxxx
   private-key: ${ALIPAY_PRIVATE_KEY}
-  alipay-public-key: ${ALIPAY_PUBLIC_KEY}
+  public-key: ${ALIPAY_PUBLIC_KEY}
   subject: 德贤茶庄订单
 
 cosid:
