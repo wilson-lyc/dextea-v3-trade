@@ -44,6 +44,15 @@ public interface OrderMapper {
     Order selectById(@Param("id") Long id);
 
     /**
+     * 按订单号查询订单
+     *
+     * @param orderNo 订单号（支付平台 out_trade_no）
+     * @return 订单（无则 null）
+     */
+    @Select("SELECT * FROM orders WHERE order_no = #{orderNo}")
+    Order selectByOrderNo(@Param("orderNo") String orderNo);
+
+    /**
      * 更新订单交易号
      *
      * @param id 订单ID
@@ -52,6 +61,36 @@ public interface OrderMapper {
      */
     @Update("UPDATE orders SET trade_no = #{tradeNo}, updated_at = NOW() WHERE id = #{id}")
     int updateTradeNo(@Param("id") Long id, @Param("tradeNo") String tradeNo);
+
+    /**
+     * 标记订单已支付（乐观更新：仅当订单处于待支付时生效，保证幂等且不覆盖终态）。
+     *
+     * @param orderNo 订单号
+     * @param tradeNo 支付平台交易号
+     * @param status 目标状态（已支付）
+     * @param expectedStatus 期望的当前状态（待支付）
+     * @return 影响行数（0 表示条件未命中，订单已被处理或状态已变更）
+     */
+    @Update("UPDATE orders SET status = #{status}, trade_no = #{tradeNo}, paid_at = NOW(), updated_at = NOW() " +
+            "WHERE order_no = #{orderNo} AND status = #{expectedStatus}")
+    int markPaid(@Param("orderNo") String orderNo,
+                 @Param("tradeNo") String tradeNo,
+                 @Param("status") int status,
+                 @Param("expectedStatus") int expectedStatus);
+
+    /**
+     * 按订单号更新订单状态（乐观更新：仅当订单处于指定期望状态时生效）。
+     *
+     * @param orderNo 订单号
+     * @param status 目标状态
+     * @param expectedStatus 期望的当前状态
+     * @return 影响行数（0 表示条件未命中）
+     */
+    @Update("UPDATE orders SET status = #{status}, updated_at = NOW() " +
+            "WHERE order_no = #{orderNo} AND status = #{expectedStatus}")
+    int updateStatusByOrderNo(@Param("orderNo") String orderNo,
+                              @Param("status") int status,
+                              @Param("expectedStatus") int expectedStatus);
 
     /**
      * 按用户ID查询指定时间之后创建的订单（按下单时间倒序）

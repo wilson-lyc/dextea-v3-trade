@@ -59,6 +59,24 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
+rocketmq:
+  # 是否启动消费端；本地/测试默认关闭，生产环境置 true（ROCKETMQ_ENABLED=true）
+  enabled: ${ROCKETMQ_ENABLED:false}
+  # 实例接入点，格式为 host:port
+  endpoints: ${ROCKETMQ_ENDPOINTS:}
+  # 订阅的 Topic 名称（需提前在控制台创建）
+  topic: ${ROCKETMQ_TOPIC:}
+  # 消费者分组（需提前在控制台创建）
+  consumer-group: ${ROCKETMQ_CONSUMER_GROUP:}
+  # 订阅 Tag 过滤规则，默认 "*" 订阅所有 Tag
+  tag: ${ROCKETMQ_TAG:*}
+  # 公网访问实例时填写的实例 ID（namespace）
+  namespace: ${ROCKETMQ_NAMESPACE:}
+  # 公网访问用户名（控制台获取）
+  access-key: ${ROCKETMQ_ACCESS_KEY:}
+  # 公网访问密码（控制台获取）
+  secret-key: ${ROCKETMQ_SECRET_KEY:}
+
 springdoc:
   api-docs:
     enabled: true
