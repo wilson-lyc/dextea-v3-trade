@@ -162,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
         Order order = Order.builder()
-                .orderNo(idGeneratorProvider.getRequired(ORDER_ID_GENERATOR).generateAsString()) // 订单号在代码中显式生成，作为支付宝 out_trade_no
+                .orderNo(String.valueOf(idGeneratorProvider.getRequired(ORDER_ID_GENERATOR).generate())) // 订单号在代码中显式生成，作为支付宝 out_trade_no（generate() 返回原始 long，转十进制字符串）
                 .tradeNo(null) // 支付宝交易号在调用 alipay.trade.create 后回填
                 .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
