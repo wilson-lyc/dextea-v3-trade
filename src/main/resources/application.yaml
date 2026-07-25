@@ -1,53 +1,56 @@
 server:
-  port: 9090
+  # HTTP 端口
+  port: ${SERVER_PORT:9090}
 
 spring:
   application:
-    name: dextea-trade
+    # 应用名，同时用作 Nacos Data ID 与 CosId 命名空间；可用 SPRING_APPLICATION_NAME 覆盖
+    name: ${SPRING_APPLICATION_NAME:dextea-trade}
   config:
     import:
+      # 从 Nacos 拉取同名配置文件；本地无 Nacos 时忽略（optional:）
       - optional:nacos:${spring.application.name}.yaml?group=${NACOS_CONFIG_GROUP:DEFAULT_GROUP}
   nacos:
     config:
+      # Nacos 地址/命名空间/账号，留空则用默认值；生产环境通过环境变量注入
       server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
       namespace: ${NACOS_NAMESPACE:}
       username: ${NACOS_USERNAME:}
       password: ${NACOS_PASSWORD:}
   datasource:
+    # MySQL 连接，DB_* 环境变量覆盖默认连接参数
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:dextea}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
+      # Redis 连接，REDIS_* 环境变量覆盖默认值
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
+      password: ${REDIS_PASSWORD:}
 
 cosid:
-  namespace: ${spring.application.name}
+  namespace: ${COSID_NAMESPACE:${spring.application.name}}
   machine:
-    enabled: true
+    enabled: ${COSID_MACHINE_ENABLED:true}
     distributor:
-      type: redis
+      type: ${COSID_MACHINE_DISTRIBUTOR_TYPE:redis}
   snowflake:
-    enabled: true
-    # 命名生成器：按业务分配。后续新增 ID 类型（退款单号、流水号等）只需在此追加条目，
-    # 代码中通过 IdGeneratorProvider.getRequired(name) 获取，无需改动生成器实现。
+    enabled: ${COSID_SNOWFLAKE_ENABLED:true}
     provider:
+      # 业务 ID 生成器，新增类型（退款单号、流水号等）在此追加条目，代码用 IdGeneratorProvider.getRequired(name) 获取
       order:
-        namespace: ${spring.application.name}
+        namespace: ${COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE:${spring.application.name}}
 
 alipay:
-  server-url: https://openapi.alipay.com
-  subject: 德贤茶庄订单
-  product-code: JSAPI_PAY
-  # 开发环境：创建支付宝交易时强制将订单总额限制为 0.01 元，避免产生真实交易金额。
-  # 生产环境（Nacos 配置）应将其置空（alipay.force-amount:）以使用真实金额。
-  force-amount: 0.01
-  # 支付宝异步支付回调地址（notify_url）。留空表示不设置，交由支付宝默认/商品配置决定；
-  # 非空时创建交易会作为异步通知地址传给支付宝。对应环境变量 ALIPAY_NOTIFY_URL。
-  # notify-url: https://example.com/alipay/notify
+  server-url: ${ALIPAY_SERVER_URL:https://openapi.alipay.com}
+  subject: ${ALIPAY_SUBJECT:德贤茶庄订单}
+  product-code: ${ALIPAY_PRODUCT_CODE:JSAPI_PAY}
+  # 开发环境强制订单金额为 0.01 元避免真实扣款；生产环境置空改用真实金额
+  force-amount: ${ALIPAY_FORCE_AMOUNT:0.01}
+  # 异步回调地址，留空则不设置；非空时作为支付宝 notify_url
+  notify-url: ${ALIPAY_NOTIFY_URL:}
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
