@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum PlatformEnum {
+public enum PlatformEnum implements StringCodeEnum {
 
     @JsonProperty("weixin")
     WEIXIN("weixin", PayMethodEnum.WECHAT),
@@ -16,4 +16,8 @@ public enum PlatformEnum {
 
     private final String value;
     private final PayMethodEnum payMethod;
+
+    public static PlatformEnum of(String value) {
+        return EnumUtils.of(PlatformEnum.class, value);
+    }
 }

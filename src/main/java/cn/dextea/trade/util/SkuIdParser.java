@@ -1,27 +1,16 @@
 package cn.dextea.trade.util;
 
 import cn.dextea.trade.exception.BizError;
-import cn.dextea.trade.error.OrderErrorCode;
+import cn.dextea.trade.errorcode.OrderErrorCode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * skuId 解析工具
- *
- * skuId 格式：商品ID#客制化项目ID_客制化选项ID-客制化项目ID_客制化选项ID...
- */
 public final class SkuIdParser {
 
     private SkuIdParser() {
     }
 
-    /**
-     * 提取商品ID
-     *
-     * @param skuId SKU 标识
-     * @return 商品ID
-     */
     public static Long parseProductId(String skuId) {
         if (skuId == null || skuId.isBlank()) {
             throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
@@ -33,12 +22,6 @@ public final class SkuIdParser {
         return parseLong(skuId.substring(0, hashIndex), skuId);
     }
 
-    /**
-     * 提取客制化项目ID列表
-     *
-     * @param skuId SKU 标识
-     * @return 客制化项目ID列表
-     */
     public static List<Long> parseItemIds(String skuId) {
         if (skuId == null || skuId.isBlank()) {
             throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
@@ -67,12 +50,6 @@ public final class SkuIdParser {
         return itemIds;
     }
 
-    /**
-     * 提取客制化选项ID列表
-     *
-     * @param skuId SKU 标识
-     * @return 客制化选项ID列表
-     */
     public static List<Long> parseOptionIds(String skuId) {
         if (skuId == null || skuId.isBlank()) {
             throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
@@ -101,13 +78,6 @@ public final class SkuIdParser {
         return optionIds;
     }
     
-    /**
-     * 字符串转长整型
-     *
-     * @param value 待转换字符串
-     * @param skuId SKU 标识
-     * @return 长整型数值
-     */
     private static long parseLong(String value, String skuId) {
         try {
             return Long.parseLong(value.trim());

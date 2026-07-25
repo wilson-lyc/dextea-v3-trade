@@ -1,13 +1,14 @@
-package cn.dextea.trade.lock;
+package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.exception.BizError;
-import cn.dextea.trade.error.OrderErrorCode;
+import cn.dextea.trade.errorcode.OrderErrorCode;
+import cn.dextea.trade.service.OrderLockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
@@ -15,9 +16,9 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-public class OrderLockService {
+public class OrderLockServiceImpl implements OrderLockService {
 
     private final StringRedisTemplate redisTemplate;
 
@@ -42,6 +43,7 @@ public class OrderLockService {
      * @return 业务逻辑返回值
      * @throws BizError 获取锁失败时抛出 {@link OrderErrorCode#ORDER_LOCK_BUSY}
      */
+    @Override
     public <T> T executeWithLock(String orderNo, Supplier<T> supplier) {
         String lockKey = "dextea:order:lock:" + orderNo;
         String lockValue = UUID.randomUUID().toString();

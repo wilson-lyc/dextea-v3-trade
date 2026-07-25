@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum ProductStoreStatusEnum {
+public enum ProductStoreStatusEnum implements CodeEnum {
 
     SOLD_OUT(0, "售罄"),
     AVAILABLE(1, "可售");
@@ -14,14 +14,6 @@ public enum ProductStoreStatusEnum {
     private final String description;
 
     public static ProductStoreStatusEnum of(Integer code) {
-        if (code == null) {
-            return null;
-        }
-        for (ProductStoreStatusEnum status : values()) {
-            if (status.code == code) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("未知门店状态: " + code);
+        return EnumUtils.of(ProductStoreStatusEnum.class, code);
     }
 }

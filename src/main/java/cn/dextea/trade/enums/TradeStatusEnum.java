@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum TradeStatusEnum {
+public enum TradeStatusEnum implements CodeEnum {
 
     TRADE_WAIT_PAY(0, "待支付"),
     TRADE_PAID(1, "已支付"),
@@ -18,14 +18,6 @@ public enum TradeStatusEnum {
     private final String description;
 
     public static TradeStatusEnum of(Integer code) {
-        if (code == null) {
-            throw new IllegalArgumentException("未知交易状态: null");
-        }
-        for (TradeStatusEnum e : values()) {
-            if (e.code == code) {
-                return e;
-            }
-        }
-        throw new IllegalArgumentException("未知交易状态: " + code);
+        return EnumUtils.of(TradeStatusEnum.class, code);
     }
 }

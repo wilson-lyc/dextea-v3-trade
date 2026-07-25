@@ -1,27 +1,29 @@
 package cn.dextea.trade.config;
 
 import lombok.AccessLevel;
+import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import cn.dextea.trade.factory.AlipayClientFactory;
 
 import java.math.BigDecimal;
 
-@Configuration
+@Data
+@Component
 @ConfigurationProperties(prefix = "alipay")
-@Getter
-@Setter
 public class AlipayClientConfig {
 
     private String gateway = "https://openapi.alipay.com";
 
     private String appId;
 
+    @ToString.Exclude
     private String privateKey;
 
+    @ToString.Exclude
     private String publicKey;
 
     private String subject = "德贤茶庄订单";
@@ -31,6 +33,7 @@ public class AlipayClientConfig {
     private String notifyUrl;
 
     @Getter(AccessLevel.NONE)
+    @ToString.Exclude
     private String forceAmount;
 
     public BigDecimal getForceAmount() {

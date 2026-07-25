@@ -1,4 +1,4 @@
-package cn.dextea.trade.error;
+package cn.dextea.trade.errorcode;
 
 import cn.dextea.trade.common.BizErrorCode;
 

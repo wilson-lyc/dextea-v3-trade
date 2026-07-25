@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum PayMethodEnum {
+public enum PayMethodEnum implements CodeEnum {
 
     WECHAT(1, "微信支付"),
     ALIPAY(2, "支付宝");
@@ -14,14 +14,6 @@ public enum PayMethodEnum {
     private final String description;
 
     public static PayMethodEnum of(Integer code) {
-        if (code == null) {
-            return null;
-        }
-        for (PayMethodEnum method : values()) {
-            if (method.code == code) {
-                return method;
-            }
-        }
-        throw new IllegalArgumentException("未知支付方式: " + code);
+        return EnumUtils.of(PayMethodEnum.class, code);
     }
 }

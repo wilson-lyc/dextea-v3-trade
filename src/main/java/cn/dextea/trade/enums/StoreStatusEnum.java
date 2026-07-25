@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum StoreStatusEnum {
+public enum StoreStatusEnum implements CodeEnum {
 
     CLOSED(0, "停业"),
     OPEN(1, "营业中");
@@ -14,14 +14,6 @@ public enum StoreStatusEnum {
     private final String description;
 
     public static StoreStatusEnum of(Integer code) {
-        if (code == null) {
-            return null;
-        }
-        for (StoreStatusEnum status : values()) {
-            if (status.code == code) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("未知门店状态: " + code);
+        return EnumUtils.of(StoreStatusEnum.class, code);
     }
 }

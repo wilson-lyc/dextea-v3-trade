@@ -35,7 +35,7 @@ import cn.dextea.trade.enums.ProductGlobalStatusEnum;
 import cn.dextea.trade.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.enums.StoreStatusEnum;
 import cn.dextea.trade.enums.CustomerStatusEnum;
-import cn.dextea.trade.error.OrderErrorCode;
+import cn.dextea.trade.errorcode.OrderErrorCode;
 import cn.dextea.trade.mapper.CustomerMapper;
 import cn.dextea.trade.mapper.CustomizationMapper;
 import cn.dextea.trade.mapper.CustomizationOptionMapper;
