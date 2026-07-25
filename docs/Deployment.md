@@ -1,50 +1,50 @@
-# Deployment Guide
+# 部署指南
 
-This document describes the deployment forms, build artifacts, startup methods, health checks, and rollback notes for `dextea-trade`, and explains how the service's **two configuration sources** (environment variables / Nacos) are chosen.
+本文档说明 `dextea-trade` 的部署形态、构建产物、启动方式、健康检查以及回滚注意事项，并解释服务的**两种配置来源**（环境变量 / Nacos）如何取舍。
 
-> For the full parameter list, see [Configuration Parameters](Configuration-Parameters.md); for the concrete写法 of each mode, see [Environment Variables](Environment-Variables.md) and [Nacos](Nacos.md).
+> 关于完整参数列表，请查阅 [配置参数](Configuration-Parameters.md)；关于各模式的具体写法，请查阅 [环境变量](Environment-Variables.md) 与 [Nacos](Nacos.md)。
 
-## 1. Environment & Dependencies
+## 1. 环境与依赖
 
-| Dependency | Version / Requirement | Description |
+| 依赖 | 版本 / 要求 | 说明 |
 |------|-------------|------|
-| JDK | 21 | Required by Spring Boot 3.5 |
-| MySQL | 5.7+ / 8.x | Business database |
-| Redis | 5+ | Idempotency cache, CosId machine id |
-| Nacos | 2.x | **Optional**, only needed when using Nacos config |
+| JDK | 21 | Spring Boot 3.5 所需 |
+| MySQL | 5.7+ / 8.x | 业务数据库 |
+| Redis | 5+ | 幂等缓存、CosId 机器 ID |
+| Nacos | 2.x | **可选**，仅在使用 Nacos 配置时才需要 |
 
-## 2. Build
+## 2. 构建
 
 ```bash
 ./mvnw clean package -DskipTests
-# Artifact: target/dextea-trade-0.0.1-SNAPSHOT.jar
+# 产物：target/dextea-trade-0.0.1-SNAPSHOT.jar
 ```
 
-If you also need a Docker image, integrate your team's image build flow at this stage (no Dockerfile is bundled in this repo; a minimal example is in section 4).
+若你还需要 Docker 镜像，请在此阶段接入团队的镜像构建流程（本仓库未附带 Dockerfile；最小化示例见第 4 节）。
 
-## 3. Two Configuration Sources
+## 3. 两种配置来源
 
-The service is wired up via `application.yaml` and supports two external configuration sources:
+服务通过 `application.yaml` 装配，并支持两种外部配置来源：
 
-### Option A: Environment Variables (default, recommended for containers)
+### 方案 A：环境变量（默认，容器部署推荐）
 
-- No Nacos and no extra config files required.
-- All connection info and secrets are injected via environment variables, following the twelve-factor "config separated from code" principle.
-- Suitable for Docker / Kubernetes / cloud functions.
-- 👉 Writing and list: [Environment Variables](Environment-Variables.md).
+- 无需 Nacos，也无需额外的配置文件。
+- 所有连接信息与密钥都通过环境变量注入，遵循十二要素“配置与代码分离”的原则。
+- 适用于 Docker / Kubernetes / 云函数。
+- 👉 写法与列表：[环境变量](Environment-Variables.md)。
 
-### Option B: Nacos Config Center (optional)
+### 方案 B：Nacos 配置中心（可选）
 
-- After setting `NACOS_SERVER_ADDR` in the environment, the service attempts to pull `dextea-trade.yaml` (Data ID) from Nacos on startup.
-- Suitable for managing config uniformly across multiple instances and environments (dev/test/prod), with dynamic changes.
-- Nacos and local/environment variables are **stackable**: Nacos-delivered config takes higher priority; params not delivered fall back to environment variable defaults.
-- 👉 Integration: [Nacos](Nacos.md).
+- 在环境中设置 `NACOS_SERVER_ADDR` 后，服务会在启动时尝试从 Nacos 拉取 `dextea-trade.yaml`（Data ID）。
+- 适用于跨多个实例与环境（dev/test/prod）统一管理配置，并支持动态变更。
+- Nacos 与本地/环境变量**可叠加**：Nacos 下发的配置优先级更高；未下发的参数回退到环境变量默认值。
+- 👉 集成方式：[Nacos](Nacos.md)。
 
-> Selection advice: prefer **Option A** for single-instance or containerized deployment; migrate to **Option B** (or combine both) when the number of instances grows and unified management / hot reload is needed.
+> 选择建议：单实例或容器化部署优先采用**方案 A**；当实例数量增长、需要统一管理 / 热刷新时，再迁移到**方案 B**（或两者结合）。
 
-## 4. Startup Methods
+## 4. 启动方式
 
-### 4.1 Run the jar directly
+### 4.1 直接运行 jar
 
 ```bash
 DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=dextea \
@@ -54,7 +54,7 @@ ALIPAY_APP_ID=app_id ALIPAY_PRIVATE_KEY="$KEY" ALIPAY_PUBLIC_KEY="$PUB" \
 java -jar target/dextea-trade-0.0.1-SNAPSHOT.jar
 ```
 
-### 4.2 Docker (minimal example)
+### 4.2 Docker（最小化示例）
 
 ```dockerfile
 FROM eclipse-temurin:21-jre
@@ -68,11 +68,11 @@ docker build -t dextea-trade:latest .
 docker run -d -p 9090:9090 --env-file .env dextea-trade:latest
 ```
 
-> The `.env` file holds all environment variables to avoid leaking secrets on the command line. Full variable list: [Environment Variables](Environment-Variables.md).
+> `.env` 文件保存所有环境变量，避免密钥出现在命令行上。完整变量列表：[环境变量](Environment-Variables.md)。
 
-## 5. Health Check & Readiness
+## 5. 健康检查与就绪探针
 
-The service includes `spring-boot-starter-actuator`, which can be combined with probes:
+服务引入了 `spring-boot-starter-actuator`，可结合探针使用：
 
 ```yaml
 management:
@@ -82,24 +82,24 @@ management:
         include: health,info
 ```
 
-- Liveness/readiness probe: `GET /actuator/health`
-- When the app has started but a dependency (e.g. MySQL, Redis) is not ready, `health` returns `DOWN`, usable for K8s readiness control.
+- 存活/就绪探针：`GET /actuator/health`
+- 当应用已启动但某依赖（如 MySQL、Redis）尚未就绪时，`health` 返回 `DOWN`，可用于 K8s 的就绪控制。
 
-> Note: if you need to expose actuator endpoints inside a container, deliver the above `management.*` config via environment variables or Nacos, using the same写法 as in the "Spring / Actuator" section of [Configuration Parameters](Configuration-Parameters.md).
+> 注意：若需要在容器内暴露 Actuator 端点，请通过环境变量或 Nacos 下发上述 `management.*` 配置，写法同 [配置参数](Configuration-Parameters.md) 中“Spring / Actuator”一节。
 
-## 6. Rollback & Versioning
+## 6. 回滚与版本管理
 
-- Version: `0.0.1-SNAPSHOT`; it is recommended to tag production builds with a fixed version.
-- Rollback: keep historical jar / image tags and simply restart the old version; since config is separated from code, no config change is needed for rollback.
-- Database: migration scripts are recommended to be managed separately (this repo does not yet include SQL init scripts); before rolling back the app, confirm table schema compatibility.
+- 版本：`0.0.1-SNAPSHOT`；建议为生产构建打上固定版本标签。
+- 回滚：保留历史 jar / 镜像标签，直接重启旧版本即可；由于配置与代码分离，回滚无需改动任何配置。
+- 数据库：迁移脚本建议单独管理（本仓库暂未包含 SQL 初始化脚本）；在回滚应用前，请确认表结构兼容性。
 
-## 7. Common Deployment Issues
+## 7. 常见部署问题
 
-| Symptom | Direction |
+| 现象 | 排查方向 |
 |------|------|
-| Startup fails on datasource/Redis connection | Check `DB_*` / `REDIS_*` env vars are set and network is reachable |
-| Alipay call reports "key error" | Check `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` are not truncated by the shell (always quote with double quotes) |
-| Startup hangs on Nacos pull | With no `NACOS_SERVER_ADDR` it should auto-skip via `optional:`; if misconfigured, check address/namespace |
-| `machineId` conflict across instances | CosId uses Redis to allocate machine ids; ensure Redis is available and `cosid.namespace` is consistent across instances |
+| 启动时数据源/Redis 连接失败 | 检查 `DB_*` / `REDIS_*` 环境变量是否已设置且网络可达 |
+| 支付宝调用报“key error” | 检查 `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` 是否被 shell 截断（始终用双引号包裹） |
+| 启动时卡在 Nacos 拉取 | 无 `NACOS_SERVER_ADDR` 时应经 `optional:` 自动跳过；若配置有误，请检查地址/命名空间 |
+| 实例间 `machineId` 冲突 | CosId 使用 Redis 分配机器 ID；请确保 Redis 可用且各实例 `cosid.namespace` 一致 |
 
-Related parameter definitions: [Configuration Parameters](Configuration-Parameters.md).
+相关参数定义：[配置参数](Configuration-Parameters.md)。

@@ -1,114 +1,114 @@
-# Configuration Parameters
+# 配置参数
 
-This table summarizes all configurable parameters of `dextea-trade`, categorized by component. Each parameter is marked with its **configuration source** (environment variable / Nacos / both), **default value**, and **required or not**.
+本表按组件分类汇总了 `dextea-trade` 的全部可配置参数。每个参数都标注了其**配置来源**（环境变量 / Nacos / 两者）、**默认值**以及**是否必填**。
 
-> - Naming rules and full list of environment variables: [Environment Variables](Environment-Variables.md).
-> - Nacos integration, Data ID, and delivery format: [Nacos](Nacos.md).
-> - "Spring relaxed binding" below means: config key `a.b.c` corresponds to env var `A_B_C`; the two are equivalent and either can be used.
+> - 环境变量的命名规则与完整列表：[环境变量](Environment-Variables.md)。
+> - Nacos 集成、Data ID 与下发格式：[Nacos](Nacos.md)。
+> - 下文“Spring 宽松绑定”指：配置键 `a.b.c` 对应环境变量 `A_B_C`；二者等价，可任选其一使用。
 
-## 1. Service Basics
+## 1. 服务基础
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `server.port` | `SERVER_PORT` | `9090` | No | HTTP port |
-| `spring.application.name` | `SPRING_APPLICATION_NAME` | `dextea-trade` | No | App name; also used as Nacos Data ID and CosId namespace |
-| `spring.profiles.active` | `SPRING_PROFILES_ACTIVE` | `default` | No | Active Profile |
+| `server.port` | `SERVER_PORT` | `9090` | 否 | HTTP 端口 |
+| `spring.application.name` | `SPRING_APPLICATION_NAME` | `dextea-trade` | 否 | 应用名；同时用作 Nacos Data ID 与 CosId 命名空间 |
+| `spring.profiles.active` | `SPRING_PROFILES_ACTIVE` | `default` | 否 | 激活的 Profile |
 
-## 2. Data Source (MySQL)
+## 2. 数据源（MySQL）
 
-`${ENV}` placeholders are enabled by default, so env vars inject directly; Nacos can deliver the full `spring.datasource.*`.
+默认已启用 `${ENV}` 占位符，因此环境变量可直接注入；Nacos 可下发完整的 `spring.datasource.*`。
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `spring.datasource.url` | assembled from `DB_*` | `jdbc:mysql://localhost:3306/dextea?...` | ✅ | JDBC url (assembled below) |
-| host (assembly) | `DB_HOST` | `localhost` | ✅ | DB host |
-| port (assembly) | `DB_PORT` | `3306` | ✅ | DB port |
-| name (assembly) | `DB_NAME` | `dextea` | ✅ | DB name |
-| `spring.datasource.username` | `DB_USERNAME` | `root` | ✅ | DB user |
-| `spring.datasource.password` | `DB_PASSWORD` | `root` | ✅ | DB password |
-| `spring.datasource.driver-class-name` | — | `com.mysql.cj.jdbc.Driver` | No | Driver class |
+| `spring.datasource.url` | 由 `DB_*` 拼接 | `jdbc:mysql://localhost:3306/dextea?...` | ✅ | JDBC 连接地址（拼接规则见下） |
+| host（拼接项） | `DB_HOST` | `localhost` | ✅ | 数据库主机 |
+| port（拼接项） | `DB_PORT` | `3306` | ✅ | 数据库端口 |
+| name（拼接项） | `DB_NAME` | `dextea` | ✅ | 数据库名 |
+| `spring.datasource.username` | `DB_USERNAME` | `root` | ✅ | 数据库用户 |
+| `spring.datasource.password` | `DB_PASSWORD` | `root` | ✅ | 数据库密码 |
+| `spring.datasource.driver-class-name` | — | `com.mysql.cj.jdbc.Driver` | 否 | 驱动类 |
 
-> Note: timezone in the URL is fixed to `Asia/Shanghai`, encoding `utf8`, `useSSL=false`. To adjust, override `spring.datasource.url` directly in Nacos.
+> 注意：连接地址中的时区固定为 `Asia/Shanghai`，编码 `utf8`，`useSSL=false`。如需调整，直接在 Nacos 中覆盖 `spring.datasource.url`。
 
 ## 3. Redis
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `spring.data.redis.host` | `REDIS_HOST` | `localhost` | ✅ | Redis host |
-| `spring.data.redis.port` | `REDIS_PORT` | `6379` | ✅ | Redis port |
-| `spring.data.redis.password` | `REDIS_PASSWORD` | (empty) | ⚠️ per instance | Leave empty if no password; required if set |
+| `spring.data.redis.host` | `REDIS_HOST` | `localhost` | ✅ | Redis 主机 |
+| `spring.data.redis.port` | `REDIS_PORT` | `6379` | ✅ | Redis 端口 |
+| `spring.data.redis.password` | `REDIS_PASSWORD` | （空） | ⚠️ 视实例而定 | 无密码时留空；设置后则必填 |
 
-## 4. Nacos (Config Center, optional)
+## 4. Nacos（配置中心，可选）
 
-Enabled after setting `NACOS_SERVER_ADDR`; when not set, it auto-skips via the `optional:` prefix without affecting startup.
+设置 `NACOS_SERVER_ADDR` 后启用；未设置时经 `optional:` 前缀自动跳过，不影响启动。
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `spring.nacos.config.server-addr` | `NACOS_SERVER_ADDR` | `127.0.0.1:8848` | ❌ | Nacos address |
-| `spring.nacos.config.namespace` | `NACOS_NAMESPACE` | (empty) | ❌ | Namespace ID (env isolation) |
-| `spring.nacos.config.username` | `NACOS_USERNAME` | (empty) | ❌ | Auth username |
-| `spring.nacos.config.password` | `NACOS_PASSWORD` | (empty) | ❌ | Auth password |
-| group in `spring.config.import` | `NACOS_CONFIG_GROUP` | `DEFAULT_GROUP` | ❌ | Config group |
+| `spring.nacos.config.server-addr` | `NACOS_SERVER_ADDR` | `127.0.0.1:8848` | ❌ | Nacos 地址 |
+| `spring.nacos.config.namespace` | `NACOS_NAMESPACE` | （空） | ❌ | 命名空间 ID（环境隔离） |
+| `spring.nacos.config.username` | `NACOS_USERNAME` | （空） | ❌ | 鉴权用户名 |
+| `spring.nacos.config.password` | `NACOS_PASSWORD` | （空） | ❌ | 鉴权密码 |
+| `spring.config.import` 中的 group | `NACOS_CONFIG_GROUP` | `DEFAULT_GROUP` | ❌ | 配置分组 |
 
-## 5. Alipay
+## 5. 支付宝
 
-支付宝配置**统一收敛在 `AlipaySdkConfig` 一个类中**，每个配置项对应一个环境变量，全部通过 `System.getenv(...)` 读取（默认值在类中定义），不再依赖 `application.yaml` 或 Spring relaxed binding。因此配置项**只有环境变量名，没有 `alipay.*` 这样的 Spring 配置键**。
+支付宝配置**统一收敛在 `AlipaySdkConfig` 一个类中**，每个配置项对应一个环境变量，全部通过 `System.getenv(...)` 读取（默认值在类中定义），不再依赖 `application.yaml` 或 Spring 宽松绑定。因此配置项**只有环境变量名，没有 `alipay.*` 这样的 Spring 配置键**。
 
 > 后续接入 Nacos 等统一配置中心时，只需在 Nacos 中将配置以环境变量形式下发（或在 `AlipaySdkConfig` 扩展读取来源），无需改动 `application.yaml`。
 
-| Env Var | Default | Required | Description |
+| 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|--------|------|------|
-| `ALIPAY_OPENAPI_GATEWAY` | `https://openapi.alipay.com` | No | 支付宝网关地址（沙箱环境需替换） |
-| `ALIPAY_APP_ID` | (empty) | ⚠️ required if using Alipay | 开放平台应用 AppId |
-| `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | 应用私钥（多行内容需用双引号包裹） |
-| `ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | 支付宝公钥 |
-| `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | 订单标题前缀 |
-| `ALIPAY_PRODUCT_CODE` | `JSAPI_PAY` | No | 支付产品码 |
-| `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
-| `ALIPAY_NOTIFY_URL` | (empty) | No | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
+| `ALIPAY_OPENAPI_GATEWAY` | `https://openapi.alipay.com` | 否 | 支付宝网关地址（沙箱环境需替换） |
+| `ALIPAY_APP_ID` | （空） | ⚠️ 使用支付宝时必填 | 开放平台应用 AppId |
+| `ALIPAY_PRIVATE_KEY` | （空） | ⚠️ 使用支付宝时必填 | 应用私钥（多行内容需用双引号包裹） |
+| `ALIPAY_PUBLIC_KEY` | （空） | ⚠️ 使用支付宝时必填 | 支付宝公钥 |
+| `ALIPAY_SUBJECT` | `德贤茶庄订单` | 否 | 订单标题前缀 |
+| `ALIPAY_PRODUCT_CODE` | `JSAPI_PAY` | 否 | 支付产品码 |
+| `ALIPAY_FORCE_AMOUNT` | `0.01` | 否 | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
+| `ALIPAY_NOTIFY_URL` | （空） | 否 | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
 
-## 6. CosId (Distributed ID)
+## 6. CosId（分布式 ID）
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `cosid.namespace` | `COSID_NAMESPACE` | `dextea-trade` | No | Namespace |
-| `cosid.machine.enabled` | `COSID_MACHINE_ENABLED` | `true` | No | Enable machine id |
-| `cosid.machine.distributor.type` | `COSID_MACHINE_DISTRIBUTOR_TYPE` | `redis` | No | Machine id distribution (redis) |
-| `cosid.snowflake.enabled` | `COSID_SNOWFLAKE_ENABLED` | `true` | No | Enable Snowflake |
-| `cosid.snowflake.provider.order.namespace` | `COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE` | `dextea-trade` | No | Order id generator namespace |
+| `cosid.namespace` | `COSID_NAMESPACE` | `dextea-trade` | 否 | 命名空间 |
+| `cosid.machine.enabled` | `COSID_MACHINE_ENABLED` | `true` | 否 | 是否启用机器 ID |
+| `cosid.machine.distributor.type` | `COSID_MACHINE_DISTRIBUTOR_TYPE` | `redis` | 否 | 机器 ID 分配方式（redis） |
+| `cosid.snowflake.enabled` | `COSID_SNOWFLAKE_ENABLED` | `true` | 否 | 是否启用 Snowflake |
+| `cosid.snowflake.provider.order.namespace` | `COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE` | `dextea-trade` | 否 | 订单 ID 生成器命名空间 |
 
 ## 7. MyBatis
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `mybatis.mapper-locations` | — | `classpath*:mapper/*.xml` | No | Mapper XML location |
-| `mybatis.type-aliases-package` | — | `cn.dextea.trade.entity` | No | Alias package |
-| `mybatis.configuration.map-underscore-to-camel-case` | — | `true` | No | Underscore to camel case |
+| `mybatis.mapper-locations` | — | `classpath*:mapper/*.xml` | 否 | Mapper XML 位置 |
+| `mybatis.type-aliases-package` | — | `cn.dextea.trade.entity` | 否 | 别名包 |
+| `mybatis.configuration.map-underscore-to-camel-case` | — | `true` | 否 | 下划线转驼峰 |
 
-## 8. SpringDoc (API Docs)
+## 8. SpringDoc（API 文档）
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `springdoc.api-docs.path` | — | `/docs/json` | No | OpenAPI JSON path |
-| `springdoc.swagger-ui.path` | — | `/docs/ui` | No | Swagger UI path |
-| `springdoc.packages-to-scan` | — | `cn.dextea.trade.controller` | No | Scan package |
-| `springdoc.paths-to-match` | — | `/api/**` | No | Match path |
+| `springdoc.api-docs.path` | — | `/docs/json` | 否 | OpenAPI JSON 路径 |
+| `springdoc.swagger-ui.path` | — | `/docs/ui` | 否 | Swagger UI 路径 |
+| `springdoc.packages-to-scan` | — | `cn.dextea.trade.controller` | 否 | 扫描包 |
+| `springdoc.paths-to-match` | — | `/api/**` | 否 | 匹配路径 |
 
-## 9. Actuator (Ops Probes)
+## 9. Actuator（运维探针）
 
-Only the dependency is included by default; you must deliver `management.endpoints.web.exposure.include` to expose HTTP endpoints (see [Deployment §5](Deployment.md)).
+默认仅引入了依赖；必须下发 `management.endpoints.web.exposure.include` 才能暴露 HTTP 端点（见 [部署指南 §5](Deployment.md)）。
 
-| Config Key | Env Var | Default | Required | Description |
+| 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
-| `management.endpoints.web.exposure.include` | `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE` | (not exposed) | No | Exposed endpoints, e.g. `health,info` |
+| `management.endpoints.web.exposure.include` | `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE` | （不暴露） | 否 | 暴露的端点，例如 `health,info` |
 
 ---
 
-### Required Quick Reference
+### 必填项速查
 
-- **Database**: `DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD`
-- **Redis**: `REDIS_HOST` `REDIS_PORT` (and `REDIS_PASSWORD` if set)
-- **Alipay (when using payment)**: `ALIPAY_APP_ID` `ALIPAY_PRIVATE_KEY` `ALIPAY_PUBLIC_KEY`
-- **Nacos**: all optional; skipped if not configured
+- **数据库**：`DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD`
+- **Redis**：`REDIS_HOST` `REDIS_PORT`（若设置了 `REDIS_PASSWORD` 则也需要）
+- **支付宝（使用支付时）**：`ALIPAY_APP_ID` `ALIPAY_PRIVATE_KEY` `ALIPAY_PUBLIC_KEY`
+- **Nacos**：全部可选；未配置则跳过
 
-Next: 👉 [Environment Variables](Environment-Variables.md) or 👉 [Nacos](Nacos.md)
+下一步：👉 [环境变量](Environment-Variables.md) 或 👉 [Nacos](Nacos.md)

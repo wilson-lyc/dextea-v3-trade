@@ -8,6 +8,8 @@
 README（根目录）
   └── 项目介绍 + 快速部署入口
         │
+        ├── docs/Prerequisites.md  ───────► 启动前必做：依赖、.env、数据库初始化
+        │
         ├── docs/Deployment.md  ──────────► 怎么把服务跑起来
         │        │
         │        ├── docs/Configuration-Parameters.md  ──► 有哪些配置可配
@@ -23,9 +25,10 @@ README（根目录）
 
 ## 建议阅读顺序
 
-1. **先看总览**：[Deployment Guide](Deployment.md) —— 了解整体部署形态与两种配置来源。
-2. **再看参数**：[Configuration Parameters](Configuration-Parameters.md) —— 一张表掌握所有可配置项及其默认值。
-3. **按场景深入**：
+1. **先看准备**：[Prerequisites](Prerequisites.md) —— 启动前检查依赖、用 `.env.example` 生成 `.env`、初始化数据库。
+2. **再看总览**：[Deployment Guide](Deployment.md) —— 了解整体部署形态与两种配置来源。
+3. **再看参数**：[Configuration Parameters](Configuration-Parameters.md) —— 一张表掌握所有可配置项及其默认值。
+4. **按场景深入**：
    - 走环境变量 / 容器化部署 → [Environment Variables](Environment-Variables.md)
    - 走配置中心统一管理 → [Nacos Configuration](Nacos.md)
 
@@ -33,6 +36,7 @@ README（根目录）
 
 | 文档 | 适合谁看 | 关键内容 |
 |------|----------|----------|
+| [Prerequisites](Prerequisites.md) | 运维 | 启动前准备：依赖服务、`.env` 创建、数据库初始化、自检清单 |
 | [Deployment Guide](Deployment.md) | 运维 / 开发者 | 构建、启动、两种配置来源、健康检查、回滚 |
 | [Configuration Parameters](Configuration-Parameters.md) | 所有人 | 按组件分类的全量参数表、默认值、必填性 |
 | [Environment Variables](Environment-Variables.md) | 容器化部署者 | 命名规则、完整环境变量清单、最小可运行示例 |

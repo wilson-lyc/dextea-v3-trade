@@ -1,22 +1,22 @@
-# Nacos Configuration
+# Nacos 配置
 
-`dextea-trade` supports **Nacos as a config center** via `spring-alibaba-nacos-config`. After setting `NACOS_SERVER_ADDR`, the service pulls app config from Nacos on startup; when not set, it silently skips via the `optional:` prefix, **without affecting local/env-var startup**.
+`dextea-trade` 通过 `spring-alibaba-nacos-config` 支持**以 Nacos 作为配置中心**。设置 `NACOS_SERVER_ADDR` 后，服务在启动时会从 Nacos 拉取应用配置；未设置时，会经由 `optional:` 前缀静默跳过，**不影响本地/环境变量方式启动**。
 
-> For env-var writing, see [Environment Variables](Environment-Variables.md); for parameter ownership and defaults, see [Configuration Parameters](Configuration-Parameters.md).
+> 关于环境变量写法，请查阅 [环境变量](Environment-Variables.md)；关于参数归属与默认值，请查阅 [配置参数](Configuration-Parameters.md)。
 
-## 1. Enable
+## 1. 启用
 
-Just set the Nacos address in the environment (or startup args) to enable:
+只需在环境（或启动参数）中设置 Nacos 地址即可启用：
 
 ```bash
 export NACOS_SERVER_ADDR=127.0.0.1:8848
-export NACOS_NAMESPACE=      # namespace ID, empty = public
-export NACOS_USERNAME=       # fill when auth is enabled
+export NACOS_NAMESPACE=      # 命名空间 ID，为空 = public
+export NACOS_USERNAME=       # 启用鉴权时填写
 export NACOS_PASSWORD=
-export NACOS_CONFIG_GROUP=DEFAULT_GROUP   # config group
+export NACOS_CONFIG_GROUP=DEFAULT_GROUP   # 配置分组
 ```
 
-`application.yaml` already includes the import statement:
+`application.yaml` 中已包含导入语句：
 
 ```yaml
 spring:
@@ -25,43 +25,35 @@ spring:
       - optional:nacos:${spring.application.name}.yaml?group=${NACOS_CONFIG_GROUP:DEFAULT_GROUP}
 ```
 
-- The `optional:` prefix ensures **no error when Nacos is not configured**.
-- The target Data ID defaults to the app name: `dextea-trade.yaml`.
+- `optional:` 前缀确保**未配置 Nacos 时也不会报错**。
+- 目标 Data ID 默认为应用名：`dextea-trade.yaml`。
 
-## 2. Data ID & Format
+## 2. Data ID 与格式
 
-| Item | Value | Description |
+| 项目 | 取值 | 说明 |
 |----|------|------|
-| Data ID | `dextea-trade.yaml` | from `spring.application.name` + `.yaml` |
-| Group | `DEFAULT_GROUP` (overridable via `NACOS_CONFIG_GROUP`) | Config group |
-| Namespace | `NACOS_NAMESPACE` (empty = public) | Env isolation |
-| Format | YAML | Same structure as local `application.yaml` |
+| Data ID | `dextea-trade.yaml` | 由 `spring.application.name` + `.yaml` 构成 |
+| Group | `DEFAULT_GROUP`（可通过 `NACOS_CONFIG_GROUP` 覆盖） | 配置分组 |
+| Namespace | `NACOS_NAMESPACE`（为空 = public） | 环境隔离 |
+| 格式 | YAML | 与本地 `application.yaml` 结构一致 |
 
-> For multiple environments (dev/test/prod), it is recommended to use **Namespace** for isolation rather than multiple Data IDs, to avoid app-name conflicts.
+> 针对多套环境（dev/test/prod），建议使用 **Namespace** 进行隔离，而非多个 Data ID，以避免应用名称冲突。
 
-## 3. Example Nacos Config
+## 3. Nacos 配置示例
 
-Create `dextea-trade.yaml` in the Nacos console; example content (overriding DB, Redis, Alipay, etc.):
+在 Nacos 控制台创建 `dextea-trade.yaml`；示例内容（覆盖数据库、Redis、支付宝等）：
 
 ```yaml
 spring:
   datasource:
     url: jdbc:mysql://mysql.prod.svc:3306/dextea?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: dextea
-    password: ${DB_PASSWORD}   # sensitive items can still be injected via env var, no plaintext in Nacos
+    password: ${DB_PASSWORD}   # 敏感项仍可经环境变量注入，Nacos 中不存明文
   data:
     redis:
       host: redis.prod.svc
       port: 6379
       password: ${REDIS_PASSWORD}
-
-# 支付宝配置已统一收敛在 AlipaySdkConfig，全部通过环境变量注入。
-# Nacos 中只需下发以下环境变量（敏感项如私钥仍可用 ${ENV} 引用，避免明文落库）：
-alipay:
-  app-id: 2021xxxxxxxx
-  private-key: ${ALIPAY_PRIVATE_KEY}
-  public-key: ${ALIPAY_PUBLIC_KEY}
-  subject: 德贤茶庄订单
 
 cosid:
   namespace: dextea-trade
@@ -77,39 +69,40 @@ management:
         include: health,info
 ```
 
-Key points:
+要点：
 
-- Nacos config has the **same structure** as local `application.yaml` and can be migrated directly.
-- **Sensitive info (passwords, private keys) should remain as `${ENV}` placeholders**, injected via env vars or K8s Secret, so Nacos does not store plaintext.
-- Any param not delivered by Nacos falls back to local defaults or env vars.
+- Nacos 配置与本地 `application.yaml` **结构一致**，可直接迁移（数据库 / Redis / CosId / MyBatis / Actuator 等）。
+- **敏感信息（密码、私钥）应保留为 `${ENV}` 占位符**，通过环境变量或 K8s Secret 注入，从而 Nacos 不存储明文。
+- **支付宝配置不通过 Nacos YAML 下发。** 它统一收敛在 `AlipaySdkConfig`，仅从环境变量读取（`ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / …）。请继续经环境变量或 K8s Secret 注入这些项；**不要**在 Nacos 中放置 `alipay:` 配置块——它会被忽略。
+- 任何未由 Nacos 下发的参数都会回退到本地默认值或环境变量。
 
-## 4. Priority vs Environment
+## 4. 与环境变量的优先级
 
-Config priority (high → low):
+配置优先级（高 → 低）：
 
 ```
-Startup command-line args
-  > Nacos config center (remote)
-    > Environment variables / system properties
-      > Local application.yaml defaults
+启动命令行参数
+  > Nacos 配置中心（远程）
+    > 环境变量 / 系统属性
+      > 本地 application.yaml 默认值
 ```
 
-That is: **Nacos-delivered config overrides same-named env vars and local defaults**; params not delivered by Nacos still fall back to env vars. This "remote-primary, env-fallback" combo is great for canary and emergency hotfixes (change Nacos without re-releasing).
+即：**Nacos 下发的配置会覆盖同名的环境变量与本地默认值**；Nacos 未下发的参数仍会回退到环境变量。这种“远程为主、环境兜底”的组合非常适合灰度发布与应急热修复（改 Nacos 无需重新发布）。
 
-## 5. Debug & Troubleshoot
+## 5. 调试与排错
 
-| Symptom | Check |
+| 现象 | 排查方向 |
 |------|------|
-| No Nacos pull in startup log | Confirm `NACOS_SERVER_ADDR` is set; `optional:` silently skips when missing |
-| Pull reports 403 / auth failure | Check `NACOS_USERNAME` / `NACOS_PASSWORD` and whether Nacos auth is enabled |
-| Pull reports namespace not found | Confirm `NACOS_NAMESPACE` is the namespace **ID** (not the name) |
-| Config not effective | Verify Data ID is `dextea-trade.yaml` and Group matches `NACOS_CONFIG_GROUP` |
-| Want hot reload | Nacos changes support dynamic refresh by default; whether the app reacts in real time depends on `@RefreshScope` / `@ConfigurationProperties` usage in code |
+| 启动日志中没有任何 Nacos 拉取 | 确认 `NACOS_SERVER_ADDR` 已设置；缺失时 `optional:` 会静默跳过 |
+| 拉取报 403 / 鉴权失败 | 检查 `NACOS_USERNAME` / `NACOS_PASSWORD` 以及 Nacos 是否启用了鉴权 |
+| 拉取报命名空间不存在 | 确认 `NACOS_NAMESPACE` 是命名空间的 **ID**（而非名称） |
+| 配置未生效 | 核对 Data ID 为 `dextea-trade.yaml` 且 Group 与 `NACOS_CONFIG_GROUP` 一致 |
+| 希望热刷新 | Nacos 变更默认支持动态刷新；应用能否实时响应取决于代码中 `@RefreshScope` / `@ConfigurationProperties` 的使用情况 |
 
-## 6. Enable Auth (Production Recommended)
+## 6. 启用鉴权（生产环境推荐）
 
-Nacos 2.x is recommended to enable auth on the server side; the client connects via `NACOS_USERNAME` / `NACOS_PASSWORD` (see section 1). Combine with TLS and network isolation to avoid config leakage.
+建议在 Nacos 2.x 服务端启用鉴权；客户端通过 `NACOS_USERNAME` / `NACOS_PASSWORD` 连接（见第 1 节）。结合 TLS 与网络隔离，可避免配置泄露。
 
 ---
 
-Back to: [Deployment Guide](Deployment.md) ｜ Compare: [Environment Variables](Environment-Variables.md)
+返回：[部署指南](Deployment.md) ｜ 对比：[环境变量](Environment-Variables.md)

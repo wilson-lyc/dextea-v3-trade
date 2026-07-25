@@ -47,6 +47,15 @@
 
 ### 3. 运行（设置必需的环境变量）
 
+推荐做法：仓库已提供 `.env.example`，复制为 `.env` 填入你自己的值，再用 `--env-file` 启动，**避免密钥出现在命令行**：
+
+```bash
+cp .env.example .env      # 然后编辑 .env，填入 DB_*/REDIS_*/ALIPAY_* 的真实值
+java -jar target/dextea-trade-0.0.1-SNAPSHOT.jar --env-file=.env
+```
+
+也可手动 export（注意私钥多行内容必须用双引号包裹）：
+
 ```bash
 export DB_HOST=127.0.0.1
 export DB_PORT=3306
@@ -66,23 +75,22 @@ java -jar target/dextea-trade-0.0.1-SNAPSHOT.jar
 ```
 
 > ⚠️ **密钥类变量（如 `ALIPAY_PRIVATE_KEY`）必须使用双引号包裹**，避免换行与特殊字符被 Shell 解析破坏。私钥通常是多行内容，建议通过 `--env-file` 或编排工具注入。
+>
+> ⚠️ **不要提交 `.env`**（仓库 `.gitignore` 已忽略 `*.env`）。仓库根目录已存在的 `.env` 含共享环境的真实密码与支付宝私钥，请勿直接使用，应视为已泄露并尽快轮转。
+>
+> ⚠️ **生产环境务必清空 `ALIPAY_FORCE_AMOUNT`**——其默认值 `0.01` 会覆盖真实订单金额，仅用于开发避免真实扣款。
 
 ### 4. 用 Docker 一键部署（推荐）
 
+> 本仓库**未附带 Dockerfile**，需自行准备镜像（最小示例见 [Deployment §4.2](docs/Deployment.md)）。镜像就绪后用 `--env-file` 注入配置：
+
 ```bash
 docker run -d --name dextea-trade -p 9090:9090 \
-  -e DB_HOST=mysql \
-  -e DB_PORT=3306 \
-  -e DB_NAME=dextea \
-  -e DB_USERNAME=root \
-  -e DB_PASSWORD=your_db_password \
-  -e REDIS_HOST=redis \
-  -e REDIS_PORT=6379 \
-  -e ALIPAY_APP_ID=your_app_id \
-  -e ALIPAY_PRIVATE_KEY="$ALIPAY_PRIVATE_KEY" \
-  -e ALIPAY_PUBLIC_KEY="$ALIPAY_PUBLIC_KEY" \
+  --env-file .env \
   dextea-trade:latest
 ```
+
+> 不要把 `ALIPAY_PRIVATE_KEY` 等明文写在 `-e` 参数里；用 `--env-file` 或 Docker/K8s Secret 注入。
 
 启动后访问 `http://<host>:9090/docs/ui` 查看接口文档。
 
@@ -114,6 +122,7 @@ docker run -d --name dextea-trade -p 9090:9090 \
 | 文档 | 内容 |
 |------|------|
 | [docs/README.md](docs/README.md) | 文档导航首页 |
+| [docs/Prerequisites.md](docs/Prerequisites.md) | 运行前准备（依赖、`.env`、数据库初始化、自检清单） |
 | [docs/Deployment.md](docs/Deployment.md) | 部署总览（构建、启动、健康检查、回滚） |
 | [docs/Configuration-Parameters.md](docs/Configuration-Parameters.md) | 全量参数一览表（按组件分类） |
 | [docs/Environment-Variables.md](docs/Environment-Variables.md) | 环境变量命名规则、完整清单与示例 |

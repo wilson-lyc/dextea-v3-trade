@@ -1,6 +1,6 @@
-# Order Creation Business Flow Analysis Report
+# 订单创建业务流程分析报告
 
-## Current Flow Overview
+## 当前流程概览
 
 ```mermaid
 flowchart TD
@@ -28,9 +28,9 @@ flowchart TD
 
 ---
 
-## Issues Found
+## 发现的问题
 
-### 🔴 Critical Bug: `productIdList` Index Out of Bounds
+### 🔴 严重缺陷：`productIdList` 索引越界
 
 This is the most critical logic bug. In the `preBuild` method:
 
@@ -53,13 +53,13 @@ This is the most critical logic bug. In the `preBuild` method:
             Long productId = productIdList.get(i);  // 🔴 IndexOutOfBoundsException when duplicate products exist!
 ```
 
-**Problem**: `productIds` is a `LinkedHashSet` that auto-dedups. When the same product appears with different customization combinations (e.g. `1#2_3` and `1#4_5`), `productIdList.size()` = 1 but `items.size()` = 2, causing `productIdList.get(1)` to go out of bounds.
+**问题**：`productIds` 是一个会自动去重的 `LinkedHashSet`。当同一商品以不同的定制组合出现时（例如 `1#2_3` 与 `1#4_5`），`productIdList.size()` = 1 而 `items.size()` = 2，导致 `productIdList.get(1)` 越界。
 
-**Fix direction**: Maintain a `productId` list that corresponds one-to-one with `items`, similar to `parsedOptionIds` and `parsedItemIds`.
+**修复方向**：维护一个与 `items` 一一对应的 `productId` 列表，类似于 `parsedOptionIds` 与 `parsedItemIds`。
 
 ---
 
-### 🟡 Missing Order Line Items
+### 🟡 缺少订单明细行
 
 The `Order` entity only stores summary info:
 
@@ -77,17 +77,17 @@ The `Order` entity only stores summary info:
                 .build();
 ```
 
-There is no `order_items` table recording the specific products, customization options, unit prices, and quantities. This means there is no way to know what the customer actually bought after the order is created.
+没有 `order_items` 表来记录具体的商品、定制选项、单价与数量。这意味着订单创建后无法得知客户实际购买了什么。
 
 ---
 
-### 🟡 No Stock Deduction
+### 🟡 未扣减库存
 
-Order creation does not deduct stock from the `product_store_status` table. This leads to overselling — the same product can be purchased by multiple orders simultaneously without stock constraints.
+订单创建时不会从 `product_store_status` 表扣减库存。这会导致超卖——同一商品可被多个订单同时购买而没有任何库存约束。
 
 ---
 
-### 🟡 Store Status Not Validated
+### 🟡 未校验门店状态
 
 ```343:348:/workspace/src/main/java/cn/dextea/trade/service/impl/OrderServiceImpl.java
     private void validateStore(Long storeId) {
@@ -98,11 +98,11 @@ Order creation does not deduct stock from the `product_store_status` table. This
     }
 ```
 
-The `Store` entity has a `status` field, but it is never checked. Closed/ceased stores can still create orders.
+`Store` 实体带有 `status` 字段，但从未被检查。已关闭/停业的门店仍能创建订单。
 
 ---
 
-### 🟡 `diningMethod` Field Discarded
+### 🟡 `diningMethod` 字段被丢弃
 
 ```35:37:/workspace/src/main/java/cn/dextea/trade/dto/CreateOrderRequest.java
     @NotBlank(message = "diningMethod 不能为空")
@@ -110,11 +110,11 @@ The `Store` entity has a `status` field, but it is never checked. Closed/ceased 
     private String diningMethod;
 ```
 
-This field passes `@NotBlank` validation but is never used or persisted throughout the `createOrder` flow. The `Order` entity also has no corresponding field. This means the business distinction between "dine-in" and "takeout" is lost at the order level.
+该字段通过了 `@NotBlank` 校验，但在整个 `createOrder` 流程中从未被使用或持久化。`Order` 实体也没有对应字段。这意味着在订单层面丢失了“堂食”与“外带”的业务区分。
 
 ---
 
-### 🟡 `isOptionUnavailable` Uses Semantically Wrong Enum
+### 🟡 `isOptionUnavailable` 使用了语义错误的枚举
 
 ```456:462:/workspace/src/main/java/cn/dextea/trade/service/impl/OrderServiceImpl.java
     private boolean isOptionUnavailable(CustomizationOption option, Integer storeStatus) {
@@ -126,32 +126,32 @@ This field passes `@NotBlank` validation but is never used or persisted througho
     }
 ```
 
-The `storeStatus` comes from the `customization_option_store_status` table and should be compared with `ProductStoreStatusEnum.AVAILABLE` (store dimension), not `CustomizationOptionGlobalStatus.ACTIVE` (global dimension). Although both values happen to be 1, the semantics are incorrect and easily introduce bugs in future maintenance.
+`storeStatus` 来自 `customization_option_store_status` 表，应当同 `ProductStoreStatusEnum.AVAILABLE`（门店维度）比较，而非 `CustomizationOptionGlobalStatus.ACTIVE`（全局维度）。虽然两者取值恰好都是 1，但语义错误，后续维护中容易引入缺陷。
 
 ---
 
-### 🟢 Race Condition Risk
+### 🟢 竞态条件风险
 
-There is a time window between pre-build validation and order insertion, during which a product may be taken down or sold out in another transaction. There is currently no locking mechanism (e.g. pessimistic/optimistic lock) to prevent this. For a tea-drink scenario, this risk is relatively controllable.
-
----
-
-## ✅ Well-Designed Parts of the Flow
-
-1. **Complete idempotency design**: dual guarantee of Redis fast check + MySQL unique index fallback, with reasonable `DuplicateKeyException` degradation.
-2. **Clear SKU parsing design**: the `SkuIdParser` utility encapsulates skuId parsing logic and uniformly throws exceptions on illegal formats.
-3. **Graceful degradation for unavailable items**: when unavailable products/options exist, the order is not created but a list is returned, allowing the client to fix and retry.
-4. **Alipay payment decoupled from order creation**: Alipay `trade_no` is written back asynchronously after order creation, with null-check logic ensuring idempotency.
+在预构建校验与订单插入之间存在一个时间窗口，期间商品可能在另一笔事务中被下架或售罄。目前没有任何锁机制（如悲观锁/乐观锁）来防止这一问题。对于茶饮场景，该风险相对可控。
 
 ---
 
-## Summary
+## ✅ 流程中设计良好的部分
 
-| Level | Issue |
+1. **完整的幂等设计**：Redis 快速校验 + MySQL 唯一索引兜底双重保障，并合理降级处理 `DuplicateKeyException`。
+2. **清晰的 SKU 解析设计**：`SkuIdParser` 工具类封装了 skuId 解析逻辑，并对非法格式统一抛出异常。
+3. **对不可用商品的优雅降级**：当存在不可用的商品/选项时，不会创建订单而是返回一个列表，便于客户端修正后重试。
+4. **支付宝支付与订单创建解耦**：支付宝 `trade_no` 在订单创建后异步回写，并通过空值校验逻辑保证幂等。
+
+---
+
+## 总结
+
+| 级别 | 问题 |
 |------|------|
-| 🔴 Critical | `productIdList.get(i)` throws `IndexOutOfBoundsException` in duplicate-product scenarios |
-| 🟡 Medium | Missing order line persistence, no stock deduction, store status not validated |
-| 🟡 Medium | `diningMethod` field discarded, `isOptionUnavailable` uses wrong enum |
-| 🟢 Minor | Race window between pre-build and persistence (acceptable for tea-drink scenario) |
+| 🔴 严重 | 在商品重复的场景下，`productIdList.get(i)` 抛出 `IndexOutOfBoundsException` |
+| 🟡 中等 | 缺少订单明细持久化、未扣减库存、未校验门店状态 |
+| 🟡 中等 | `diningMethod` 字段被丢弃、`isOptionUnavailable` 使用了错误的枚举 |
+| 🟢 轻微 | 预构建与持久化之间的竞态窗口（对茶饮场景可接受） |
 
-**Overall assessment**: The core idempotency architecture and SKU parsing logic are reasonably designed, but there is one critical functional bug (`productIdList` index out of bounds), as well as some gaps in business completeness (order line items, stock deduction, store status, diningMethod, etc.).
+**总体评估**：核心幂等架构与 SKU 解析逻辑设计合理，但存在一个严重的功能性缺陷（`productIdList` 索引越界），以及在业务完整性方面的一些缺失（订单明细、库存扣减、门店状态、diningMethod 等）。
