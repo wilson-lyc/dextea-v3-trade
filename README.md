@@ -60,7 +60,7 @@ export REDIS_PASSWORD=            # 无密码可留空
 
 export ALIPAY_APP_ID=your_app_id
 export ALIPAY_PRIVATE_KEY="-----BEGIN PRIVATE KEY----- ..."
-export ALIPAY_ALIPAY_PUBLIC_KEY="-----BEGIN PUBLIC KEY----- ..."
+export ALIPAY_PUBLIC_KEY="-----BEGIN PUBLIC KEY----- ..."
 
 java -jar target/dextea-trade-0.0.1-SNAPSHOT.jar
 ```
@@ -80,7 +80,7 @@ docker run -d --name dextea-trade -p 9090:9090 \
   -e REDIS_PORT=6379 \
   -e ALIPAY_APP_ID=your_app_id \
   -e ALIPAY_PRIVATE_KEY="$ALIPAY_PRIVATE_KEY" \
-  -e ALIPAY_ALIPAY_PUBLIC_KEY="$ALIPAY_ALIPAY_PUBLIC_KEY" \
+  -e ALIPAY_PUBLIC_KEY="$ALIPAY_PUBLIC_KEY" \
   dextea-trade:latest
 ```
 

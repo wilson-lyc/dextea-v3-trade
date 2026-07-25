@@ -58,7 +58,7 @@ spring:
 alipay:
   app-id: 2021xxxxxxxx
   private-key: ${ALIPAY_PRIVATE_KEY}
-  alipay-public-key: ${ALIPAY_ALIPAY_PUBLIC_KEY}
+  alipay-public-key: ${ALIPAY_PUBLIC_KEY}
   subject: 德贤茶庄订单
 
 cosid:

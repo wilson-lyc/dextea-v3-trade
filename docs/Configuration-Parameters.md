@@ -56,10 +56,10 @@ Enabled after setting `NACOS_SERVER_ADDR`; when not set, it auto-skips via the `
 
 | Config Key | Env Var | Default | Required | Description |
 |--------|----------|--------|------|------|
-| `alipay.server-url` | `ALIPAY_SERVER_URL` | `https://openapi.alipay.com` | No | Gateway (change for sandbox) |
+| `alipay.server-url` | `ALIPAY_GATEWAY` | `https://openapi.alipay.com` | No | Gateway (change for sandbox) |
 | `alipay.app-id` | `ALIPAY_APP_ID` | (empty) | ⚠️ required if using Alipay | Open platform app ID |
 | `alipay.private-key` | `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | App private key (multi-line, quote it) |
-| `alipay.alipay-public-key` | `ALIPAY_ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
+| `alipay.alipay-public-key` | `ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
 | `alipay.subject` | `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | Order title prefix |
 | `alipay.product-code` | `ALIPAY_PRODUCT_CODE` | `JSAPI_PAY` | No | Payment product code |
 | `alipay.force-amount` | `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
@@ -106,7 +106,7 @@ Only the dependency is included by default; you must deliver `management.endpoin
 
 - **Database**: `DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD`
 - **Redis**: `REDIS_HOST` `REDIS_PORT` (and `REDIS_PASSWORD` if set)
-- **Alipay (when using payment)**: `ALIPAY_APP_ID` `ALIPAY_PRIVATE_KEY` `ALIPAY_ALIPAY_PUBLIC_KEY`
+- **Alipay (when using payment)**: `ALIPAY_APP_ID` `ALIPAY_PRIVATE_KEY` `ALIPAY_PUBLIC_KEY`
 - **Nacos**: all optional; skipped if not configured
 
 Next: 👉 [Environment Variables](Environment-Variables.md) or 👉 [Nacos](Nacos.md)

@@ -50,7 +50,7 @@ The service is wired up via `application.yaml` and supports two external configu
 DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=dextea \
 DB_USERNAME=root DB_PASSWORD=**** \
 REDIS_HOST=127.0.0.1 REDIS_PORT=6379 \
-ALIPAY_APP_ID=app_id ALIPAY_PRIVATE_KEY="$KEY" ALIPAY_ALIPAY_PUBLIC_KEY="$PUB" \
+ALIPAY_APP_ID=app_id ALIPAY_PRIVATE_KEY="$KEY" ALIPAY_PUBLIC_KEY="$PUB" \
 java -jar target/dextea-trade-0.0.1-SNAPSHOT.jar
 ```
 
@@ -98,7 +98,7 @@ management:
 | Symptom | Direction |
 |------|------|
 | Startup fails on datasource/Redis connection | Check `DB_*` / `REDIS_*` env vars are set and network is reachable |
-| Alipay call reports "key error" | Check `ALIPAY_PRIVATE_KEY` / `ALIPAY_ALIPAY_PUBLIC_KEY` are not truncated by the shell (always quote with double quotes) |
+| Alipay call reports "key error" | Check `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` are not truncated by the shell (always quote with double quotes) |
 | Startup hangs on Nacos pull | With no `NACOS_SERVER_ADDR` it should auto-skip via `optional:`; if misconfigured, check address/namespace |
 | `machineId` conflict across instances | CosId uses Redis to allocate machine ids; ensure Redis is available and `cosid.namespace` is consistent across instances |
 

@@ -59,10 +59,10 @@ These params already reference env vars directly in `application.yaml`, making t
 | `NACOS_USERNAME` | (empty) | ❌ | Username |
 | `NACOS_PASSWORD` | (empty) | ❌ | Password |
 | `NACOS_CONFIG_GROUP` | `DEFAULT_GROUP` | ❌ | Config group |
-| `ALIPAY_SERVER_URL` | `https://openapi.alipay.com` | No | Gateway |
+| `ALIPAY_GATEWAY` | `https://openapi.alipay.com` | No | Gateway |
 | `ALIPAY_APP_ID` | (empty) | ⚠️ required if using Alipay | App ID |
 | `ALIPAY_PRIVATE_KEY` | (empty) | ⚠️ required if using Alipay | App private key (multi-line) |
-| `ALIPAY_ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
+| `ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
 | `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | Order title prefix |
 | `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发环境强制固定订单金额（元）；非空时覆盖真实金额，避免真实扣款。生产环境置空 |
 | `ALIPAY_NOTIFY_URL` | (empty) | ❌ | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
@@ -100,7 +100,7 @@ export ALIPAY_APP_ID=2021xxxxxxxx
 export ALIPAY_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
 MIIE...
 -----END PRIVATE KEY-----"
-export ALIPAY_ALIPAY_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
+export ALIPAY_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
 MIIB...
 -----END PUBLIC KEY-----"
 ```
@@ -125,7 +125,7 @@ services:
       REDIS_PORT: 6379
       ALIPAY_APP_ID: ${ALIPAY_APP_ID}
       ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY}
-      ALIPAY_ALIPAY_PUBLIC_KEY: ${ALIPAY_ALIPAY_PUBLIC_KEY}
+      ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY}
 ```
 
 ## 5. Verify Config Takes Effect

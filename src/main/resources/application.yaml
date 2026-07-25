@@ -44,7 +44,7 @@ cosid:
         namespace: ${COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE:${spring.application.name}}
 
 alipay:
-  server-url: ${ALIPAY_SERVER_URL:https://openapi.alipay.com}
+  server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
   subject: ${ALIPAY_SUBJECT:德贤茶庄订单}
   product-code: ${ALIPAY_PRODUCT_CODE:JSAPI_PAY}
   # 开发环境强制订单金额为 0.01 元避免真实扣款；生产环境置空改用真实金额
