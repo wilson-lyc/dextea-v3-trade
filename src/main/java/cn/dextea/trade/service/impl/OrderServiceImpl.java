@@ -328,7 +328,7 @@ public class OrderServiceImpl implements OrderService {
                         .unitPrice(item.getUnitPrice())
                         .subtotal(item.getSubtotal())
                         .build())
-                .toList();
+                .collect(Collectors.<OrderDetailItem>toList());
 
         // 5. 组装响应，枚举 code 回填可读文案
         return OrderDetailResponse.builder()
