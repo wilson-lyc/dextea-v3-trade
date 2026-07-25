@@ -45,6 +45,9 @@ alipay:
   # 开发环境：创建支付宝交易时强制将订单总额限制为 0.01 元，避免产生真实交易金额。
   # 生产环境（Nacos 配置）应将其置空（alipay.force-amount:）以使用真实金额。
   force-amount: 0.01
+  # 支付宝异步支付回调地址（notify_url）。留空表示不设置，交由支付宝默认/商品配置决定；
+  # 非空时创建交易会作为异步通知地址传给支付宝。对应环境变量 ALIPAY_NOTIFY_URL。
+  # notify-url: https://example.com/alipay/notify
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

@@ -38,6 +38,11 @@ public class AlipayServiceImpl implements AlipayService {
                     request.getOrderNo(), request.getTotalPrice(), forceAmount);
             model.totalAmount(forceAmount.toPlainString());
         }
+        // 支付宝异步支付回调地址（notify_url）：非空才设置，空则不传给支付宝
+        String notifyUrl = alipayConfig.getNotifyUrl();
+        if (notifyUrl != null && !notifyUrl.isBlank()) {
+            model.notifyUrl(notifyUrl);
+        }
         try {
             AlipayTradeCreateResponseModel resp = tradeApi.create(model);
             if (resp == null || resp.getTradeNo() == null) {

@@ -62,6 +62,7 @@ Enabled after setting `NACOS_SERVER_ADDR`; when not set, it auto-skips via the `
 | `alipay.alipay-public-key` | `ALIPAY_ALIPAY_PUBLIC_KEY` | (empty) | ⚠️ required if using Alipay | Alipay public key |
 | `alipay.subject` | `ALIPAY_SUBJECT` | `德贤茶庄订单` | No | Order title prefix |
 | `alipay.force-amount` | `ALIPAY_FORCE_AMOUNT` | `0.01` | No | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
+| `alipay.notify-url` | `ALIPAY_NOTIFY_URL` | (empty) | No | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
 
 ## 6. CosId (Distributed ID)
 

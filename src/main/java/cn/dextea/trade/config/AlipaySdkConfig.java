@@ -33,6 +33,13 @@ public class AlipaySdkConfig {
     private String subject = "德贤茶庄订单";
 
     /**
+     * 支付宝异步支付回调地址（notify_url）。
+     * 对应配置项 {@code alipay.notify-url} / 环境变量 {@code ALIPAY_NOTIFY_URL}。
+     * 为空则不设置，非空时创建交易会作为异步通知地址传给支付宝。
+     */
+    private String notifyUrl;
+
+    /**
      * 开发/测试环境下强制使用的固定订单金额（元）。
      * 当该值非空时，创建支付宝交易会把订单总额覆盖为此固定值，
      * 避免开发联调或沙箱环境误产生真实交易金额。生产环境应置空以使用真实金额。
