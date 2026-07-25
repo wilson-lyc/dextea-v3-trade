@@ -15,21 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
-/**
- * 支付回单消息处理实现。
- *
- * <p>核心流程：根据 {@code out_trade_no} 定位订单，按 {@code trade_status} 映射为
- * {@link OrderEventEnum} 事件，委托 {@link OrderStatusService#changeStatus} 统一变更状态。
- * 状态变更的三层防护（Redis 锁 + 状态机白名单 + 数据库 CAS）全部封装在
- * {@code OrderStatusService} 内，本类只负责「回单 → 事件」的语义映射。</p>
- *
- * <p>幂等保障：{@link OrderStatusService} 内部 CAS 条件 {@code WHERE trade_status=? AND version=?}
- * 保证只有前置状态匹配时才更新；已是终态的订单 CAS 返回 0，本类捕获后视为幂等跳过，
- * 不再抛异常触发 MQ 重试。</p>
- *
- * <p>注意：回单消息来自支付平台经 RocketMQ 投递，平台侧已对原始异步通知做校验与解析；
- * 若需在本系统再次校验签名，可在此补充支付平台签名验签逻辑。</p>
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
