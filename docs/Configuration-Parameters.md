@@ -50,24 +50,7 @@
 | `spring.nacos.config.password` | `NACOS_PASSWORD` | （空） | ❌ | 鉴权密码 |
 | `spring.config.import` 中的 group | `NACOS_CONFIG_GROUP` | `DEFAULT_GROUP` | ❌ | 配置分组 |
 
-## 5. 支付宝
-
-支付宝配置**统一收敛在 `AlipaySdkConfig` 一个类中**，每个配置项对应一个环境变量，全部通过 `System.getenv(...)` 读取（默认值在类中定义），不再依赖 `application.yaml` 或 Spring 宽松绑定。因此配置项**只有环境变量名，没有 `alipay.*` 这样的 Spring 配置键**。
-
-> 后续接入 Nacos 等统一配置中心时，只需在 Nacos 中将配置以环境变量形式下发（或在 `AlipaySdkConfig` 扩展读取来源），无需改动 `application.yaml`。
-
-| 环境变量 | 默认值 | 是否必填 | 说明 |
-|--------|--------|------|------|
-| `ALIPAY_OPENAPI_GATEWAY` | `https://openapi.alipay.com` | 否 | 支付宝网关地址（沙箱环境需替换） |
-| `ALIPAY_APP_ID` | （空） | ⚠️ 使用支付宝时必填 | 开放平台应用 AppId |
-| `ALIPAY_PRIVATE_KEY` | （空） | ⚠️ 使用支付宝时必填 | 应用私钥（多行内容需用双引号包裹） |
-| `ALIPAY_PUBLIC_KEY` | （空） | ⚠️ 使用支付宝时必填 | 支付宝公钥 |
-| `ALIPAY_SUBJECT` | `德贤茶庄订单` | 否 | 订单标题前缀 |
-| `ALIPAY_PRODUCT_CODE` | `JSAPI_PAY` | 否 | 支付产品码 |
-| `ALIPAY_FORCE_AMOUNT` | `0.01` | 否 | 开发/测试环境强制使用的固定订单金额（元）；非空时创建交易会把总额覆盖为该值，避免真实扣款。生产环境置空以使用真实金额 |
-| `ALIPAY_NOTIFY_URL` | （空） | 否 | 支付宝异步支付回调地址（notify_url）；为空则不设置，非空时创建交易传给支付宝 |
-
-## 6. CosId（分布式 ID）
+## 5. CosId（分布式 ID）
 
 | 配置键 | 环境变量 | 默认值 | 是否必填 | 说明 |
 |--------|----------|--------|------|------|
@@ -108,7 +91,6 @@
 
 - **数据库**：`DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD`
 - **Redis**：`REDIS_HOST` `REDIS_PORT`（若设置了 `REDIS_PASSWORD` 则也需要）
-- **支付宝（使用支付时）**：`ALIPAY_APP_ID` `ALIPAY_PRIVATE_KEY` `ALIPAY_PUBLIC_KEY`
 - **Nacos**：全部可选；未配置则跳过
 
 下一步：👉 [环境变量](Environment-Variables.md) 或 👉 [Nacos](Nacos.md)

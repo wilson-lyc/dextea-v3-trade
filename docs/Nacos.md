@@ -58,6 +58,16 @@ spring:
 cosid:
   namespace: dextea-trade
 
+alipay:
+  openapi-gateway: https://openapi.alipay.com
+  app-id: 2021xxxxxxxxxxxx
+  private-key: ${ALIPAY_PRIVATE_KEY}   # 多行私钥建议仍经环境变量/K8s Secret 注入
+  public-key: ${ALIPAY_PUBLIC_KEY}
+  subject: 德贤茶庄订单
+  product-code: JSAPI_PAY
+  force-amount:                        # 生产环境留空，使用真实订单金额
+  notify-url: https://api.example.com/api/alipay/notify
+
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
@@ -71,9 +81,8 @@ management:
 
 要点：
 
-- Nacos 配置与本地 `application.yaml` **结构一致**，可直接迁移（数据库 / Redis / CosId / MyBatis / Actuator 等）。
+- Nacos 配置与本地 `application.yaml` **结构一致**，可直接迁移（数据库 / Redis / CosId / MyBatis / Actuator / 支付宝 等）。
 - **敏感信息（密码、私钥）应保留为 `${ENV}` 占位符**，通过环境变量或 K8s Secret 注入，从而 Nacos 不存储明文。
-- **支付宝配置不通过 Nacos YAML 下发。** 它统一收敛在 `AlipaySdkConfig`，仅从环境变量读取（`ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / …）。请继续经环境变量或 K8s Secret 注入这些项；**不要**在 Nacos 中放置 `alipay:` 配置块——它会被忽略。
 - 任何未由 Nacos 下发的参数都会回退到本地默认值或环境变量。
 
 ## 4. 与环境变量的优先级

@@ -5,6 +5,7 @@ import com.alipay.v3.ApiException;
 import com.alipay.v3.util.model.AlipayConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,19 +14,24 @@ import java.math.BigDecimal;
 /**
  * 支付宝配置的唯一入口。
  *
- * <p>所有支付宝相关配置项（网关、AppId、密钥、标题、产品码、强制金额、回调地址）都在本类以字段形式统一定义，
- * 并通过 {@link #loadFromEnv()} 从环境变量读取赋值，便于后续接入 Nacos 等统一配置中心时只在此处扩展。
- *
- * <p>对应的环境变量名见各字段注解，与 {@code .env.example} 保持一致：
+ * <p>所有支付宝相关配置项（网关、AppId、密钥、标题、产品码、强制金额、回调地址）都通过 Spring 的属性占位符
+ * {@code ${alipay.*:默认值}} 注入，因此支持两种注入方式：
  * <ul>
- *     <li>{@code ALIPAY_OPENAPI_GATEWAY}</li>
- *     <li>{@code ALIPAY_APP_ID}</li>
- *     <li>{@code ALIPAY_PRIVATE_KEY}</li>
- *     <li>{@code ALIPAY_PUBLIC_KEY}</li>
- *     <li>{@code ALIPAY_SUBJECT}</li>
- *     <li>{@code ALIPAY_PRODUCT_CODE}</li>
- *     <li>{@code ALIPAY_FORCE_AMOUNT}</li>
- *     <li>{@code ALIPAY_NOTIFY_URL}</li>
+ *     <li><b>环境变量</b>：借助 Spring 宽松绑定，{@code alipay.openapi-gateway} 对应 {@code ALIPAY_OPENAPI_GATEWAY}，
+ *         其余同理（详见 {@code .env.example}）。</li>
+ *     <li><b>Nacos</b>：在 {@code dextea-trade.yaml} 中以 {@code alipay:} 配置块下发即可，与本地 {@code application.yaml} 结构一致。</li>
+ * </ul>
+ *
+ * <p>对应的环境变量名如下，与 {@code .env.example} 保持一致：
+ * <ul>
+ *     <li>{@code ALIPAY_OPENAPI_GATEWAY} → {@code alipay.openapi-gateway}</li>
+ *     <li>{@code ALIPAY_APP_ID} → {@code alipay.app-id}</li>
+ *     <li>{@code ALIPAY_PRIVATE_KEY} → {@code alipay.private-key}</li>
+ *     <li>{@code ALIPAY_PUBLIC_KEY} → {@code alipay.public-key}</li>
+ *     <li>{@code ALIPAY_SUBJECT} → {@code alipay.subject}</li>
+ *     <li>{@code ALIPAY_PRODUCT_CODE} → {@code alipay.product-code}</li>
+ *     <li>{@code ALIPAY_FORCE_AMOUNT} → {@code alipay.force-amount}</li>
+ *     <li>{@code ALIPAY_NOTIFY_URL} → {@code alipay.notify-url}</li>
  * </ul>
  */
 @Slf4j
@@ -33,35 +39,48 @@ import java.math.BigDecimal;
 @Getter
 public class AlipaySdkConfig {
 
-    /** 支付宝网关地址，对应环境变量 {@code ALIPAY_OPENAPI_GATEWAY}，默认正式环境网关 */
-    private final String gateway = getEnv("ALIPAY_OPENAPI_GATEWAY", "https://openapi.alipay.com");
+    /** 支付宝网关地址，对应 {@code alipay.openapi-gateway} / {@code ALIPAY_OPENAPI_GATEWAY}，默认正式环境网关 */
+    @Value("${alipay.openapi-gateway:https://openapi.alipay.com}")
+    private String gateway;
 
-    /** 应用 AppId，对应环境变量 {@code ALIPAY_APP_ID}（使用支付宝支付时必填） */
-    private final String appId = getEnv("ALIPAY_APP_ID", null);
+    /** 应用 AppId，对应 {@code alipay.app-id} / {@code ALIPAY_APP_ID}（使用支付宝支付时必填） */
+    @Value("${alipay.app-id:#{null}}")
+    private String appId;
 
-    /** 应用私钥，对应环境变量 {@code ALIPAY_PRIVATE_KEY}（使用支付宝支付时必填，多行内容需双引号包裹） */
-    private final String privateKey = getEnv("ALIPAY_PRIVATE_KEY", null);
+    /** 应用私钥，对应 {@code alipay.private-key} / {@code ALIPAY_PRIVATE_KEY}（使用支付宝支付时必填，多行内容需双引号包裹） */
+    @Value("${alipay.private-key:#{null}}")
+    private String privateKey;
 
-    /** 支付宝公钥，对应环境变量 {@code ALIPAY_PUBLIC_KEY}（使用支付宝支付时必填） */
-    private final String publicKey = getEnv("ALIPAY_PUBLIC_KEY", null);
+    /** 支付宝公钥，对应 {@code alipay.public-key} / {@code ALIPAY_PUBLIC_KEY}（使用支付宝支付时必填） */
+    @Value("${alipay.public-key:#{null}}")
+    private String publicKey;
 
-    /** 订单标题前缀，对应环境变量 {@code ALIPAY_SUBJECT} */
-    private final String subject = getEnv("ALIPAY_SUBJECT", "德贤茶庄订单");
+    /** 订单标题前缀，对应 {@code alipay.subject} / {@code ALIPAY_SUBJECT} */
+    @Value("${alipay.subject:德贤茶庄订单}")
+    private String subject;
 
-    /** 支付产品码，对应环境变量 {@code ALIPAY_PRODUCT_CODE} */
-    private final String productCode = getEnv("ALIPAY_PRODUCT_CODE", "JSAPI_PAY");
+    /** 支付产品码，对应 {@code alipay.product-code} / {@code ALIPAY_PRODUCT_CODE} */
+    @Value("${alipay.product-code:JSAPI_PAY}")
+    private String productCode;
+
+    /** 开发/测试环境强制金额（元）原始字符串，对应 {@code alipay.force-amount} / {@code ALIPAY_FORCE_AMOUNT} */
+    @Value("${alipay.force-amount:0.01}")
+    private String forceAmountRaw;
 
     /**
-     * 开发/测试环境下强制使用的固定订单金额（元），对应环境变量 {@code ALIPAY_FORCE_AMOUNT}。
-     * 非空时将覆盖真实订单金额，避免开发联调或沙箱环境误产生真实交易；生产环境置空以使用真实金额。
-     */
-    private final BigDecimal forceAmount = parseAmount(getEnv("ALIPAY_FORCE_AMOUNT", "0.01"));
-
-    /**
-     * 支付宝异步支付回调地址（notify_url），对应环境变量 {@code ALIPAY_NOTIFY_URL}。
+     * 支付宝异步支付回调地址（notify_url），对应 {@code alipay.notify-url} / {@code ALIPAY_NOTIFY_URL}。
      * 为空则不设置，非空时创建交易会作为异步通知地址传给支付宝。
      */
-    private final String notifyUrl = getEnv("ALIPAY_NOTIFY_URL", null);
+    @Value("${alipay.notify-url:#{null}}")
+    private String notifyUrl;
+
+    /**
+     * 开发/测试环境下强制使用的固定订单金额（元）。
+     * 非空时将覆盖真实订单金额，避免开发联调或沙箱环境误产生真实交易；生产环境置空以使用真实金额。
+     */
+    public BigDecimal getForceAmount() {
+        return parseAmount(forceAmountRaw);
+    }
 
     @Bean
     public ApiClient alipayApiClient() {
@@ -80,22 +99,7 @@ public class AlipaySdkConfig {
     }
 
     /**
-     * 读取环境变量；当未设置或为空字符串时返回默认值。
-     *
-     * @param name         环境变量名
-     * @param defaultValue 默认值（可为 {@code null}）
-     * @return 环境变量值或默认值
-     */
-    private static String getEnv(String name, String defaultValue) {
-        String value = System.getenv(name);
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-        return value;
-    }
-
-    /**
-     * 将环境变量中的金额字符串解析为 {@link BigDecimal}；为空或非法时返回 {@code null}。
+     * 将金额字符串解析为 {@link BigDecimal}；为空或非法时返回 {@code null}。
      */
     private static BigDecimal parseAmount(String value) {
         if (value == null || value.isBlank()) {
@@ -104,7 +108,7 @@ public class AlipaySdkConfig {
         try {
             return new BigDecimal(value.trim());
         } catch (NumberFormatException e) {
-            log.warn("支付宝强制金额 ALIPAY_FORCE_AMOUNT 值非法，已忽略：{}", value);
+            log.warn("支付宝强制金额 alipay.force-amount 值非法，已忽略：{}", value);
             return null;
         }
     }
