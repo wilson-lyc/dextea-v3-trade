@@ -59,7 +59,7 @@ cosid:
   namespace: dextea-trade
 
 alipay:
-  openapi-gateway: https://openapi.alipay.com
+  gateway: https://openapi.alipay.com
   app-id: 2021xxxxxxxxxxxx
   private-key: ${ALIPAY_PRIVATE_KEY}   # 多行私钥建议仍经环境变量/K8s Secret 注入
   public-key: ${ALIPAY_PUBLIC_KEY}

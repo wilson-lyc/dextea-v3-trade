@@ -14,6 +14,7 @@ import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.FilterExpressionType;
 import org.apache.rocketmq.client.apis.consumer.PushConsumer;
 import org.apache.rocketmq.client.apis.message.MessageView;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -24,20 +25,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
-/**
- * 基于 RocketMQ 5.x Java SDK PushConsumer 的支付回单消费者。
- *
- * <p>使用 push 模式，由 SDK 管理消费并发度与消息分发，业务仅需实现监听器回调处理消息：
- * <ul>
- *     <li>消息体反序列化为 {@link PaymentNotifyMessage} 后交给 {@link PaymentNotifyService} 处理；</li>
- *     <li>处理成功返回 {@link ConsumeResult#SUCCESS} 确认消息；</li>
- *     <li>消息体无法解析（不可恢复）直接确认，避免毒消息阻塞队列；</li>
- *     <li>业务处理抛出瞬时异常返回 {@link ConsumeResult#FAILURE} 触发服务端重试。</li>
- * </ul>
- * </p>
- *
- * <p>PushConsumer 在后台线程消费，无需阻塞主线程；通过 {@link PreDestroy} 在应用关停时优雅关闭。</p>
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -47,14 +34,13 @@ public class PaymentNotifyConsumer {
     private final PaymentNotifyService paymentNotifyService;
     private final ObjectMapper objectMapper;
 
+    @Value("${spring.application.name:dextea-trade}")
+    private String applicationName;
+
     private PushConsumer pushConsumer;
 
     @PostConstruct
     public void start() {
-        if (!properties.isEnabled()) {
-            log.info("RocketMQ 消费端未启用（rocketmq.enabled=false），跳过启动");
-            return;
-        }
         validateConfig();
 
         ClientServiceProvider provider = ClientServiceProvider.loadService();

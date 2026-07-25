@@ -20,8 +20,8 @@ public interface OrderMapper {
      * @param order 订单
      * @return 影响行数
      */
-    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, trade_status, making_status, pay_method, dining_method, note, total_price, total_quantity) " +
-            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{tradeStatus}, #{makingStatus}, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity})")
+    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, trade_status, making_status, version, pay_method, dining_method, note, total_price, total_quantity) " +
+            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{tradeStatus}, #{makingStatus}, 0, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Order order);
 
@@ -91,6 +91,38 @@ public interface OrderMapper {
     int updateTradeStatusByOrderNo(@Param("orderNo") String orderNo,
                                    @Param("targetStatus") int targetStatus,
                                    @Param("expectedStatus") int expectedStatus);
+
+    /**
+     * CAS 状态变更（带版本号）：仅当订单号、当前状态、版本号三者同时匹配时才更新。
+     * <p>这是状态不可逆流转的最终原子保障。{@code version} 条件防止 ABA 问题：
+     * 即使两个并发请求读到相同状态，只有一个能命中 {@code version}，另一个返回 0。</p>
+     *
+     * <p>成功时 {@code trade_status} 更新为目标状态，{@code version + 1}，
+     * 并按需回填 {@code trade_no}、{@code paid_at}、{@code refunded_at}。</p>
+     *
+     * @param orderNo        订单号
+     * @param targetStatus   目标状态码
+     * @param expectedStatus 期望的当前状态码
+     * @param currentVersion 当前版本号
+     * @param tradeNo        支付平台交易号（支付事件回填，其他事件传 null 不更新）
+     * @param paidAt         支付时间（支付事件回填，其他事件传 null 不更新）
+     * @param refundedAt     退款时间（退款事件回填，其他事件传 null 不更新）
+     * @return 影响行数（0 表示 CAS 失败：状态已被并发变更或版本不匹配）
+     */
+    @Update("<script>" +
+            "UPDATE orders SET trade_status = #{targetStatus}, version = version + 1, updated_at = NOW()" +
+            "<if test='tradeNo != null'>, trade_no = #{tradeNo}</if>" +
+            "<if test='paidAt != null'>, paid_at = #{paidAt}</if>" +
+            "<if test='refundedAt != null'>, refunded_at = #{refundedAt}</if>" +
+            " WHERE order_no = #{orderNo} AND trade_status = #{expectedStatus} AND version = #{currentVersion}" +
+            "</script>")
+    int updateStatusCas(@Param("orderNo") String orderNo,
+                        @Param("targetStatus") int targetStatus,
+                        @Param("expectedStatus") int expectedStatus,
+                        @Param("currentVersion") int currentVersion,
+                        @Param("tradeNo") String tradeNo,
+                        @Param("paidAt") java.time.LocalDateTime paidAt,
+                        @Param("refundedAt") java.time.LocalDateTime refundedAt);
 
     /**
      * 按用户ID查询指定时间之后创建的订单（按下单时间倒序）

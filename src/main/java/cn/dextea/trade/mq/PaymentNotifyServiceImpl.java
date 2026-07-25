@@ -1,18 +1,28 @@
 package cn.dextea.trade.mq;
 
 import cn.dextea.trade.entity.Order;
+import cn.dextea.trade.enums.OrderEventEnum;
 import cn.dextea.trade.enums.TradeStatusEnum;
+import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.mapper.OrderMapper;
+import cn.dextea.trade.service.OrderStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 /**
  * 支付回单消息处理实现。
  *
- * <p>核心流程：根据 {@code out_trade_no} 定位订单，按 {@code trade_status} 更新订单的「交易状态」
- * （{@link TradeStatusEnum}）。交易状态仅描述支付维度，与制作进度（{@link cn.dextea.trade.enums.MakingStatusEnum}）相互独立。
- * 通过「仅当订单处于待支付时更新为已支付」的乐观条件保证幂等，避免重复消费或覆盖终态订单。</p>
+ * <p>核心流程：根据 {@code out_trade_no} 定位订单，按 {@code trade_status} 映射为
+ * {@link OrderEventEnum} 事件，委托 {@link OrderStatusService#changeStatus} 统一变更状态。
+ * 状态变更的三层防护（Redis 锁 + 状态机白名单 + 数据库 CAS）全部封装在
+ * {@code OrderStatusService} 内，本类只负责「回单 → 事件」的语义映射。</p>
+ *
+ * <p>幂等保障：{@link OrderStatusService} 内部 CAS 条件 {@code WHERE trade_status=? AND version=?}
+ * 保证只有前置状态匹配时才更新；已是终态的订单 CAS 返回 0，本类捕获后视为幂等跳过，
+ * 不再抛异常触发 MQ 重试。</p>
  *
  * <p>注意：回单消息来自支付平台经 RocketMQ 投递，平台侧已对原始异步通知做校验与解析；
  * 若需在本系统再次校验签名，可在此补充支付平台签名验签逻辑。</p>
@@ -23,6 +33,7 @@ import org.springframework.stereotype.Service;
 public class PaymentNotifyServiceImpl implements PaymentNotifyService {
 
     private final OrderMapper orderMapper;
+    private final OrderStatusService orderStatusService;
 
     @Override
     public void handleNotify(PaymentNotifyMessage message) {
@@ -40,9 +51,9 @@ public class PaymentNotifyServiceImpl implements PaymentNotifyService {
         String tradeStatus = data.getTradeStatus();
         if (isPaid(tradeStatus)) {
             // TRADE_FINISHED 表示交易已结算（退款窗口关闭），与 TRADE_SUCCESS 同属支付成功，但语义不同
-            TradeStatusEnum target = "TRADE_FINISHED".equals(tradeStatus)
-                    ? TradeStatusEnum.TRADE_FINISHED : TradeStatusEnum.TRADE_PAID;
-            markOrderPaid(outTradeNo, data.getTradeNo(), target, tradeStatus, message.getTraceId());
+            OrderEventEnum event = "TRADE_FINISHED".equals(tradeStatus)
+                    ? OrderEventEnum.PAY_AND_FINISH : OrderEventEnum.PAY;
+            markOrderPaid(outTradeNo, data.getTradeNo(), event, tradeStatus, message.getTraceId());
         } else if ("TRADE_CLOSED".equals(tradeStatus)) {
             markOrderClosed(outTradeNo, message.getTraceId());
         } else {
@@ -51,7 +62,11 @@ public class PaymentNotifyServiceImpl implements PaymentNotifyService {
         }
     }
 
-    private void markOrderPaid(String outTradeNo, String tradeNo, TradeStatusEnum target,
+    /**
+     * 处理支付成功回单：委托 {@link OrderStatusService} 执行 待支付 → 已支付/已结算 流转。
+     * <p>已是支付终态的订单直接跳过；CAS 失败（已被并发处理）也视为幂等跳过。</p>
+     */
+    private void markOrderPaid(String outTradeNo, String tradeNo, OrderEventEnum event,
                                String tradeStatus, String traceId) {
         Order order = orderMapper.selectByOrderNo(outTradeNo);
         if (order == null) {
@@ -66,25 +81,28 @@ public class PaymentNotifyServiceImpl implements PaymentNotifyService {
             return;
         }
 
-        int updated = orderMapper.markPaid(outTradeNo, tradeNo, target.getCode(), TradeStatusEnum.TRADE_WAIT_PAY.getCode());
-        if (updated > 0) {
+        try {
+            orderStatusService.changeStatus(
+                    outTradeNo, event, "system-pay-callback",
+                    tradeNo, LocalDateTime.now(), null
+            );
             log.info("订单支付状态更新成功: orderNo={}, tradeNo={}, tradeStatus={}, traceId={}",
                     outTradeNo, tradeNo, tradeStatus, traceId);
-        } else {
-            // 乐观条件未命中（并发或已被其他流程变更），再次确认当前状态
+        } catch (BizError e) {
+            // CAS 失败或流转非法：再次确认当前状态，已是终态则幂等跳过，否则告警
             Order latest = orderMapper.selectByOrderNo(outTradeNo);
-            if (latest != null && isPaidTerminal(latest.getTradeStatus())) {
-                log.info("订单已被其他处理更新为已支付，幂等跳过: orderNo={}", outTradeNo);
-            } else if (latest != null && isClosedTerminal(latest.getTradeStatus())) {
-                // 已被并发变更为其他终态（已退款/已关闭/退款中），属正常结果，不应告警
-                log.info("订单已被并发变更为其他终态，跳过支付更新: orderNo={}, status={}", outTradeNo, latest.getTradeStatus());
+            if (latest != null && (isPaidTerminal(latest.getTradeStatus()) || isClosedTerminal(latest.getTradeStatus()))) {
+                log.info("订单已被并发处理为终态，幂等跳过: orderNo={}, status={}", outTradeNo, latest.getTradeStatus());
             } else {
-                log.warn("订单支付状态更新未生效，请核查: orderNo={}, currentStatus={}",
-                        outTradeNo, latest == null ? "null" : latest.getTradeStatus());
+                log.warn("订单支付状态更新未生效，请核查: orderNo={}, currentStatus={}, err={}",
+                        outTradeNo, latest == null ? "null" : latest.getTradeStatus(), e.getMessage());
             }
         }
     }
 
+    /**
+     * 处理关闭回单：根据当前状态区分「未付款超时关闭」与「支付后全额退款关闭」。
+     */
     private void markOrderClosed(String outTradeNo, String traceId) {
         Order order = orderMapper.selectByOrderNo(outTradeNo);
         if (order == null) {
@@ -92,31 +110,33 @@ public class PaymentNotifyServiceImpl implements PaymentNotifyService {
             return;
         }
         Integer cur = order.getTradeStatus();
-        if (isStatus(cur, TradeStatusEnum.TRADE_PAID)) {
-            // 支付后全额退款导致的关闭（TRADE_CLOSED after paid），应记为已退款
-            updateTradeStatus(outTradeNo, TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_PAID,
-                    traceId, "订单全额退款完成（支付后关闭）");
-        } else if (isStatus(cur, TradeStatusEnum.TRADE_FINISHED)) {
-            updateTradeStatus(outTradeNo, TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_FINISHED,
-                    traceId, "订单全额退款完成（支付后关闭）");
-        } else if (isStatus(cur, TradeStatusEnum.TRADE_WAIT_PAY)) {
-            // 未付款超时关闭
-            updateTradeStatus(outTradeNo, TradeStatusEnum.TRADE_CLOSED, TradeStatusEnum.TRADE_WAIT_PAY,
-                    traceId, "订单超时未支付已关闭");
-        } else {
-            // 已关闭/退款中/已退款，幂等跳过
-            log.info("订单已处于退款/关闭终态，忽略关闭通知: orderNo={}, status={}, traceId={}", outTradeNo, cur, traceId);
-        }
-    }
 
-    private void updateTradeStatus(String outTradeNo, TradeStatusEnum target, TradeStatusEnum expected,
-                                   String traceId, String successMsg) {
-        int updated = orderMapper.updateTradeStatusByOrderNo(outTradeNo, target.getCode(), expected.getCode());
-        if (updated > 0) {
-            log.info("{}: orderNo={}, traceId={}", successMsg, outTradeNo, traceId);
-        } else {
-            log.info("订单状态更新未生效（可能已被并发处理），忽略: orderNo={}, target={}, traceId={}",
-                    outTradeNo, target.name(), traceId);
+        try {
+            if (isStatus(cur, TradeStatusEnum.TRADE_PAID)) {
+                // 支付后全额退款导致的关闭（TRADE_CLOSED after paid），应记为已退款
+                orderStatusService.changeStatus(
+                        outTradeNo, OrderEventEnum.REFUND, "system-pay-callback",
+                        null, null, LocalDateTime.now()
+                );
+                log.info("订单全额退款完成（支付后关闭）: orderNo={}, traceId={}", outTradeNo, traceId);
+            } else if (isStatus(cur, TradeStatusEnum.TRADE_FINISHED)) {
+                // 已结算后全额退款导致的关闭，同样记为已退款
+                orderStatusService.changeStatus(
+                        outTradeNo, OrderEventEnum.REFUND, "system-pay-callback",
+                        null, null, LocalDateTime.now()
+                );
+                log.info("订单全额退款完成（结算后关闭）: orderNo={}, traceId={}", outTradeNo, traceId);
+            } else if (isStatus(cur, TradeStatusEnum.TRADE_WAIT_PAY)) {
+                // 未付款超时关闭
+                orderStatusService.changeStatus(outTradeNo, OrderEventEnum.CLOSE, "system-pay-callback");
+                log.info("订单超时未支付已关闭: orderNo={}, traceId={}", outTradeNo, traceId);
+            } else {
+                // 已关闭/退款中/已退款，幂等跳过
+                log.info("订单已处于退款/关闭终态，忽略关闭通知: orderNo={}, status={}, traceId={}", outTradeNo, cur, traceId);
+            }
+        } catch (BizError e) {
+            log.info("订单关闭/退款状态更新未生效（可能已被并发处理），忽略: orderNo={}, target={}, err={}",
+                    outTradeNo, cur, e.getMessage());
         }
     }
 

@@ -1,31 +1,25 @@
 server:
-  # HTTP 端口
   port: ${SERVER_PORT:9090}
 
 spring:
   application:
-    # 应用名，同时用作 Nacos Data ID 与 CosId 命名空间；可用 SPRING_APPLICATION_NAME 覆盖
     name: ${SPRING_APPLICATION_NAME:dextea-trade}
   config:
     import:
-      # 从 Nacos 拉取同名配置文件；本地无 Nacos 时忽略（optional:）
       - optional:nacos:${spring.application.name}.yaml?group=${NACOS_CONFIG_GROUP:DEFAULT_GROUP}
   nacos:
     config:
-      # Nacos 地址/命名空间/账号，留空则用默认值；生产环境通过环境变量注入
       server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
       namespace: ${NACOS_NAMESPACE:}
       username: ${NACOS_USERNAME:}
       password: ${NACOS_PASSWORD:}
   datasource:
-    # MySQL 连接，DB_* 环境变量覆盖默认连接参数
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:dextea}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      # Redis 连接，REDIS_* 环境变量覆盖默认值
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
@@ -39,19 +33,18 @@ cosid:
   snowflake:
     enabled: ${COSID_SNOWFLAKE_ENABLED:true}
     provider:
-      # 业务 ID 生成器，新增类型（退款单号、流水号等）在此追加条目，代码用 IdGeneratorProvider.getRequired(name) 获取
       order:
         namespace: ${COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE:${spring.application.name}}
 
 alipay:
-  openapi-gateway: ${ALIPAY_OPENAPI_GATEWAY:https://openapi.alipay.com}   # 支付宝网关（沙箱需替换）
-  app-id: ${ALIPAY_APP_ID:}                                             # 开放平台应用 AppId（使用支付时必填）
-  private-key: ${ALIPAY_PRIVATE_KEY:}                                   # 应用私钥（多行内容需用双引号包裹）
-  public-key: ${ALIPAY_PUBLIC_KEY:}                                     # 支付宝公钥（使用支付时必填）
-  subject: ${ALIPAY_SUBJECT:德贤茶庄订单}                                 # 订单标题前缀
-  product-code: ${ALIPAY_PRODUCT_CODE:JSAPI_PAY}                        # 支付产品码
-  force-amount: ${ALIPAY_FORCE_AMOUNT:0.01}                             # 开发/测试环境强制固定金额(元)；生产环境置空用真实金额
-  notify-url: ${ALIPAY_NOTIFY_URL:}                                     # 异步回调地址 notify_url；留空则不设置
+  gateway: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
+  app-id: ${ALIPAY_APP_ID}
+  private-key: ${ALIPAY_PRIVATE_KEY}
+  public-key: ${ALIPAY_PUBLIC_KEY}
+  subject: ${ALIPAY_SUBJECT:dextea-order}
+  product-code: ${ALIPAY_PRODUCT_CODE:JSAPI_PAY}
+  force-amount: ${ALIPAY_FORCE_AMOUNT:}
+  notify-url: ${ALIPAY_NOTIFY_URL:}
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
@@ -60,21 +53,12 @@ mybatis:
     map-underscore-to-camel-case: true
 
 rocketmq:
-  # 是否启动消费端；本地/测试默认关闭，生产环境置 true（ROCKETMQ_ENABLED=true）
-  enabled: ${ROCKETMQ_ENABLED:false}
-  # 实例接入点，格式为 host:port
-  endpoints: ${ROCKETMQ_ENDPOINTS:}
-  # 订阅的 Topic 名称（需提前在控制台创建）
-  topic: ${ROCKETMQ_TOPIC:}
-  # 消费者分组（需提前在控制台创建）
-  consumer-group: ${ROCKETMQ_CONSUMER_GROUP:}
-  # 订阅 Tag 过滤规则，默认 "*" 订阅所有 Tag
+  endpoints: ${ROCKETMQ_ENDPOINTS}
+  topic: ${ROCKETMQ_TOPIC}
+  consumer-group: ${ROCKETMQ_CONSUMER_GROUP}
   tag: ${ROCKETMQ_TAG:*}
-  # 公网访问实例时填写的实例 ID（namespace）
   namespace: ${ROCKETMQ_NAMESPACE:}
-  # 公网访问用户名（控制台获取）
   access-key: ${ROCKETMQ_ACCESS_KEY:}
-  # 公网访问密码（控制台获取）
   secret-key: ${ROCKETMQ_SECRET_KEY:}
 
 springdoc:

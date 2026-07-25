@@ -18,7 +18,10 @@ public enum OrderErrorCode implements BizErrorCode {
     DINING_METHOD_INVALID(1012, "用餐方式错误"),
     PAY_PLATFORM_NOT_SUPPORTED(1013, "暂不支持的支付方式"),
     ORDER_NOT_FOUND(1016, "订单不存在"),
-    ORDER_ACCESS_DENIED(1017, "订单不属于该顾客");
+    ORDER_ACCESS_DENIED(1017, "订单不属于该顾客"),
+    ORDER_STATUS_TRANSITION_INVALID(1018, "订单状态流转非法"),
+    ORDER_STATUS_CAS_FAILED(1019, "订单状态已变更，请刷新后重试"),
+    ORDER_LOCK_BUSY(1020, "系统繁忙，请稍后重试");
 
     private final int code;
 

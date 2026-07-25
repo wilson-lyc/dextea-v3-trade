@@ -67,7 +67,7 @@ Spring Boot 的“宽松绑定（Relaxed Binding）”允许你把配置键 `a.b
 | `NACOS_USERNAME` | （空） | ❌ | 用户名 |
 | `NACOS_PASSWORD` | （空） | ❌ | 密码 |
 | `NACOS_CONFIG_GROUP` | `DEFAULT_GROUP` | ❌ | 配置分组 |
-| `ALIPAY_OPENAPI_GATEWAY` | `https://openapi.alipay.com` | 否 | 网关 |
+| `ALIPAY_GATEWAY` | `https://openapi.alipay.com` | 否 | 网关 |
 | `ALIPAY_APP_ID` | （空） | ⚠️ 使用支付宝时必填 | 应用 ID |
 | `ALIPAY_PRIVATE_KEY` | （空） | ⚠️ 使用支付宝时必填 | 应用私钥（多行） |
 | `ALIPAY_PUBLIC_KEY` | （空） | ⚠️ 使用支付宝时必填 | 支付宝公钥 |

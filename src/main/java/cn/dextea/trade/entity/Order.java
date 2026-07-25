@@ -37,6 +37,13 @@ public class Order {
      */
     private Integer makingStatus;
 
+    /**
+     * 乐观锁版本号，对应库表 version 列。
+     * <p>每次状态变更 CAS 更新时 {@code version + 1}，配合 {@code WHERE version = ?} 条件防止 ABA 问题，
+     * 是状态不可逆流转的最终原子保障。</p>
+     */
+    private Integer version;
+
     private BigDecimal totalPrice;
 
     private Integer totalQuantity;
