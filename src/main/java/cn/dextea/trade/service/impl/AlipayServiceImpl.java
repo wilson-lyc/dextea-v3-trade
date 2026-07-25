@@ -1,7 +1,7 @@
 package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.model.CreateAlipayTradeRequest;
-import cn.dextea.trade.config.AlipaySdkConfig;
+import cn.dextea.trade.config.AlipayClientConfig;
 import cn.dextea.trade.error.OrderErrorCode;
 import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.service.AlipayService;
@@ -20,9 +20,9 @@ import java.math.BigDecimal;
 public class AlipayServiceImpl implements AlipayService {
 
     private final AlipayTradeApi tradeApi;
-    private final AlipaySdkConfig alipayConfig;
+    private final AlipayClientConfig alipayConfig;
 
-    public AlipayServiceImpl(ApiClient apiClient, AlipaySdkConfig alipayConfig) {
+    public AlipayServiceImpl(ApiClient apiClient, AlipayClientConfig alipayConfig) {
         this.tradeApi = new AlipayTradeApi(apiClient);
         this.alipayConfig = alipayConfig;
     }

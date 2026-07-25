@@ -1,11 +1,14 @@
-package cn.dextea.trade.mq;
+package cn.dextea.trade.service.impl;
 
 import cn.dextea.trade.entity.Order;
 import cn.dextea.trade.enums.OrderEventEnum;
 import cn.dextea.trade.enums.TradeStatusEnum;
 import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.mapper.OrderMapper;
+import cn.dextea.trade.model.PaymentNotifyData;
+import cn.dextea.trade.model.PaymentNotifyMessage;
 import cn.dextea.trade.service.OrderStatusService;
+import cn.dextea.trade.service.PaymentNotifyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,7 +53,8 @@ public class PaymentNotifyServiceImpl implements PaymentNotifyService {
 
         String tradeStatus = data.getTradeStatus();
         if (isPaid(tradeStatus)) {
-            // TRADE_FINISHED 表示交易已结算（退款窗口关闭），与 TRADE_SUCCESS 同属支付成功，但语义不同
+            // TRADE_FINISHED 表示交易已结算，与 TRADE_SUCCESS 同属支付成功，但语义不同；
+            // 已结算仍支持随时退款（TRADE_FINISHED → TRADE_REFUNDED），退款窗口不关闭
             OrderEventEnum event = "TRADE_FINISHED".equals(tradeStatus)
                     ? OrderEventEnum.PAY_AND_FINISH : OrderEventEnum.PAY;
             markOrderPaid(outTradeNo, data.getTradeNo(), event, tradeStatus, message.getTraceId());

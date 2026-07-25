@@ -1,4 +1,6 @@
-package cn.dextea.trade.mq;
+package cn.dextea.trade.service;
+
+import cn.dextea.trade.model.PaymentNotifyMessage;
 
 /**
  * 支付回单消息处理服务。

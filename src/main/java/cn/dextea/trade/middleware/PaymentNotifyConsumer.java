@@ -1,5 +1,8 @@
-package cn.dextea.trade.mq;
+package cn.dextea.trade.middleware;
 
+import cn.dextea.trade.config.RocketMqConfig;
+import cn.dextea.trade.model.PaymentNotifyMessage;
+import cn.dextea.trade.service.PaymentNotifyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +33,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class PaymentNotifyConsumer {
 
-    private final RocketMqProperties properties;
+    private final RocketMqConfig properties;
     private final PaymentNotifyService paymentNotifyService;
     private final ObjectMapper objectMapper;
 
@@ -46,11 +49,9 @@ public class PaymentNotifyConsumer {
         ClientServiceProvider provider = ClientServiceProvider.loadService();
         ClientConfigurationBuilder builder = ClientConfiguration.newBuilder()
                 .setEndpoints(properties.getEndpoints());
-        // 公网访问实例时需设置实例 ID（namespace）
         if (StringUtils.hasText(properties.getNamespace())) {
             builder.setNamespace(properties.getNamespace());
         }
-        // 公网访问时需设置访问凭证（用户名密码）
         if (StringUtils.hasText(properties.getAccessKey()) && StringUtils.hasText(properties.getSecretKey())) {
             SessionCredentialsProvider credentialsProvider =
                     new StaticSessionCredentialsProvider(properties.getAccessKey(), properties.getSecretKey());
@@ -87,11 +88,9 @@ public class PaymentNotifyConsumer {
             paymentNotifyService.handleNotify(message);
             return ConsumeResult.SUCCESS;
         } catch (IOException e) {
-            // 消息体无法解析为约定格式，属于不可恢复消息，确认以免阻塞队列
             log.error("支付回单消息体解析失败，确认消息以免阻塞队列: msgId={}", msgId, e);
             return ConsumeResult.SUCCESS;
         } catch (Exception e) {
-            // 业务处理异常（如数据库瞬时不可用），返回失败触发服务端重试
             log.error("支付回单处理失败，触发重试: msgId={}", msgId, e);
             return ConsumeResult.FAILURE;
         }

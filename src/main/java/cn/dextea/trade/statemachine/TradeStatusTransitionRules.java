@@ -6,26 +6,7 @@ import cn.dextea.trade.enums.TradeStatusEnum;
 import java.util.EnumMap;
 import java.util.Map;
 
-/**
- * 订单交易状态流转规则表（状态机白名单）。
- *
- * <p>以 {@code (当前状态, 事件) → 目标状态} 的映射定义所有合法流转路径。
- * 不在表中的组合视为非法流转，{@link #getTarget} 返回 {@code null}，
- * 由调用方拒绝执行，从根本上杜绝「已支付倒退到待支付」等逆向操作。</p>
- *
- * <p>当前定义的合法路径：</p>
- * <pre>
- *   WAIT_PAY  + PAY             → PAID
- *   WAIT_PAY  + PAY_AND_FINISH  → FINISHED
- *   WAIT_PAY  + CLOSE           → CLOSED
- *   PAID      + REFUND          → REFUNDED
- *   FINISHED  + REFUND          → REFUNDED
- * </pre>
- *
- * <p>新增状态或事件时，只需在此表追加条目，所有状态变更入口自动生效，
- * 无需修改散落在各 Service 中的判断分支。</p>
- */
-public final class TransitionRules {
+public final class TradeStatusTransitionRules {
 
     private static final Map<TradeStatusEnum, Map<OrderEventEnum, TradeStatusEnum>> RULES = new EnumMap<>(TradeStatusEnum.class);
 
@@ -48,7 +29,7 @@ public final class TransitionRules {
         RULES.put(TradeStatusEnum.TRADE_FINISHED, fromFinished);
     }
 
-    private TransitionRules() {
+    private TradeStatusTransitionRules() {
     }
 
     /**

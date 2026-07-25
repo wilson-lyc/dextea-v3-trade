@@ -15,7 +15,7 @@ import cn.dextea.trade.model.OrderSummary;
 import cn.dextea.trade.model.OrderDetailItem;
 import cn.dextea.trade.model.OrderDetailResponse;
 import cn.dextea.trade.model.StoreInfo;
-import cn.dextea.trade.config.AlipaySdkConfig;
+import cn.dextea.trade.config.AlipayClientConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Customer;
@@ -95,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
     private final ObjectMapper objectMapper;
     private final IdGeneratorProvider idGeneratorProvider;
     private final AlipayService alipayService;
-    private final AlipaySdkConfig alipayConfig;
+    private final AlipayClientConfig alipayConfig;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem:";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);

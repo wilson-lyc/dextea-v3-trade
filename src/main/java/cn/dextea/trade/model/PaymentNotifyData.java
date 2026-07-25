@@ -1,13 +1,8 @@
-package cn.dextea.trade.mq;
+package cn.dextea.trade.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-/**
- * 支付回单中的业务数据字段（{@link PaymentNotifyMessage#data}）。
- *
- * <p>字段名采用支付平台异步通知的 snake_case 命名，通过 {@link JsonProperty} 映射到 Java 属性。</p>
- */
 @Data
 public class PaymentNotifyData {
 

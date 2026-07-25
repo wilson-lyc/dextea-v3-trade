@@ -10,7 +10,7 @@ import cn.dextea.trade.lock.OrderLockService;
 import cn.dextea.trade.mapper.OrderMapper;
 import cn.dextea.trade.mapper.OrderStatusLogMapper;
 import cn.dextea.trade.service.OrderStatusService;
-import cn.dextea.trade.statemachine.TransitionRules;
+import cn.dextea.trade.statemachine.TradeStatusTransitionRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,18 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-/**
- * 订单状态变更统一实现：Redis 锁 + 状态机白名单 + 数据库 CAS 三层组合。
- *
- * <p>这是「已支付不会倒退到待支付」的结构性保障。三层职责：
- * <ul>
- *     <li><b>Redis 锁</b>：串行化同一订单的并发请求，减少 CAS 冲突。失效时 CAS 兜底。</li>
- *     <li><b>状态机白名单</b>：内存快速判断 {@code (当前状态, 事件)} 是否合法流转，
- *         非法组合直接拒绝。流转规则集中在 {@link TransitionRules}，新增状态/事件只改一处。</li>
- *     <li><b>CAS UPDATE</b>：最终原子保障。{@code WHERE trade_status=? AND version=?} 条件
- *         保证只有当前状态与版本都匹配时才更新，100% 防并发覆盖，防 ABA。</li>
- * </ul>
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,7 +41,7 @@ public class OrderStatusServiceImpl implements OrderStatusService {
             TradeStatusEnum currentStatus = TradeStatusEnum.of(order.getTradeStatus());
 
             // 2. 状态机校验：查询 (当前状态, 事件) → 目标状态，不在白名单则拒绝
-            TradeStatusEnum targetStatus = TransitionRules.getTarget(currentStatus, event);
+            TradeStatusEnum targetStatus = TradeStatusTransitionRules.getTarget(currentStatus, event);
             if (targetStatus == null) {
                 log.warn("非法状态流转被拒绝: orderNo={}, current={}, event={}", orderNo, currentStatus, event);
                 throw new BizError(OrderErrorCode.ORDER_STATUS_TRANSITION_INVALID,

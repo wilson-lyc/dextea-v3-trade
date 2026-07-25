@@ -1,5 +1,6 @@
-package cn.dextea.trade.mq;
+package cn.dextea.trade.model;
 
+import cn.dextea.trade.model.PaymentNotifyData;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 

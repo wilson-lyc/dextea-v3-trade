@@ -34,9 +34,9 @@ flowchart TD
 
 | 环节 | 类 | 职责 |
 |------|----|------|
-| 消费接入 | `mq/PaymentNotifyConsumer` | 订阅 Topic、反序列化、重试与确认 |
-| 语义映射 | `mq/PaymentNotifyServiceImpl` | 回单 `trade_status` → 事件枚举 |
-| 状态机 | `statemachine/TransitionRules` | `(当前状态, 事件) → 目标状态` 白名单 |
+| 消费接入 | `middleware/PaymentNotifyConsumer` | 订阅 Topic、反序列化、重试与确认 |
+| 语义映射 | `service/impl/PaymentNotifyServiceImpl` | 回单 `trade_status` → 事件枚举 |
+| 状态机 | `statemachine/TradeStatusTransitionRules` | `(当前状态, 事件) → 目标状态` 白名单 |
 | 分布式锁 | `lock/OrderLockService` | 串行化同订单并发请求 |
 | 统一入口 | `service/impl/OrderStatusServiceImpl` | 串联三层防护 + 审计日志 |
 | 持久层 | `mapper/OrderMapper#updateStatusCas` | 带版本号的乐观更新 |
@@ -63,10 +63,10 @@ flowchart TD
 | 平台 `trade_status` | 语义 | 映射事件 |
 |---------------------|------|----------|
 | `TRADE_SUCCESS` | 支付成功 | `PAY`（待支付 → 已支付） |
-| `TRADE_FINISHED` | 交易结算（退款窗口关闭） | `PAY_AND_FINISH`（待支付 → 已结算） |
+| `TRADE_FINISHED` | 交易结算（仍支持随时退款） | `PAY_AND_FINISH`（待支付 → 已结算） |
 | `TRADE_CLOSED` | 关闭 | 按当前状态再分：`WAIT_PAY` → `CLOSE`（未付款关闭）；`PAID`/`FINISHED` → `REFUND`（支付后全额退款） |
 
-本类**只做语义映射**，不再散落各种状态判断分支；所有「能不能变、变成什么」的规则都下沉到 `TransitionRules`。
+本类**只做语义映射**，不再散落各种状态判断分支；所有「能不能变、变成什么」的规则都下沉到 `TradeStatusTransitionRules`。
 
 ### 2.3 三层防护（核心）
 
@@ -75,7 +75,7 @@ flowchart TD
 ```java
 orderLockService.executeWithLock(orderNo, () -> {
     Order order = orderMapper.selectByOrderNo(orderNo);          // 查当前状态
-    TradeStatusEnum target = TransitionRules.getTarget(current, event); // ② 状态机
+    TradeStatusEnum target = TradeStatusTransitionRules.getTarget(current, event); // ② 状态机
     if (target == null) throw 非法流转;
     int rows = orderMapper.updateStatusCas(..., currentVersion); // ③ CAS
     if (rows == 0) throw CAS 冲突;
@@ -89,7 +89,7 @@ orderLockService.executeWithLock(orderNo, () -> {
 - 释放时用 Lua 脚本校验 `value` 后才 `DEL`，避免误删别人的锁。
 - 作用：把同一订单的并发请求串行化，减少下游 CAS 冲突。
 
-**② 状态机白名单**（`statemachine/TransitionRules`）
+**② 状态机白名单**（`statemachine/TradeStatusTransitionRules`）
 - 集中定义全部合法路径：
 
 ```text
