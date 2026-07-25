@@ -23,8 +23,17 @@ public class OrderSummary {
     @Schema(description = "下单时间", example = "2026-04-23T15:30:00")
     private LocalDateTime orderTime;
 
-    @Schema(description = "订单状态：0-待支付 1-已支付 2-已退款 3-已关闭", example = "1")
-    private Integer status;
+    @Schema(description = "交易状态（支付维度）：0-待支付 1-已支付 2-已结算 3-已关闭 4-退款中 5-已退款", example = "1")
+    private Integer tradeStatus;
+
+    @Schema(description = "交易状态文案", example = "已支付")
+    private String tradeStatusDesc;
+
+    @Schema(description = "制作进度状态：0-待制作 1-制作中 2-制作完成 3-已交付", example = "0")
+    private Integer makingStatus;
+
+    @Schema(description = "制作进度文案", example = "待制作")
+    private String makingStatusDesc;
 
     @Schema(description = "订单总价", example = "99.00")
     private BigDecimal totalPrice;

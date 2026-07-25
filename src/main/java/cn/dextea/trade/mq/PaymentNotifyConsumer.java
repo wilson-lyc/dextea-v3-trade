@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.ClientConfiguration;
+import org.apache.rocketmq.client.apis.ClientConfigurationBuilder;
 import org.apache.rocketmq.client.apis.ClientException;
 import org.apache.rocketmq.client.apis.ClientServiceProvider;
 import org.apache.rocketmq.client.apis.SessionCredentialsProvider;
@@ -19,6 +20,7 @@ import org.springframework.util.StringUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
@@ -56,7 +58,7 @@ public class PaymentNotifyConsumer {
         validateConfig();
 
         ClientServiceProvider provider = ClientServiceProvider.loadService();
-        ClientConfiguration.Builder builder = ClientConfiguration.newBuilder()
+        ClientConfigurationBuilder builder = ClientConfiguration.newBuilder()
                 .setEndpoints(properties.getEndpoints());
         // 公网访问实例时需设置实例 ID（namespace）
         if (StringUtils.hasText(properties.getNamespace())) {
@@ -91,7 +93,10 @@ public class PaymentNotifyConsumer {
     private ConsumeResult handle(MessageView messageView) {
         String msgId = String.valueOf(messageView.getMessageId());
         try {
-            String body = new String(messageView.getBody(), StandardCharsets.UTF_8);
+            ByteBuffer bodyBuf = messageView.getBody();
+            byte[] bodyBytes = new byte[bodyBuf.remaining()];
+            bodyBuf.get(bodyBytes);
+            String body = new String(bodyBytes, StandardCharsets.UTF_8);
             PaymentNotifyMessage message = objectMapper.readValue(body, PaymentNotifyMessage.class);
             paymentNotifyService.handleNotify(message);
             return ConsumeResult.SUCCESS;

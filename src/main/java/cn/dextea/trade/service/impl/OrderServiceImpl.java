@@ -27,7 +27,8 @@ import cn.dextea.trade.entity.Store;
 import cn.dextea.trade.enums.CustomizationOptionGlobalStatusEnum;
 import cn.dextea.trade.enums.CustomizationStatusEnum;
 import cn.dextea.trade.enums.DiningMethodEnum;
-import cn.dextea.trade.enums.OrderStatusEnum;
+import cn.dextea.trade.enums.MakingStatusEnum;
+import cn.dextea.trade.enums.TradeStatusEnum;
 import cn.dextea.trade.enums.PayMethodEnum;
 import cn.dextea.trade.enums.PlatformEnum;
 import cn.dextea.trade.enums.ProductGlobalStatusEnum;
@@ -167,7 +168,8 @@ public class OrderServiceImpl implements OrderService {
                 .idempotencyKey(idempotencyKey)
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
-                .status(OrderStatusEnum.PENDING.getCode())
+                .tradeStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode())
+                .makingStatus(MakingStatusEnum.MAKING_WAIT.getCode())
                 .payMethod(request.getPlatform().getPayMethod().getCode())
                 .diningMethod(diningMethod.getCode())
                 .note(request.getNote())
@@ -271,7 +273,10 @@ public class OrderServiceImpl implements OrderService {
             result.add(OrderSummary.builder()
                     .storeName(store != null ? store.getName() : null)
                     .orderTime(order.getCreatedAt())
-                    .status(order.getStatus())
+                    .tradeStatus(order.getTradeStatus())
+                    .tradeStatusDesc(safeEnumDesc(() -> TradeStatusEnum.of(order.getTradeStatus()).getDescription()))
+                    .makingStatus(order.getMakingStatus())
+                    .makingStatusDesc(safeEnumDesc(() -> MakingStatusEnum.of(order.getMakingStatus()).getDescription()))
                     .totalPrice(order.getTotalPrice())
                     .totalQuantity(order.getTotalQuantity())
                     .coverUrls(coverUrls)
@@ -336,8 +341,10 @@ public class OrderServiceImpl implements OrderService {
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
-                .status(order.getStatus())
-                .statusDesc(safeEnumDesc(() -> OrderStatusEnum.of(order.getStatus()).getDescription()))
+                .tradeStatus(order.getTradeStatus())
+                .tradeStatusDesc(safeEnumDesc(() -> TradeStatusEnum.of(order.getTradeStatus()).getDescription()))
+                .makingStatus(order.getMakingStatus())
+                .makingStatusDesc(safeEnumDesc(() -> MakingStatusEnum.of(order.getMakingStatus()).getDescription()))
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
                 .payMethod(order.getPayMethod())

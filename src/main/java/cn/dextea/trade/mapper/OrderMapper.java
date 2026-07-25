@@ -20,8 +20,8 @@ public interface OrderMapper {
      * @param order 订单
      * @return 影响行数
      */
-    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, status, pay_method, dining_method, note, total_price, total_quantity) " +
-            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{status}, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity})")
+    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, trade_status, making_status, pay_method, dining_method, note, total_price, total_quantity) " +
+            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{tradeStatus}, #{makingStatus}, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Order order);
 
@@ -71,11 +71,11 @@ public interface OrderMapper {
      * @param expectedStatus 期望的当前状态（待支付）
      * @return 影响行数（0 表示条件未命中，订单已被处理或状态已变更）
      */
-    @Update("UPDATE orders SET status = #{status}, trade_no = #{tradeNo}, paid_at = NOW(), updated_at = NOW() " +
-            "WHERE order_no = #{orderNo} AND status = #{expectedStatus}")
+    @Update("UPDATE orders SET trade_status = #{targetStatus}, trade_no = #{tradeNo}, paid_at = NOW(), updated_at = NOW() " +
+            "WHERE order_no = #{orderNo} AND trade_status = #{expectedStatus}")
     int markPaid(@Param("orderNo") String orderNo,
                  @Param("tradeNo") String tradeNo,
-                 @Param("status") int status,
+                 @Param("targetStatus") int targetStatus,
                  @Param("expectedStatus") int expectedStatus);
 
     /**
@@ -86,11 +86,11 @@ public interface OrderMapper {
      * @param expectedStatus 期望的当前状态
      * @return 影响行数（0 表示条件未命中）
      */
-    @Update("UPDATE orders SET status = #{status}, updated_at = NOW() " +
-            "WHERE order_no = #{orderNo} AND status = #{expectedStatus}")
-    int updateStatusByOrderNo(@Param("orderNo") String orderNo,
-                              @Param("status") int status,
-                              @Param("expectedStatus") int expectedStatus);
+    @Update("UPDATE orders SET trade_status = #{targetStatus}, updated_at = NOW() " +
+            "WHERE order_no = #{orderNo} AND trade_status = #{expectedStatus}")
+    int updateTradeStatusByOrderNo(@Param("orderNo") String orderNo,
+                                   @Param("targetStatus") int targetStatus,
+                                   @Param("expectedStatus") int expectedStatus);
 
     /**
      * 按用户ID查询指定时间之后创建的订单（按下单时间倒序）

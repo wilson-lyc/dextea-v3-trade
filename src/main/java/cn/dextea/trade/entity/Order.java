@@ -26,7 +26,16 @@ public class Order {
 
     private Long storeId;
 
-    private Integer status;
+    /**
+     * 交易（支付）状态，取值见 {@link cn.dextea.trade.enums.TradeStatusEnum}，对应库表 trade_status 列。
+     */
+    private Integer tradeStatus;
+
+    /**
+     * 制作进度状态，取值见 {@link cn.dextea.trade.enums.MakingStatusEnum}，对应库表 making_status 列。
+     * 与支付状态相互独立，描述门店侧制作与交付过程。
+     */
+    private Integer makingStatus;
 
     private BigDecimal totalPrice;
 
