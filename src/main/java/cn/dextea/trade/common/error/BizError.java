@@ -18,6 +18,16 @@ public class BizError extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+    public BizError(BizErrorCode errorCode, Throwable cause) {
+        super(errorCode.getMessage(), cause);
+        this.errorCode = errorCode;
+    }
+
+    public BizError(BizErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
+
     public int getCode() {
         return errorCode.getCode();
     }
