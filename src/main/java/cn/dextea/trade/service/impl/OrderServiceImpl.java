@@ -10,12 +10,10 @@ import cn.dextea.trade.model.CreateOrderUnavailable;
 import cn.dextea.trade.model.CreateOrderProductItem;
 import cn.dextea.trade.model.CreateOrderUnavailableCustomization;
 import cn.dextea.trade.model.CreateOrderUnavailableProduct;
-import cn.dextea.trade.model.CreateAlipayTradeRequest;
 import cn.dextea.trade.model.OrderSummary;
 import cn.dextea.trade.model.OrderDetailItem;
 import cn.dextea.trade.model.OrderDetailResponse;
 import cn.dextea.trade.model.StoreInfo;
-import cn.dextea.trade.config.AlipayClientConfig;
 import cn.dextea.trade.entity.Customization;
 import cn.dextea.trade.entity.CustomizationOption;
 import cn.dextea.trade.entity.Customer;
@@ -29,8 +27,11 @@ import cn.dextea.trade.enums.CustomizationStatusEnum;
 import cn.dextea.trade.enums.DiningMethodEnum;
 import cn.dextea.trade.enums.MakingStatusEnum;
 import cn.dextea.trade.enums.TradeStatusEnum;
-import cn.dextea.trade.enums.PayMethodEnum;
-import cn.dextea.trade.enums.PlatformEnum;
+import cn.dextea.trade.pay.application.PaymentService;
+import cn.dextea.trade.pay.application.command.CreatePaymentCommand;
+import cn.dextea.trade.pay.domain.exception.PayErrorCode;
+import cn.dextea.trade.pay.domain.model.PaymentMethodEnum;
+import cn.dextea.trade.pay.domain.model.PlatformEnum;
 import cn.dextea.trade.enums.ProductGlobalStatusEnum;
 import cn.dextea.trade.enums.ProductStoreStatusEnum;
 import cn.dextea.trade.enums.StoreStatusEnum;
@@ -47,7 +48,6 @@ import cn.dextea.trade.mapper.ProductImageMapper;
 import cn.dextea.trade.mapper.ProductMapper;
 import cn.dextea.trade.mapper.ProductStoreStatusMapper;
 import cn.dextea.trade.mapper.StoreMapper;
-import cn.dextea.trade.service.AlipayService;
 import cn.dextea.trade.service.OrderService;
 import cn.dextea.trade.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
@@ -94,8 +94,7 @@ public class OrderServiceImpl implements OrderService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final IdGeneratorProvider idGeneratorProvider;
-    private final AlipayService alipayService;
-    private final AlipayClientConfig alipayConfig;
+    private final PaymentService paymentService;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem:";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
@@ -127,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
         // 0. 支付方式拦截：微信支付暂未实现，识别到后直接抛业务异常
         if (PlatformEnum.WEIXIN.equals(request.getPlatform())) {
-            throw new BizError(OrderErrorCode.PAY_PLATFORM_NOT_SUPPORTED, "微信支付暂不支持");
+            throw new BizError(PayErrorCode.PAY_PLATFORM_NOT_SUPPORTED, "微信支付暂不支持");
         }
 
         // 校验用餐方式合法性
@@ -200,20 +199,19 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. 支付宝支付：创建交易并回填 trade_no。
         //    幂等保证：已存在且已生成 trade_no 则跳过；否则用订单号(out_trade_no)创建，失败不缓存可重试。
-        if (Integer.valueOf(PayMethodEnum.ALIPAY.getCode()).equals(order.getPayMethod()) && order.getTradeNo() == null) {
+        if (Integer.valueOf(PaymentMethodEnum.ALIPAY.getCode()).equals(order.getPayMethod()) && order.getTradeNo() == null) {
             Customer customer = customerMapper.selectById(order.getCustomerId());
             if (customer == null || customer.getAlipayOpenId() == null) {
-                throw new BizError(OrderErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
+                throw new BizError(PayErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
             }
-            CreateAlipayTradeRequest alipayRequest = CreateAlipayTradeRequest.builder()
+            CreatePaymentCommand paymentCommand = CreatePaymentCommand.builder()
                     .orderNo(order.getOrderNo())
                     .totalPrice(order.getTotalPrice())
-                    .subject(alipayConfig.getSubject())
-                    .appId(alipayConfig.getAppId())
-                    .productCode(alipayConfig.getProductCode())
-                    .customerAlipayOpenId(customer.getAlipayOpenId())
+                    .customerOpenId(customer.getAlipayOpenId())
+                    .totalQuantity(order.getTotalQuantity())
+                    .paymentMethod(PaymentMethodEnum.ALIPAY)
                     .build();
-            String tradeNo = alipayService.createTrade(alipayRequest);
+            String tradeNo = paymentService.createPayment(paymentCommand);
             order.setTradeNo(tradeNo);
             orderMapper.updateTradeNo(order.getId(), tradeNo);
         }
@@ -348,7 +346,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
                 .payMethod(order.getPayMethod())
-                .payMethodDesc(safeEnumDesc(() -> PayMethodEnum.of(order.getPayMethod()).getDescription()))
+                .payMethodDesc(safeEnumDesc(() -> PaymentMethodEnum.of(order.getPayMethod()).getDescription()))
                 .diningMethod(order.getDiningMethod())
                 .diningMethodDesc(safeEnumDesc(() -> DiningMethodEnum.of(order.getDiningMethod()).getDescription()))
                 .note(order.getNote())

@@ -1,20 +1,23 @@
-package cn.dextea.trade.config;
+package cn.dextea.trade.pay.infrastructure.config;
 
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import cn.dextea.trade.factory.AlipayClientFactory;
-
 import java.math.BigDecimal;
 
+/**
+ * 支付宝网关配置，配置前缀为 alipay。
+ */
+@Slf4j
 @Data
 @Component
 @ConfigurationProperties(prefix = "alipay")
-public class AlipayClientConfig {
+public class AlipayGatewayConfig {
 
     private String gateway = "https://openapi.alipay.com";
 
@@ -37,6 +40,14 @@ public class AlipayClientConfig {
     private String forceAmount;
 
     public BigDecimal getForceAmount() {
-        return AlipayClientFactory.parseAmount(forceAmount);
+        if (forceAmount == null || forceAmount.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(forceAmount.trim());
+        } catch (NumberFormatException e) {
+            log.warn("支付宝强制金额 alipay.force-amount 值非法，已忽略：{}", forceAmount);
+            return null;
+        }
     }
 }

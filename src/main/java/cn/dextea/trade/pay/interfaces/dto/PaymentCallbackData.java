@@ -1,10 +1,13 @@
-package cn.dextea.trade.model;
+package cn.dextea.trade.pay.interfaces.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+/**
+ * 支付平台回单业务数据。
+ */
 @Data
-public class PaymentNotifyData {
+public class PaymentCallbackData {
 
     /** 通知类型，如 trade_status_sync */
     @JsonProperty("notify_type")

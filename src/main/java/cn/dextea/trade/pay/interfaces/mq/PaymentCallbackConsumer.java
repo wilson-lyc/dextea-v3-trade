@@ -1,8 +1,8 @@
-package cn.dextea.trade.middleware;
+package cn.dextea.trade.pay.interfaces.mq;
 
-import cn.dextea.trade.config.RocketMqConfig;
-import cn.dextea.trade.model.PaymentNotifyMessage;
-import cn.dextea.trade.service.PaymentNotifyService;
+import cn.dextea.trade.pay.application.PaymentCallbackService;
+import cn.dextea.trade.pay.infrastructure.config.RocketMqConfig;
+import cn.dextea.trade.pay.interfaces.dto.PaymentCallbackMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +28,16 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+/**
+ * 支付回单 RocketMQ 消费入口。
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PaymentNotifyConsumer {
+public class PaymentCallbackConsumer {
 
     private final RocketMqConfig properties;
-    private final PaymentNotifyService paymentNotifyService;
+    private final PaymentCallbackService paymentCallbackService;
     private final ObjectMapper objectMapper;
 
     @Value("${spring.application.name:dextea-trade}")
@@ -84,8 +87,8 @@ public class PaymentNotifyConsumer {
             byte[] bodyBytes = new byte[bodyBuf.remaining()];
             bodyBuf.get(bodyBytes);
             String body = new String(bodyBytes, StandardCharsets.UTF_8);
-            PaymentNotifyMessage message = objectMapper.readValue(body, PaymentNotifyMessage.class);
-            paymentNotifyService.handleNotify(message);
+            PaymentCallbackMessage message = objectMapper.readValue(body, PaymentCallbackMessage.class);
+            paymentCallbackService.handleCallback(message);
             return ConsumeResult.SUCCESS;
         } catch (IOException e) {
             log.error("支付回单消息体解析失败，确认消息以免阻塞队列: msgId={}", msgId, e);

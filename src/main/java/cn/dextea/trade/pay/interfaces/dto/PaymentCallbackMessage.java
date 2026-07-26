@@ -1,13 +1,12 @@
-package cn.dextea.trade.model;
+package cn.dextea.trade.pay.interfaces.dto;
 
-import cn.dextea.trade.model.PaymentNotifyData;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Map;
 
 /**
- * 支付平台回单消息体（MQ 消息 body 反序列化目标）。
+ * 支付平台回单消息体，作为 MQ 消息 body 反序列化目标。
  *
  * <p>消息由支付平台推送到 RocketMQ，结构示例如下：
  * <pre>
@@ -25,7 +24,7 @@ import java.util.Map;
  * </p>
  */
 @Data
-public class PaymentNotifyMessage {
+public class PaymentCallbackMessage {
 
     private String id;
 
@@ -43,5 +42,5 @@ public class PaymentNotifyMessage {
     private Map<String, String> headers;
 
     /** 支付平台解析后的业务数据 */
-    private PaymentNotifyData data;
+    private PaymentCallbackData data;
 }
