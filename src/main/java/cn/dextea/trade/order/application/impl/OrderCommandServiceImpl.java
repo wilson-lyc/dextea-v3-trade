@@ -7,8 +7,6 @@ import cn.dextea.trade.order.application.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.command.OrderProductCommand;
 import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
-import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
-import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderCreateResult;
@@ -100,21 +98,6 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         }
 
         // 3. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
-        Order order = Order.builder()
-                .orderNo(orderIdGeneratorPort.generateOrderNo())
-                .tradeNo(null)
-                .idempotencyKey(idempotencyKey)
-                .customerId(command.getCustomerId())
-                .storeId(command.getStoreId())
-                .tradeStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode())
-                .makingStatus(MakingStatusEnum.MAKING_WAIT.getCode())
-                .payMethod(command.getPlatform().getCode())
-                .diningMethod(diningMethod.getCode())
-                .note(command.getNote())
-                .totalPrice(summary.getTotalPrice())
-                .totalQuantity(summary.getTotalQuantity())
-                .build();
-
         List<OrderItem> items = summary.getProducts().stream()
                 .map(p -> OrderItem.builder()
                         .productId(p.getProductId())
@@ -126,7 +109,18 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                         .subtotal(p.getSubtotal())
                         .build())
                 .toList();
-        order.setItems(items);
+
+        Order order = Order.createInitial(
+                orderIdGeneratorPort.generateOrderNo(),
+                idempotencyKey,
+                command.getCustomerId(),
+                command.getStoreId(),
+                command.getPlatform().getCode(),
+                diningMethod.getCode(),
+                command.getNote(),
+                summary.getTotalPrice(),
+                summary.getTotalQuantity(),
+                items);
 
         boolean newlyCreated = true;
         try {
@@ -150,7 +144,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             String tradeNo = paymentClientPort.createPayment(
                     order.getOrderNo(), order.getTotalPrice(), customer.getAlipayOpenId(),
                     order.getTotalQuantity(), order.getPayMethod());
-            order.setTradeNo(tradeNo);
+            order.markTradeNo(tradeNo);
             orderRepository.updateTradeNo(order.getId(), tradeNo);
         }
 

@@ -20,7 +20,9 @@ README（根目录）
         │        │
         │        └── （健康检查 / 回滚 等运维要点）
         │
-        └── docs/Order-Creation-Flow-Analysis.md  ──► 业务流程与已知问题
+        ├── docs/Order-Creation-Flow-Analysis.md  ──► 业务流程与已知问题
+        │
+        └── docs/DDD-Refactor-Improvement-Analysis.md ──► DDD 重构进一步优化与改造分析
 ```
 
 ## 建议阅读顺序
@@ -42,6 +44,7 @@ README（根目录）
 | [Environment Variables](Environment-Variables.md) | 容器化部署者 | 命名规则、完整环境变量清单、最小可运行示例 |
 | [Nacos Configuration](Nacos.md) | 配置中心管理者 | 接入方式、Data ID、配置示例、与环境变量优先级 |
 | [Order Creation Flow Analysis](Order-Creation-Flow-Analysis.md) | 开发者 | 下单链路、幂等设计、已知 Bug 与改进点 |
+| [DDD Refactor Improvement Analysis](DDD-Refactor-Improvement-Analysis.md) | 开发者 / 架构 | DDD 重构后的进一步优化点：库存、事务、ACL、聚合根、上下文映射 |
 
 ## 两种配置来源的关系
 

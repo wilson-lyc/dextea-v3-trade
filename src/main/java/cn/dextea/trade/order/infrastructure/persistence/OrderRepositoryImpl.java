@@ -6,6 +6,7 @@ import cn.dextea.trade.order.domain.model.OrderStatusLog;
 import cn.dextea.trade.order.domain.port.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final OrderStatusLogMapper orderStatusLogMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Order save(Order order) {
         orderMapper.insert(order);
         if (order.getItems() != null && !order.getItems().isEmpty()) {

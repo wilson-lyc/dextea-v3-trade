@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.service;
 
 import cn.dextea.trade.catalog.domain.enums.CustomizationOptionGlobalStatusEnum;
+import cn.dextea.trade.catalog.domain.enums.CustomizationOptionStoreStatusEnum;
 import cn.dextea.trade.catalog.domain.enums.CustomizationStatusEnum;
 import cn.dextea.trade.catalog.domain.enums.ProductGlobalStatusEnum;
 import cn.dextea.trade.catalog.domain.enums.ProductStoreStatusEnum;
@@ -357,7 +358,7 @@ public class OrderPlacementDomainService {
         boolean globalDisabled = option.getStatus() == null
                 || option.getStatus() != CustomizationOptionGlobalStatusEnum.ACTIVE.getCode();
         boolean storeDisabled = storeStatus == null
-                || storeStatus != CustomizationOptionGlobalStatusEnum.ACTIVE.getCode();
+                || storeStatus != CustomizationOptionStoreStatusEnum.AVAILABLE.getCode();
         return globalDisabled || storeDisabled;
     }
 

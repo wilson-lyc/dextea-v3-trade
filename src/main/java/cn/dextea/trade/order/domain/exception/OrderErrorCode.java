@@ -18,7 +18,11 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_ACCESS_DENIED(1017, "订单不属于该顾客"),
     ORDER_STATUS_TRANSITION_INVALID(1018, "订单状态流转非法"),
     ORDER_STATUS_CAS_FAILED(1019, "订单状态已变更，请刷新后重试"),
-    ORDER_LOCK_BUSY(1020, "系统繁忙，请稍后重试");
+    ORDER_LOCK_BUSY(1020, "系统繁忙，请稍后重试"),
+    ORDER_ITEMS_EMPTY(1021, "订单明细不能为空"),
+    ORDER_PRICE_INVALID(1022, "订单金额非法"),
+    ORDER_QUANTITY_INVALID(1023, "订单数量非法"),
+    ORDER_TRADE_NO_ALREADY_SET(1024, "trade_no 已存在，不可重复设置");
 
     private final int code;
 
