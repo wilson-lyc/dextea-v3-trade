@@ -12,6 +12,11 @@ import cn.dextea.trade.catalog.domain.model.Store;
 
 import java.util.List;
 
+/**
+ * 商品目录只读仓储端口：对外暴露批量查询参考数据的契约。
+ * 由基础设施层 {@link cn.dextea.trade.catalog.infrastructure.persistence.CatalogPersistenceAdapter}
+ * 实现，保持领域层不依赖持久化细节。
+ */
 public interface CatalogRepository {
 
     List<Product> findProductsByIds(List<Long> ids);

@@ -1,4 +1,4 @@
-package cn.dextea.trade.catalog.domain.service.impl;
+package cn.dextea.trade.catalog.infrastructure.persistence;
 
 import cn.dextea.trade.catalog.domain.model.Customization;
 import cn.dextea.trade.catalog.domain.model.CustomizationOption;
@@ -10,24 +10,27 @@ import cn.dextea.trade.catalog.domain.model.ProductImage;
 import cn.dextea.trade.catalog.domain.model.ProductStoreStatus;
 import cn.dextea.trade.catalog.domain.model.Store;
 import cn.dextea.trade.catalog.domain.repository.CatalogRepository;
-import cn.dextea.trade.catalog.domain.service.CatalogQueryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Service
+/**
+ * 商品目录只读仓储适配：聚合单一 MyBatis Mapper，实现领域层 {@link CatalogRepository} 端口。
+ * 空集合守卫集中在此处（唯一一层），避免重复判断。
+ */
+@Repository
 @RequiredArgsConstructor
-public class CatalogQueryServiceImpl implements CatalogQueryService {
+public class CatalogPersistenceAdapter implements CatalogRepository {
 
-    private final CatalogRepository catalogRepository;
+    private final CatalogMapper catalogMapper;
 
     @Override
     public List<Product> findProductsByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findProductsByIds(ids);
+        return catalogMapper.selectProductsByIds(ids);
     }
 
     @Override
@@ -35,7 +38,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         if (productIds == null || productIds.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findCoverImagesByProductIds(productIds);
+        return catalogMapper.selectCoverImagesByProductIds(productIds);
     }
 
     @Override
@@ -43,7 +46,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findGalleriesByIds(ids);
+        return catalogMapper.selectGalleriesByIds(ids);
     }
 
     @Override
@@ -51,7 +54,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         if (productIds == null || productIds.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findProductStoreStatus(productIds, storeId);
+        return catalogMapper.selectProductStoreStatusByProductIdsAndStoreId(productIds, storeId);
     }
 
     @Override
@@ -59,7 +62,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findCustomizationsByIds(ids);
+        return catalogMapper.selectCustomizationsByIds(ids);
     }
 
     @Override
@@ -67,7 +70,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findCustomizationOptionsByIds(ids);
+        return catalogMapper.selectCustomizationOptionsByIds(ids);
     }
 
     @Override
@@ -75,16 +78,16 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         if (optionIds == null || optionIds.isEmpty()) {
             return List.of();
         }
-        return catalogRepository.findOptionStoreStatus(optionIds, storeId);
+        return catalogMapper.selectOptionStoreStatusByOptionIdsAndStoreId(optionIds, storeId);
     }
 
     @Override
     public Store findStoreById(Long id) {
-        return catalogRepository.findStoreById(id);
+        return catalogMapper.selectStoreById(id);
     }
 
     @Override
     public Customer findCustomerById(Long id) {
-        return catalogRepository.findCustomerById(id);
+        return catalogMapper.selectCustomerById(id);
     }
 }
