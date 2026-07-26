@@ -47,7 +47,7 @@ alipay:
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
-  type-aliases-package: cn.dextea.trade.entity
+  type-aliases-package: cn.dextea.trade.catalog.domain.model,cn.dextea.trade.order.domain.model
   configuration:
     map-underscore-to-camel-case: true
 
@@ -68,5 +68,5 @@ springdoc:
     enabled: true
     path: /docs/ui
     disable-swagger-default-url: true
-  packages-to-scan: cn.dextea.trade.controller
+  packages-to-scan: cn.dextea.trade.controller,cn.dextea.trade.order.interfaces.controller
   paths-to-match: /api/**
