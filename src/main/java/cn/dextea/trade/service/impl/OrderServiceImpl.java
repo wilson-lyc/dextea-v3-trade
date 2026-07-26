@@ -168,7 +168,7 @@ public class OrderServiceImpl implements OrderService {
                 .storeId(request.getStoreId())
                 .tradeStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode())
                 .makingStatus(MakingStatusEnum.MAKING_WAIT.getCode())
-                .payMethod(request.getPlatform().getPayMethod().getCode())
+                .payMethod(request.getPlatform().getCode())
                 .diningMethod(diningMethod.getCode())
                 .note(request.getNote())
                 .totalPrice(summary.getTotalPrice())

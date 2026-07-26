@@ -71,7 +71,7 @@ The `Order` entity only stores summary info:
                 .customerId(request.getCustomerId())
                 .storeId(request.getStoreId())
                 .status(OrderStatus.PENDING.getCode())
-                .payMethod(request.getPlatform().getPayMethod().getCode())
+                .payMethod(request.getPlatform().getCode())
                 .price(summary.getTotalPrice())
                 .quantity(summary.getTotalQuantity())
                 .build();
