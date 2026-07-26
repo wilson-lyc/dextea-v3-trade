@@ -1,6 +1,7 @@
 package cn.dextea.trade.catalog.domain.enums;
 
 import cn.dextea.trade.common.enums.CodeEnum;
+import cn.dextea.trade.common.enums.EnumUtils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +16,6 @@ public enum ProductStoreStatusEnum implements CodeEnum {
     private final String description;
 
     public static ProductStoreStatusEnum of(Integer code) {
-        return cn.dextea.trade.common.enums.EnumUtils.of(ProductStoreStatusEnum.class, code);
+        return EnumUtils.of(ProductStoreStatusEnum.class, code);
     }
 }
