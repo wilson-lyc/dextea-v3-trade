@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * 支付宝网关配置
+ * 支付宝支付配置
  * 配置前缀为 alipay。
  */
 @Slf4j
 @Data
 @Component
 @ConfigurationProperties(prefix = "alipay")
-public class AlipayGatewayConfig {
+public class AlipayPaymentConfig {
 
     /** 支付宝网关地址 */
     private String serverUrl = "https://openapi.alipay.com";

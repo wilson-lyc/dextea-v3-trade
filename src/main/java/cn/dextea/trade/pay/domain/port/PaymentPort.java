@@ -1,11 +1,11 @@
-package cn.dextea.trade.pay.domain.gateway;
+package cn.dextea.trade.pay.domain.port;
 
 import cn.dextea.trade.pay.domain.model.Payment;
 
 /**
- * 支付网关
+ * 支付端口
  */
-public interface PaymentGateway {
+public interface PaymentPort {
 
     /**
      * 创建交易

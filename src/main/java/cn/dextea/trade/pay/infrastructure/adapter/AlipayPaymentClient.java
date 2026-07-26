@@ -1,10 +1,10 @@
-package cn.dextea.trade.pay.infrastructure.gateway;
+package cn.dextea.trade.pay.infrastructure.adapter;
 
 import cn.dextea.trade.exception.BizError;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
-import cn.dextea.trade.pay.domain.gateway.PaymentGateway;
 import cn.dextea.trade.pay.domain.model.Payment;
-import cn.dextea.trade.pay.infrastructure.config.AlipayGatewayConfig;
+import cn.dextea.trade.pay.domain.port.PaymentPort;
+import cn.dextea.trade.pay.infrastructure.config.AlipayPaymentConfig;
 import com.alipay.v3.ApiClient;
 import com.alipay.v3.ApiException;
 import com.alipay.v3.api.AlipayTradeApi;
@@ -18,16 +18,16 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * 支付宝网关：{@link PaymentGateway} 的支付宝实现，封装支付宝 SDK 细节。
+ * 支付宝支付客户端：{@link PaymentPort} 的支付宝实现，封装支付宝 SDK 细节。
  */
 @Slf4j
 @Component
-public class AlipayGateway implements PaymentGateway {
+public class AlipayPaymentClient implements PaymentPort {
 
     private final AlipayTradeApi tradeApi;
-    private final AlipayGatewayConfig config;
+    private final AlipayPaymentConfig config;
 
-    public AlipayGateway(AlipayGatewayConfig config) {
+    public AlipayPaymentClient(AlipayPaymentConfig config) {
         this.config = config;
         this.tradeApi = new AlipayTradeApi(buildApiClient(config));
     }
@@ -38,10 +38,10 @@ public class AlipayGateway implements PaymentGateway {
      * <p>从全局默认的 {@link ApiClient} 获取实例，并将网关配置（网关地址、appId、密钥等）
      * 封装为 SDK 的 {@link AlipayConfig} 写入客户端，完成支付宝 SDK 的初始化。</p>
      *
-     * @param config 支付宝网关配置（来自 {@link AlipayGatewayConfig}）
+     * @param config 支付宝支付配置（来自 {@link AlipayPaymentConfig}）
      * @return 已完成配置初始化的 {@link ApiClient} 实例
      */
-    private static ApiClient buildApiClient(AlipayGatewayConfig config) {
+    private static ApiClient buildApiClient(AlipayPaymentConfig config) {
         ApiClient client = Configuration.getDefaultApiClient();
         AlipayConfig sdkConfig = new AlipayConfig();
         sdkConfig.setServerUrl(config.getServerUrl());

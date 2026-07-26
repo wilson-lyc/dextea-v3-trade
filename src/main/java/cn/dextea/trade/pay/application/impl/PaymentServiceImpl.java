@@ -2,19 +2,19 @@ package cn.dextea.trade.pay.application.impl;
 
 import cn.dextea.trade.pay.application.PaymentService;
 import cn.dextea.trade.pay.application.command.CreatePaymentCommand;
-import cn.dextea.trade.pay.domain.gateway.PaymentGateway;
 import cn.dextea.trade.pay.domain.model.Payment;
+import cn.dextea.trade.pay.domain.port.PaymentPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * 支付服务实现：将创建支付命令转换为支付领域对象，委派给 {@link PaymentGateway}。
+ * 支付服务实现：将创建支付命令转换为支付领域对象，委派给 {@link PaymentPort}。
  */
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private final PaymentGateway paymentGateway;
+    private final PaymentPort paymentPort;
 
     @Override
     public String createPayment(CreatePaymentCommand command) {
@@ -25,6 +25,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .totalQuantity(command.getTotalQuantity())
                 .platform(command.getPlatform())
                 .build();
-        return paymentGateway.createPayment(payment);
+        return paymentPort.createPayment(payment);
     }
 }
