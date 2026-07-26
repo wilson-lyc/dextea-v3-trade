@@ -1,4 +1,4 @@
-package cn.dextea.trade.config;
+package cn.dextea.trade.common.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;

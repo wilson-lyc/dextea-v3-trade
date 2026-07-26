@@ -1,8 +1,6 @@
-package cn.dextea.trade.controller;
+package cn.dextea.trade.health;
 
-import cn.dextea.trade.common.APIResponse;
-import cn.dextea.trade.model.HealthResult;
-import cn.dextea.trade.service.HealthService;
+import cn.dextea.trade.common.api.APIResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

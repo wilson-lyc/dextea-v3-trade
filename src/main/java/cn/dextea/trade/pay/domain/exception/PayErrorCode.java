@@ -1,6 +1,6 @@
 package cn.dextea.trade.pay.domain.exception;
 
-import cn.dextea.trade.common.BizErrorCode;
+import cn.dextea.trade.common.error.BizErrorCode;
 
 /**
  * 支付域错误码

@@ -1,4 +1,4 @@
-package cn.dextea.trade.enums;
+package cn.dextea.trade.common.enums;
 
 public final class EnumUtils {
 

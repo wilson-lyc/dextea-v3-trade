@@ -1,7 +1,7 @@
 package cn.dextea.trade.order.application.impl;
 
 import cn.dextea.trade.catalog.domain.model.Customer;
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.application.OrderCommandService;
 import cn.dextea.trade.order.application.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.command.OrderProductCommand;

@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.service;
 
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.enums.OrderEventEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;

@@ -1,6 +1,5 @@
-package cn.dextea.trade.service;
+package cn.dextea.trade.health;
 
-import cn.dextea.trade.model.HealthResult;
 
 public interface HealthService {
 

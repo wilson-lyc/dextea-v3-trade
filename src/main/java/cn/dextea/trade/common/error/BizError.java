@@ -1,6 +1,6 @@
-package cn.dextea.trade.exception;
+package cn.dextea.trade.common.error;
 
-import cn.dextea.trade.common.BizErrorCode;
+import cn.dextea.trade.common.error.BizErrorCode;
 import lombok.Getter;
 
 @Getter

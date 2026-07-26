@@ -1,6 +1,6 @@
 package cn.dextea.trade.pay.infrastructure.adapter;
 
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.domain.model.Payment;
 import cn.dextea.trade.pay.domain.port.PaymentPort;

@@ -1,4 +1,4 @@
-package cn.dextea.trade.common;
+package cn.dextea.trade.common.error;
 
 public interface BizErrorCode {
     

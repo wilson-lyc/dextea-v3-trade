@@ -1,4 +1,4 @@
-package cn.dextea.trade.common;
+package cn.dextea.trade.common.api;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -3,7 +3,7 @@ package cn.dextea.trade.order.application.impl;
 import cn.dextea.trade.catalog.domain.model.CustomizationOption;
 import cn.dextea.trade.catalog.domain.model.Gallery;
 import cn.dextea.trade.catalog.domain.model.Store;
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.application.OrderQueryService;
 import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
 import cn.dextea.trade.order.domain.enums.MakingStatusEnum;

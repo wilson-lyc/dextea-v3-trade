@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.infrastructure.adapter;
 
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.port.OrderLockPort;
 import lombok.RequiredArgsConstructor;

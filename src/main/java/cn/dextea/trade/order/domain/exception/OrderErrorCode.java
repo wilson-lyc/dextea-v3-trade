@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.exception;
 
-import cn.dextea.trade.common.BizErrorCode;
+import cn.dextea.trade.common.error.BizErrorCode;
 
 public enum OrderErrorCode implements BizErrorCode {
 

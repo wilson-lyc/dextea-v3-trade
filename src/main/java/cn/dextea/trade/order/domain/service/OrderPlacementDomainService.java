@@ -12,7 +12,7 @@ import cn.dextea.trade.catalog.domain.model.Gallery;
 import cn.dextea.trade.catalog.domain.model.Product;
 import cn.dextea.trade.catalog.domain.model.Store;
 import cn.dextea.trade.catalog.domain.model.Customer;
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.PreBuildContext;
 import cn.dextea.trade.order.domain.model.PreBuildProductInput;

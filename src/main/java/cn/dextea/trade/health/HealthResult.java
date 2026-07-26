@@ -1,4 +1,4 @@
-package cn.dextea.trade.model;
+package cn.dextea.trade.health;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.interfaces.controller;
 
-import cn.dextea.trade.common.APIResponse;
+import cn.dextea.trade.common.api.APIResponse;
 import cn.dextea.trade.order.application.OrderCommandService;
 import cn.dextea.trade.order.application.OrderQueryService;
 import cn.dextea.trade.order.interfaces.assembler.OrderAssembler;

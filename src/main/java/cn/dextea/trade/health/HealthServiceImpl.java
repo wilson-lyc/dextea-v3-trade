@@ -1,7 +1,5 @@
-package cn.dextea.trade.service.impl;
+package cn.dextea.trade.health;
 
-import cn.dextea.trade.model.HealthResult;
-import cn.dextea.trade.service.HealthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

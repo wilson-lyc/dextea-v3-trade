@@ -1,7 +1,7 @@
-package cn.dextea.trade.handler;
+package cn.dextea.trade.common.web;
 
-import cn.dextea.trade.common.APIResponse;
-import cn.dextea.trade.exception.BizError;
+import cn.dextea.trade.common.api.APIResponse;
+import cn.dextea.trade.common.error.BizError;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
