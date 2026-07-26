@@ -14,7 +14,7 @@ import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.PreBuildContext;
 import cn.dextea.trade.order.domain.model.PreBuildProductInput;
 import cn.dextea.trade.order.domain.model.PreBuildResult;
-import cn.dextea.trade.order.domain.port.CustomerPort;
+import cn.dextea.trade.order.domain.port.CatalogPort;
 import cn.dextea.trade.order.domain.port.OrderIdGeneratorPort;
 import cn.dextea.trade.order.domain.port.OrderRepository;
 import cn.dextea.trade.order.domain.port.PaymentClientPort;
@@ -47,7 +47,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     private final OrderRepository orderRepository;
     private final OrderIdGeneratorPort orderIdGeneratorPort;
     private final PaymentClientPort paymentClientPort;
-    private final CustomerPort customerPort;
+    private final CatalogPort catalogPort;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -137,7 +137,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
 
         // 4. 支付宝支付：创建交易并回填 trade_no
         if (Integer.valueOf(PlatformEnum.ALIPAY.getCode()).equals(order.getPayMethod()) && order.getTradeNo() == null) {
-            Customer customer = customerPort.findById(order.getCustomerId());
+            Customer customer = catalogPort.findCustomer(order.getCustomerId());
             if (customer == null || customer.getAlipayOpenId() == null) {
                 throw new BizError(PayErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
             }

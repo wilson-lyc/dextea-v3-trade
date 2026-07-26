@@ -16,8 +16,7 @@ import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.OrderSummaryView;
 import cn.dextea.trade.order.domain.model.StoreInfoView;
 import cn.dextea.trade.order.domain.port.OrderRepository;
-import cn.dextea.trade.order.domain.port.ProductCatalogPort;
-import cn.dextea.trade.order.domain.port.StorePort;
+import cn.dextea.trade.order.domain.port.CatalogPort;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
 import cn.dextea.trade.pay.domain.model.PlatformEnum;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +44,7 @@ import java.util.stream.Collectors;
 public class OrderQueryServiceImpl implements OrderQueryService {
 
     private final OrderRepository orderRepository;
-    private final ProductCatalogPort productCatalogPort;
-    private final StorePort storePort;
+    private final CatalogPort catalogPort;
 
     @Override
     public List<OrderSummaryView> getOrdersByCustomer(Long customerId) {
@@ -69,7 +67,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
 
         Map<Long, String> coverUrlMap = new HashMap<>();
         if (!allCoverIds.isEmpty()) {
-            coverUrlMap.putAll(productCatalogPort.findGalleries(new ArrayList<>(allCoverIds)).stream()
+            coverUrlMap.putAll(catalogPort.findGalleries(new ArrayList<>(allCoverIds)).stream()
                     .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a)));
         }
 
@@ -81,7 +79,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                     .filter(Objects::nonNull)
                     .distinct()
                     .toList();
-            Store store = storePort.findById(order.getStoreId());
+            Store store = catalogPort.findStore(order.getStoreId());
             result.add(OrderSummaryView.builder()
                     .storeName(store != null ? store.getName() : null)
                     .orderTime(order.getCreatedAt())
@@ -108,7 +106,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         }
 
         StoreInfoView storeInfo = null;
-        Store store = storePort.findById(order.getStoreId());
+        Store store = catalogPort.findStore(order.getStoreId());
         if (store != null) {
             storeInfo = StoreInfoView.builder()
                     .id(store.getId())
@@ -168,7 +166,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         if (coverIds.isEmpty()) {
             return Map.of();
         }
-        return productCatalogPort.findGalleries(new ArrayList<>(coverIds)).stream()
+        return catalogPort.findGalleries(new ArrayList<>(coverIds)).stream()
                 .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a));
     }
 
@@ -181,7 +179,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         }
         Map<Long, String> nameMap = new HashMap<>();
         if (!optionIds.isEmpty()) {
-            for (CustomizationOption opt : productCatalogPort.findOptions(new ArrayList<>(optionIds))) {
+            for (CustomizationOption opt : catalogPort.findOptions(new ArrayList<>(optionIds))) {
                 nameMap.put(opt.getId(), opt.getName());
             }
         }

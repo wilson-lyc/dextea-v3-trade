@@ -1,15 +1,14 @@
 package cn.dextea.trade.catalog.domain.model;
 
+import cn.dextea.trade.catalog.domain.enums.StoreStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
-/**
- * 门店实体，对应 {@code stores} 表。
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,13 +37,17 @@ public class Store {
 
     private Double latitude;
 
-    private String account;
-
-    private String password;
-
     private String email;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    public Optional<StoreStatusEnum> getStoreStatus() {
+        return status == null ? Optional.empty() : Optional.of(StoreStatusEnum.of(status));
+    }
+
+    public boolean isOpen() {
+        return status != null && StoreStatusEnum.OPEN.getCode() == status;
+    }
 }

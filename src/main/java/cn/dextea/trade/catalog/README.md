@@ -17,14 +17,15 @@
 ```
 catalog/
 ├── domain/                    领域层
-│   ├── enums/                状态枚举（6 个）：门店/顾客/商品(全局&门店)/客制化(项目&选项) 状态
-│   ├── model/                领域模型（9 个实体/值对象）
+│   ├── enums/                状态枚举：门店/顾客/商品(全局&门店)/客制化(项目&选项) 状态（类型化，避免裸码外泄）
+│   ├── model/                领域模型（9 个实体/值对象，内聚可用性行为：isOnShelf/isOpen/isActive/isAvailableInStore 等）
+│   ├── repository/           CatalogRepository 只读仓储端口（领域层定义，基础设施实现）
 │   ├── service/
 │   │   ├── CatalogQueryService.java        只读查询服务接口（对外支撑契约）
-│   │   └── impl/CatalogQueryServiceImpl.java 实现，聚合各类 Mapper
+│   │   └── impl/CatalogQueryServiceImpl.java 实现，依赖 CatalogRepository 端口（不直接依赖 Mapper）
 │   └── （本模块无 application / interfaces 层——纯只读支撑数据，不对外暴露独立 HTTP 接口）
 └── infrastructure/
-    └── persistence/          持久化：9 个 MyBatis Mapper（Product/Customization/.../Store）
+    └── persistence/          持久化：9 个 MyBatis Mapper + CatalogRepositoryImpl（仓储端口实现）
 ```
 
 ## 领域模型一览（model）
@@ -44,9 +45,13 @@ catalog/
 ## 对外契约：`CatalogQueryService`
 
 订单域通过该接口批量获取参考数据（均为 `findXxxByIds` 风格的批量查询）。
-对应实现 `CatalogQueryServiceImpl` 直接聚合并调用 `infrastructure/persistence`
-下的各 Mapper。订单侧的 `order/infrastructure/adapter/ProductCatalogAdapter`
-把该接口适配成订单域的 `ProductCatalogPort`。
+对应实现 `CatalogQueryServiceImpl` 依赖领域层 `CatalogRepository` 端口（由
+`infrastructure/persistence/CatalogRepositoryImpl` 调用各 Mapper 实现），
+从而保持领域层不直接依赖基础设施。订单侧的 `order/infrastructure/adapter/CatalogAdapter`
+把该接口适配成订单域统一的 `CatalogPort`（商品/客制化/门店/顾客共用同一端口）。
+
+> 只读快照裁剪：`Store` / `Customer` 快照不含 `password` / `account` 等凭证字段，
+> 仅保留下单前校验与支付绑卡所需信息，避免敏感数据进入订单上下文。
 
 ## 扩展指引
 

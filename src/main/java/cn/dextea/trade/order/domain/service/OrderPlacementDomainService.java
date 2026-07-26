@@ -1,18 +1,13 @@
 package cn.dextea.trade.order.domain.service;
 
-import cn.dextea.trade.catalog.domain.enums.CustomizationOptionGlobalStatusEnum;
-import cn.dextea.trade.catalog.domain.enums.CustomizationOptionStoreStatusEnum;
-import cn.dextea.trade.catalog.domain.enums.CustomizationStatusEnum;
-import cn.dextea.trade.catalog.domain.enums.ProductGlobalStatusEnum;
-import cn.dextea.trade.catalog.domain.enums.ProductStoreStatusEnum;
-import cn.dextea.trade.catalog.domain.enums.StoreStatusEnum;
-import cn.dextea.trade.catalog.domain.enums.CustomerStatusEnum;
 import cn.dextea.trade.catalog.domain.model.Customization;
 import cn.dextea.trade.catalog.domain.model.CustomizationOption;
+import cn.dextea.trade.catalog.domain.model.CustomizationOptionStoreStatus;
+import cn.dextea.trade.catalog.domain.model.Customer;
 import cn.dextea.trade.catalog.domain.model.Gallery;
 import cn.dextea.trade.catalog.domain.model.Product;
+import cn.dextea.trade.catalog.domain.model.ProductStoreStatus;
 import cn.dextea.trade.catalog.domain.model.Store;
-import cn.dextea.trade.catalog.domain.model.Customer;
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.PreBuildContext;
@@ -21,9 +16,7 @@ import cn.dextea.trade.order.domain.model.PreBuildResult;
 import cn.dextea.trade.order.domain.model.PricedOrderItem;
 import cn.dextea.trade.order.domain.model.UnavailableCustomization;
 import cn.dextea.trade.order.domain.model.UnavailableProduct;
-import cn.dextea.trade.order.domain.port.CustomerPort;
-import cn.dextea.trade.order.domain.port.ProductCatalogPort;
-import cn.dextea.trade.order.domain.port.StorePort;
+import cn.dextea.trade.order.domain.port.CatalogPort;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,9 +46,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderPlacementDomainService {
 
-    private final ProductCatalogPort productCatalogPort;
-    private final StorePort storePort;
-    private final CustomerPort customerPort;
+    private final CatalogPort catalogPort;
 
     public PreBuildResult preBuild(PreBuildContext ctx) {
         Long storeId = ctx.getStoreId();
@@ -161,20 +152,20 @@ public class OrderPlacementDomainService {
         Map<Long, Product> productMap = loadProducts(resolution.allProductIds());
         Map<Long, Long> productCoverMap = loadCoverIds(resolution.allProductIds());
         Map<Long, String> productCoverUrlMap = loadCoverUrls(productCoverMap);
-        Map<Long, Integer> productStoreStatusMap = loadProductStoreStatus(resolution.allProductIds(), storeId);
+        Map<Long, ProductStoreStatus> productStoreStatusMap = loadProductStoreStatus(resolution.allProductIds(), storeId);
         Map<Long, Customization> customizationMap = loadCustomizations(resolution.allItemIds());
         Map<Long, CustomizationOption> optionMap = loadOptions(resolution.allOptionIds());
-        Map<Long, Integer> optionStoreStatusMap = loadOptionStoreStatus(resolution.allOptionIds(), storeId);
+        Map<Long, CustomizationOptionStoreStatus> optionStoreStatusMap = loadOptionStoreStatus(resolution.allOptionIds(), storeId);
         return new LoadedEntities(productMap, productCoverMap, productCoverUrlMap,
                 productStoreStatusMap, customizationMap, optionMap, optionStoreStatusMap);
     }
 
     private Optional<UnavailableProduct> checkProductAvailability(
-            Product product, Integer storeStatus, Long productId) {
-        if (isProductUnavailable(product, storeStatus)) {
+            Product product, ProductStoreStatus storeStatus, Long productId) {
+        if (product == null || !product.isAvailableInStore(storeStatus)) {
             return Optional.of(UnavailableProduct.builder()
                     .id(productId)
-                    .name(product.getName())
+                    .name(product != null ? product.getName() : null)
                     .build());
         }
         return Optional.empty();
@@ -183,7 +174,7 @@ public class OrderPlacementDomainService {
     private List<UnavailableCustomization> checkOptionAvailability(
             List<Long> opts, List<Long> itemIdsForItem, Long productId, Product product,
             Map<Long, CustomizationOption> optionMap, Map<Long, Customization> customizationMap,
-            Map<Long, Integer> optionStoreStatusMap) {
+            Map<Long, CustomizationOptionStoreStatus> optionStoreStatusMap) {
         List<UnavailableCustomization> badOptions = new ArrayList<>();
         for (int j = 0; j < opts.size(); j++) {
             Long optionId = opts.get(j);
@@ -192,21 +183,21 @@ public class OrderPlacementDomainService {
             Customization customization = customizationMap.get(itemId);
 
             // 跨绑定校验：客制化项目必须属于当前商品，客制化选项必须属于当前客制化项目
-            boolean itemNotBelongToProduct = customization.getProductId() != null
+            boolean itemNotBelongToProduct = customization != null && customization.getProductId() != null
                     && !customization.getProductId().equals(productId);
-            boolean optionNotBelongToItem = option.getCustomizationId() != null
+            boolean optionNotBelongToItem = option != null && option.getCustomizationId() != null
                     && !option.getCustomizationId().equals(itemId);
 
-            boolean itemUnavailable = isCustomizationUnavailable(customization);
-            boolean optionUnavailable = isOptionUnavailable(option, optionStoreStatusMap.get(optionId));
+            boolean itemUnavailable = customization == null || !customization.isGloballyAvailable();
+            boolean optionUnavailable = option == null || !option.isAvailableInStore(optionStoreStatusMap.get(optionId));
             if (itemUnavailable || optionUnavailable || itemNotBelongToProduct || optionNotBelongToItem) {
                 badOptions.add(UnavailableCustomization.builder()
                         .optionId(optionId)
-                        .optionName(option.getName())
+                        .optionName(option != null ? option.getName() : null)
                         .productId(productId)
-                        .productName(product.getName())
+                        .productName(product != null ? product.getName() : null)
                         .itemId(itemId)
-                        .itemName(customization.getName())
+                        .itemName(customization != null ? customization.getName() : null)
                         .build());
             }
         }
@@ -243,21 +234,13 @@ public class OrderPlacementDomainService {
     }
 
     private boolean isStoreAvailable(Long storeId) {
-        Store store = storePort.findById(storeId);
-        if (store == null) {
-            return false;
-        }
-        Integer status = store.getStatus();
-        return status != null && status == StoreStatusEnum.OPEN.getCode();
+        Store store = catalogPort.findStore(storeId);
+        return store != null && store.isOpen();
     }
 
     private boolean isCustomerAvailable(Long customerId) {
-        Customer customer = customerPort.findById(customerId);
-        if (customer == null) {
-            return false;
-        }
-        Integer status = customer.getStatus();
-        return status != null && status == CustomerStatusEnum.ACTIVE.getCode();
+        Customer customer = catalogPort.findCustomer(customerId);
+        return customer != null && customer.isActive();
     }
 
     private <T> Map<Long, T> loadByIds(
@@ -282,7 +265,7 @@ public class OrderPlacementDomainService {
     }
 
     private Map<Long, Product> loadProducts(Set<Long> productIds) {
-        return loadByIds(productIds, productCatalogPort::findProducts, Product::getId,
+        return loadByIds(productIds, catalogPort::findProducts, Product::getId,
                 OrderErrorCode.PRODUCT_NOT_FOUND, "商品");
     }
 
@@ -291,7 +274,7 @@ public class OrderPlacementDomainService {
         if (productIds.isEmpty()) {
             return map;
         }
-        productCatalogPort.findCoverImages(new ArrayList<>(productIds))
+        catalogPort.findCoverImages(new ArrayList<>(productIds))
                 .forEach(pi -> map.putIfAbsent(pi.getProductId(), pi.getImageId()));
         return map;
     }
@@ -305,7 +288,7 @@ public class OrderPlacementDomainService {
         if (imageIds.isEmpty()) {
             return map;
         }
-        Map<Long, String> urlMap = productCatalogPort.findGalleries(new ArrayList<>(imageIds)).stream()
+        Map<Long, String> urlMap = catalogPort.findGalleries(new ArrayList<>(imageIds)).stream()
                 .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a));
         productCoverMap.forEach((productId, imageId) -> {
             String url = urlMap.get(imageId);
@@ -316,56 +299,34 @@ public class OrderPlacementDomainService {
         return map;
     }
 
-    private Map<Long, Integer> loadProductStoreStatus(Set<Long> productIds, Long storeId) {
-        Map<Long, Integer> map = new HashMap<>();
+    private Map<Long, ProductStoreStatus> loadProductStoreStatus(Set<Long> productIds, Long storeId) {
+        Map<Long, ProductStoreStatus> map = new HashMap<>();
         if (productIds.isEmpty()) {
             return map;
         }
-        productCatalogPort.findProductStoreStatus(new ArrayList<>(productIds), storeId)
-                .forEach(s -> map.put(s.getProductId(), s.getStatus()));
+        catalogPort.findProductStoreStatus(new ArrayList<>(productIds), storeId)
+                .forEach(s -> map.put(s.getProductId(), s));
         return map;
     }
 
     private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
-        return loadByIds(itemIds, productCatalogPort::findCustomizations, Customization::getId,
+        return loadByIds(itemIds, catalogPort::findCustomizations, Customization::getId,
                 OrderErrorCode.CUSTOMIZATION_NOT_FOUND, "客制化项目");
     }
 
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
-        return loadByIds(optionIds, productCatalogPort::findOptions, CustomizationOption::getId,
+        return loadByIds(optionIds, catalogPort::findOptions, CustomizationOption::getId,
                 OrderErrorCode.CUSTOMIZATION_OPTION_NOT_FOUND, "客制化选项");
     }
 
-    private Map<Long, Integer> loadOptionStoreStatus(Set<Long> optionIds, Long storeId) {
-        Map<Long, Integer> map = new HashMap<>();
+    private Map<Long, CustomizationOptionStoreStatus> loadOptionStoreStatus(Set<Long> optionIds, Long storeId) {
+        Map<Long, CustomizationOptionStoreStatus> map = new HashMap<>();
         if (optionIds.isEmpty()) {
             return map;
         }
-        productCatalogPort.findOptionStoreStatus(new ArrayList<>(optionIds), storeId)
-                .forEach(s -> map.put(s.getCustomizationOptionId(), s.getStatus()));
+        catalogPort.findOptionStoreStatus(new ArrayList<>(optionIds), storeId)
+                .forEach(s -> map.put(s.getCustomizationOptionId(), s));
         return map;
-    }
-
-    private boolean isProductUnavailable(Product product, Integer storeStatus) {
-        boolean globalOffShelf = product.getStatus() == null
-                || product.getStatus() != ProductGlobalStatusEnum.ON_SHELF.getCode();
-        boolean storeSoldOut = storeStatus == null
-                || storeStatus != ProductStoreStatusEnum.AVAILABLE.getCode();
-        return globalOffShelf || storeSoldOut;
-    }
-
-    private boolean isOptionUnavailable(CustomizationOption option, Integer storeStatus) {
-        boolean globalDisabled = option.getStatus() == null
-                || option.getStatus() != CustomizationOptionGlobalStatusEnum.ACTIVE.getCode();
-        boolean storeDisabled = storeStatus == null
-                || storeStatus != CustomizationOptionStoreStatusEnum.AVAILABLE.getCode();
-        return globalDisabled || storeDisabled;
-    }
-
-    private boolean isCustomizationUnavailable(Customization customization) {
-        return customization == null
-                || customization.getStatus() == null
-                || customization.getStatus() != CustomizationStatusEnum.ACTIVE.getCode();
     }
 
     private static BigDecimal nullToZero(BigDecimal value) {
@@ -388,10 +349,10 @@ public class OrderPlacementDomainService {
             Map<Long, Product> productMap,
             Map<Long, Long> productCoverMap,
             Map<Long, String> productCoverUrlMap,
-            Map<Long, Integer> productStoreStatusMap,
+            Map<Long, ProductStoreStatus> productStoreStatusMap,
             Map<Long, Customization> customizationMap,
             Map<Long, CustomizationOption> optionMap,
-            Map<Long, Integer> optionStoreStatusMap) {}
+            Map<Long, CustomizationOptionStoreStatus> optionStoreStatusMap) {}
 
     private record PricedItem(PricedOrderItem detail, int quantity, BigDecimal subtotal) {}
 }

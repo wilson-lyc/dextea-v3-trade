@@ -1,11 +1,13 @@
 package cn.dextea.trade.catalog.domain.model;
 
+import cn.dextea.trade.catalog.domain.enums.ProductStoreStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Data
 @Builder
@@ -22,4 +24,12 @@ public class ProductStoreStatus {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    public Optional<ProductStoreStatusEnum> getStoreStatus() {
+        return status == null ? Optional.empty() : Optional.of(ProductStoreStatusEnum.of(status));
+    }
+
+    public boolean isAvailable() {
+        return status != null && ProductStoreStatusEnum.AVAILABLE.getCode() == status;
+    }
 }

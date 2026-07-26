@@ -12,12 +12,6 @@ import cn.dextea.trade.catalog.domain.model.Store;
 
 import java.util.List;
 
-/**
- * 商品目录只读查询服务（支撑数据）。
- *
- * <p>聚合商品、客制化、封面、门店、顾客等参考数据的批量查询能力，
- * 供订单上下文经防腐端口按需获取只读快照，避免污染订单领域。</p>
- */
 public interface CatalogQueryService {
 
     List<Product> findProductsByIds(List<Long> ids);

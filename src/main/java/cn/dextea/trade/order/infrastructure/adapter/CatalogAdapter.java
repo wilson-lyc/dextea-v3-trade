@@ -3,23 +3,25 @@ package cn.dextea.trade.order.infrastructure.adapter;
 import cn.dextea.trade.catalog.domain.model.Customization;
 import cn.dextea.trade.catalog.domain.model.CustomizationOption;
 import cn.dextea.trade.catalog.domain.model.CustomizationOptionStoreStatus;
+import cn.dextea.trade.catalog.domain.model.Customer;
 import cn.dextea.trade.catalog.domain.model.Gallery;
 import cn.dextea.trade.catalog.domain.model.Product;
 import cn.dextea.trade.catalog.domain.model.ProductImage;
 import cn.dextea.trade.catalog.domain.model.ProductStoreStatus;
+import cn.dextea.trade.catalog.domain.model.Store;
 import cn.dextea.trade.catalog.domain.service.CatalogQueryService;
-import cn.dextea.trade.order.domain.port.ProductCatalogPort;
+import cn.dextea.trade.order.domain.port.CatalogPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
- * 商品目录防腐适配器：实现订单领域 {@link ProductCatalogPort}，委托 catalog 查询服务获取只读快照。
+ * 商品目录防腐适配器：实现订单领域 {@link CatalogPort}，委托 catalog 查询服务获取只读快照。
  */
 @Component
 @RequiredArgsConstructor
-public class ProductCatalogAdapter implements ProductCatalogPort {
+public class CatalogAdapter implements CatalogPort {
 
     private final CatalogQueryService catalogQueryService;
 
@@ -56,5 +58,15 @@ public class ProductCatalogAdapter implements ProductCatalogPort {
     @Override
     public List<CustomizationOptionStoreStatus> findOptionStoreStatus(List<Long> optionIds, Long storeId) {
         return catalogQueryService.findOptionStoreStatus(optionIds, storeId);
+    }
+
+    @Override
+    public Store findStore(Long id) {
+        return catalogQueryService.findStoreById(id);
+    }
+
+    @Override
+    public Customer findCustomer(Long id) {
+        return catalogQueryService.findCustomerById(id);
     }
 }

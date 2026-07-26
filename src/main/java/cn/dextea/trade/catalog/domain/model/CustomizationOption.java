@@ -1,5 +1,6 @@
 package cn.dextea.trade.catalog.domain.model;
 
+import cn.dextea.trade.catalog.domain.enums.CustomizationOptionGlobalStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Data
 @Builder
@@ -33,4 +35,16 @@ public class CustomizationOption {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    public Optional<CustomizationOptionGlobalStatusEnum> getGlobalStatus() {
+        return status == null ? Optional.empty() : Optional.of(CustomizationOptionGlobalStatusEnum.of(status));
+    }
+
+    public boolean isGloballyAvailable() {
+        return status != null && CustomizationOptionGlobalStatusEnum.ACTIVE.getCode() == status;
+    }
+
+    public boolean isAvailableInStore(CustomizationOptionStoreStatus storeStatus) {
+        return isGloballyAvailable() && storeStatus != null && storeStatus.isAvailable();
+    }
 }

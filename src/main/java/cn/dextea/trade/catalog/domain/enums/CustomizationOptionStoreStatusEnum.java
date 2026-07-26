@@ -10,13 +10,13 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>与 {@link CustomizationOptionGlobalStatusEnum}（全局维度）区分：
  * 选项在某个门店下可能被单独禁用，该门店状态应比对本枚举而非全局枚举。
- * 取值约定与 {@link ProductStoreStatusEnum} 对齐（0=禁用，1=可用）。</p>
+ * 取值约定与 {@link ProductStoreStatusEnum} 对齐（0=门店不可用，1=门店可用）。</p>
  */
 @Getter
 @RequiredArgsConstructor
 public enum CustomizationOptionStoreStatusEnum implements CodeEnum {
 
-    DISABLED(0, "门店禁用"),
+    UNAVAILABLE(0, "门店不可用"),
     AVAILABLE(1, "门店可用");
 
     private final int code;

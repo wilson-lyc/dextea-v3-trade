@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ProductStoreStatusEnum implements CodeEnum {
 
-    SOLD_OUT(0, "售罄"),
-    AVAILABLE(1, "可售");
+    UNAVAILABLE(0, "门店不可售"),
+    AVAILABLE(1, "门店可售");
 
     private final int code;
     private final String description;
