@@ -20,7 +20,8 @@ import java.math.BigDecimal;
 @ConfigurationProperties(prefix = "alipay")
 public class AlipayGatewayConfig {
 
-    private String gateway = "https://openapi.alipay.com";
+    /** 支付宝网关地址 */
+    private String serverUrl = "https://openapi.alipay.com";
 
     private String appId;
 
@@ -28,7 +29,7 @@ public class AlipayGatewayConfig {
     private String privateKey;
 
     @ToString.Exclude
-    private String publicKey;
+    private String alipayPublicKey;
 
     private String subject = "德贤茶庄订单";
 
