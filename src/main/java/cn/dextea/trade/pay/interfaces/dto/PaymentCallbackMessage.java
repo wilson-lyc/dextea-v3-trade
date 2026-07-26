@@ -28,8 +28,9 @@ public class PaymentCallbackMessage {
 
     private String id;
 
-    /** 支付渠道，如 alipay / weixin */
-    private String channel;
+    /** 支付平台，如 alipay / weixin */
+    @JsonProperty("channel")
+    private String platform;
 
     @JsonProperty("trace_id")
     private String traceId;

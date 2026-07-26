@@ -30,7 +30,6 @@ import cn.dextea.trade.enums.TradeStatusEnum;
 import cn.dextea.trade.pay.application.PaymentService;
 import cn.dextea.trade.pay.application.command.CreatePaymentCommand;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
-import cn.dextea.trade.pay.domain.model.PaymentMethodEnum;
 import cn.dextea.trade.pay.domain.model.PlatformEnum;
 import cn.dextea.trade.enums.ProductGlobalStatusEnum;
 import cn.dextea.trade.enums.ProductStoreStatusEnum;
@@ -199,7 +198,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. 支付宝支付：创建交易并回填 trade_no。
         //    幂等保证：已存在且已生成 trade_no 则跳过；否则用订单号(out_trade_no)创建，失败不缓存可重试。
-        if (Integer.valueOf(PaymentMethodEnum.ALIPAY.getCode()).equals(order.getPayMethod()) && order.getTradeNo() == null) {
+        if (Integer.valueOf(PlatformEnum.ALIPAY.getCode()).equals(order.getPayMethod()) && order.getTradeNo() == null) {
             Customer customer = customerMapper.selectById(order.getCustomerId());
             if (customer == null || customer.getAlipayOpenId() == null) {
                 throw new BizError(PayErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
@@ -209,7 +208,7 @@ public class OrderServiceImpl implements OrderService {
                     .totalPrice(order.getTotalPrice())
                     .customerOpenId(customer.getAlipayOpenId())
                     .totalQuantity(order.getTotalQuantity())
-                    .paymentMethod(PaymentMethodEnum.ALIPAY)
+                    .platform(PlatformEnum.ALIPAY)
                     .build();
             String tradeNo = paymentService.createPayment(paymentCommand);
             order.setTradeNo(tradeNo);
@@ -346,7 +345,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
                 .payMethod(order.getPayMethod())
-                .payMethodDesc(safeEnumDesc(() -> PaymentMethodEnum.of(order.getPayMethod()).getDescription()))
+                .payMethodDesc(safeEnumDesc(() -> PlatformEnum.of(order.getPayMethod()).getDescription()))
                 .diningMethod(order.getDiningMethod())
                 .diningMethodDesc(safeEnumDesc(() -> DiningMethodEnum.of(order.getDiningMethod()).getDescription()))
                 .note(order.getNote())

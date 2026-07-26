@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PaymentCallbackAppService implements PaymentCallbackService {
+public class PaymentCallbackServiceImpl implements PaymentCallbackService {
 
     private final PaymentDomainService paymentDomainService;
 
@@ -37,7 +37,7 @@ public class PaymentCallbackAppService implements PaymentCallbackService {
         }
 
         PaymentResult result = PaymentResult.evaluate(
-                orderNo, data.getTradeNo(), message.getChannel(),
+                orderNo, data.getTradeNo(), message.getPlatform(),
                 data.getTradeStatus(), message.getTraceId());
         paymentDomainService.process(result);
     }

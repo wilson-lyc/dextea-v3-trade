@@ -80,13 +80,13 @@ public class AlipayGateway implements PaymentGateway {
 
     /**
      * 转换为支付宝 SDK 所需的 {@link AlipayTradeCreateModel}，仅填充必填字段。
-     * <p>subject / op_app_id / product_code 为支付宝渠道专属参数，由网关自身配置填充。</p>
+     * <p>subject / op_app_id 为支付宝渠道专属参数，由网关配置填充；product_code 固定为 JSAPI_PAY。</p>
      */
     private AlipayTradeCreateModel toAlipayTradeCreateModel(Payment payment) {
         return new AlipayTradeCreateModel()
                 .outTradeNo(payment.getOrderNo())
                 .totalAmount(payment.getTotalPrice().toPlainString())
-                .productCode(alipayConfig.getProductCode())
+                .productCode("JSAPI_PAY")
                 .subject(alipayConfig.getSubject())
                 .opAppId(alipayConfig.getAppId())
                 .buyerOpenId(payment.getCustomerOpenId());

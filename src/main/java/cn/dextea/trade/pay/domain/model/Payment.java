@@ -12,11 +12,11 @@ import java.math.BigDecimal;
 @Builder
 public class Payment {
 
+    /** 支付平台 */
+    PlatformEnum platform;
+
     /** 商户订单号 */
     String orderNo;
-
-    /** 订单总金额（元） */
-    BigDecimal totalPrice;
 
     /** 顾客在支付渠道的唯一标识 */
     String customerOpenId;
@@ -24,6 +24,6 @@ public class Payment {
     /** 订单商品总数量 */
     Integer totalQuantity;
 
-    /** 支付方式 */
-    PaymentMethodEnum paymentMethod;
+    /** 订单总金额（元） */
+    BigDecimal totalPrice;
 }

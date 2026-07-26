@@ -4,22 +4,22 @@ import lombok.Builder;
 import lombok.Value;
 
 /**
- * 支付结果值对象：由支付渠道回单解析而来，渠道无关。
+ * 支付结果值对象：由支付平台回单解析而来，平台无关。
  */
 @Value
 @Builder
 public class PaymentResult {
 
-    /** 商户订单号，对应本系统订单号 */
+    /** 商户订单号 */
     String orderNo;
 
-    /** 支付渠道交易号（trade_no） */
+    /** 支付平台交易号 */
     String tradeNo;
 
-    /** 支付渠道，如 alipay / weixin */
-    String channel;
+    /** 支付平台 */
+    String platform;
 
-    /** 渠道原始交易状态，如 TRADE_SUCCESS / TRADE_FINISHED / TRADE_CLOSED */
+    /** 平台原始交易状态，如 TRADE_SUCCESS / TRADE_FINISHED / TRADE_CLOSED */
     String rawStatus;
 
     /** 是否支付成功（TRADE_SUCCESS / TRADE_FINISHED） */
@@ -35,9 +35,9 @@ public class PaymentResult {
     String traceId;
 
     /**
-     * 由渠道原始交易状态解析支付结果。
+     * 由平台原始交易状态解析支付结果。
      */
-    public static PaymentResult evaluate(String orderNo, String tradeNo, String channel,
+    public static PaymentResult evaluate(String orderNo, String tradeNo, String platform,
                                          String rawStatus, String traceId) {
         boolean success = "TRADE_SUCCESS".equals(rawStatus) || "TRADE_FINISHED".equals(rawStatus);
         boolean settled = "TRADE_FINISHED".equals(rawStatus);
@@ -45,7 +45,7 @@ public class PaymentResult {
         return PaymentResult.builder()
                 .orderNo(orderNo)
                 .tradeNo(tradeNo)
-                .channel(channel)
+                .platform(platform)
                 .rawStatus(rawStatus)
                 .success(success)
                 .settled(settled)

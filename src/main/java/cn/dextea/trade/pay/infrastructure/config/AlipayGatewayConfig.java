@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * 支付宝网关配置，配置前缀为 alipay。
+ * 支付宝网关配置
+ * 配置前缀为 alipay。
  */
 @Slf4j
 @Data
@@ -31,8 +32,6 @@ public class AlipayGatewayConfig {
 
     private String subject = "德贤茶庄订单";
 
-    private String productCode = "JSAPI_PAY";
-
     private String notifyUrl;
 
     @Getter(AccessLevel.NONE)
@@ -46,7 +45,7 @@ public class AlipayGatewayConfig {
         try {
             return new BigDecimal(forceAmount.trim());
         } catch (NumberFormatException e) {
-            log.warn("支付宝强制金额 alipay.force-amount 值非法，已忽略：{}", forceAmount);
+            log.warn("alipay.force-amount 值非法，已忽略：{}", forceAmount);
             return null;
         }
     }

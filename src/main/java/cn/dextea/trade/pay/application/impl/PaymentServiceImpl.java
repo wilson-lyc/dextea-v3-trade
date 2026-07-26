@@ -8,11 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * 支付应用服务实现：将创建支付命令转换为支付领域对象，委派给 {@link PaymentGateway}。
+ * 支付服务实现：将创建支付命令转换为支付领域对象，委派给 {@link PaymentGateway}。
  */
 @Service
 @RequiredArgsConstructor
-public class PaymentAppService implements PaymentService {
+public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentGateway paymentGateway;
 
@@ -23,7 +23,7 @@ public class PaymentAppService implements PaymentService {
                 .totalPrice(command.getTotalPrice())
                 .customerOpenId(command.getCustomerOpenId())
                 .totalQuantity(command.getTotalQuantity())
-                .paymentMethod(command.getPaymentMethod())
+                .platform(command.getPlatform())
                 .build();
         return paymentGateway.createPayment(payment);
     }

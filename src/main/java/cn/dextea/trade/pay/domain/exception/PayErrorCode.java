@@ -3,7 +3,7 @@ package cn.dextea.trade.pay.domain.exception;
 import cn.dextea.trade.common.BizErrorCode;
 
 /**
- * 支付域错误码，承载支付宝接入与回单处理相关的业务异常。
+ * 支付域错误码
  */
 public enum PayErrorCode implements BizErrorCode {
 

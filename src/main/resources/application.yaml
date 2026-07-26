@@ -42,7 +42,6 @@ alipay:
   private-key: ${ALIPAY_PRIVATE_KEY}
   public-key: ${ALIPAY_PUBLIC_KEY}
   subject: ${ALIPAY_SUBJECT:dextea-order}
-  product-code: ${ALIPAY_PRODUCT_CODE:JSAPI_PAY}
   force-amount: ${ALIPAY_FORCE_AMOUNT:}
   notify-url: ${ALIPAY_NOTIFY_URL:}
 
