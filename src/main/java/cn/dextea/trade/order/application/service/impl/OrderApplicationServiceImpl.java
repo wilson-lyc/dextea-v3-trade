@@ -20,7 +20,7 @@ import cn.dextea.trade.order.domain.model.valueobject.Customer;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderPlacementDomainService;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
-import cn.dextea.trade.pay.domain.model.PlatformEnum;
+import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

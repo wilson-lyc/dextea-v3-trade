@@ -1,10 +1,10 @@
-package cn.dextea.trade.pay.application.impl;
+package cn.dextea.trade.pay.application.service.impl;
 
-import cn.dextea.trade.pay.application.PaymentCallbackService;
+import cn.dextea.trade.pay.api.dto.PaymentCallbackData;
+import cn.dextea.trade.pay.api.dto.PaymentCallbackMessage;
+import cn.dextea.trade.pay.application.service.PaymentCallbackService;
 import cn.dextea.trade.pay.domain.model.PaymentResult;
 import cn.dextea.trade.pay.domain.service.PaymentDomainService;
-import cn.dextea.trade.pay.interfaces.dto.PaymentCallbackData;
-import cn.dextea.trade.pay.interfaces.dto.PaymentCallbackMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * 支付回单处理应用服务实现：
  * 校验回单消息、解析为渠道无关的 {@link PaymentResult}，交由支付领域服务处理。
  *
- * <p>订单状态流转与幂等判定由订单域的 {@code PaymentResultSyncPort} 适配器负责，
+ * <p>订单状态流转与幂等判定由订单域的 {@code PaymentResultSyncGateway} 适配器负责，
  * 本类不依赖任何订单域内部类。</p>
  */
 @Slf4j

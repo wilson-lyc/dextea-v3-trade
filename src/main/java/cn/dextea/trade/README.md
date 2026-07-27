@@ -47,7 +47,7 @@ cn.dextea.trade
         │ CustomerGateway 防腐  │          └─────────────────────────┘
         │ 访问商品/门店/顾客数据 │
         │                       │
-   pay ── application ── domain ◀── PaymentResultSyncPort ──► order 域 OrderPaymentSyncAdapter（写回订单状态）
+   pay ── application ── domain ◀── PaymentResultSyncGateway ──► order 域 OrderPaymentSyncAdapter（写回订单状态）
         ▲ 经 PaymentClientGateway ◀── order 调起支付
 ```
 

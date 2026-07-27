@@ -54,7 +54,7 @@ order/
     │   ├── impl/               网关实现（ACL 落地）
     │   │   ├── ProductGatewayImpl / CustomizationGatewayImpl / StoreGatewayImpl / CustomerGatewayImpl   委托 CatalogMapper
     │   │   ├── PaymentClientAdapter              调 pay 应用 PaymentService
-    │   │   ├── OrderPaymentSyncAdapter           实现 pay 域 PaymentResultSyncPort（支付结果回写）
+    │   │   ├── OrderPaymentSyncAdapter           实现 pay 域 PaymentResultSyncGateway（支付结果回写）
     │   │   ├── OrderIdGeneratorAdapter           分布式订单号（CosId）
     │   │   └── OrderLockAdapter                  分布式锁（Redis）
     │   ├── mapper/              CatalogMapper（商品/客制化/门店/顾客表注解 SQL）
@@ -116,7 +116,7 @@ order/
 | `OrderRepository` | 订单持久化（含 CAS） | `OrderRepositoryImpl` + Mapper |
 | `OrderIdGeneratorGateway` | 分布式订单号 | `OrderIdGeneratorAdapter` → CosId |
 | `OrderLockGateway` | 分布式锁 | `OrderLockAdapter` → Redis |
-| （支付结果回写） | 支付成功/关闭同步 | `OrderPaymentSyncAdapter` 实现 pay 域的 `PaymentResultSyncPort` |
+| （支付结果回写） | 支付成功/关闭同步 | `OrderPaymentSyncAdapter` 实现 pay 域的 `PaymentResultSyncGateway` |
 
 > 设计核心：**order 领域层完全不 import 任何基础设施或第三方 SDK**，所有外部能力
 > （DB、Redis、pay、商品/客制化/门店/顾客）都通过 `gateway` 接口抽象。要替换支付渠道、
@@ -147,7 +147,7 @@ api → application → domain ← infrastructure
 - 新增订单字段：在 `domain/model/aggregate/Order`（及 `entity/OrderItem`）加属性 →
   同步应用层 `dto/` 与 `OrderAssembler` → `infrastructure/persistence` Mapper 的 SQL。
 - 新增状态流转：在 `enums` + `OrderStatusMachine.RULES` 注册，并确认
-  `PaymentResultSyncPort` 适配器映射正确。
-- 接入新支付渠道：实现 order 侧 `PaymentClientAdapter` 与 pay 侧 `PaymentPort`。
+  `PaymentResultSyncGateway` 适配器映射正确。
+- 接入新支付渠道：实现 order 侧 `PaymentClientAdapter` 与 pay 侧 `PaymentGateway`。
 - 扩展商品/门店/顾客数据源：在 `infrastructure/gateway/impl/*GatewayImpl` 调整
   `CatalogMapper` 查询与 `ProductTranslator` 等映射，领域层不受影响。

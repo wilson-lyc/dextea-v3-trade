@@ -1,8 +1,8 @@
-package cn.dextea.trade.pay.interfaces.mq;
+package cn.dextea.trade.pay.api.mq;
 
-import cn.dextea.trade.pay.application.PaymentCallbackService;
+import cn.dextea.trade.pay.api.dto.PaymentCallbackMessage;
+import cn.dextea.trade.pay.application.service.PaymentCallbackService;
 import cn.dextea.trade.pay.infrastructure.config.RocketMqConfig;
-import cn.dextea.trade.pay.interfaces.dto.PaymentCallbackMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

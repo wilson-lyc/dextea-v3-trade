@@ -1,9 +1,9 @@
 package cn.dextea.trade.order.infrastructure.gateway.impl;
 
 import cn.dextea.trade.order.domain.gateway.PaymentClientGateway;
-import cn.dextea.trade.pay.application.PaymentService;
 import cn.dextea.trade.pay.application.command.CreatePaymentCommand;
-import cn.dextea.trade.pay.domain.model.PlatformEnum;
+import cn.dextea.trade.pay.application.service.PaymentService;
+import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

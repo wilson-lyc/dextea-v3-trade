@@ -17,7 +17,7 @@ import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
 import cn.dextea.trade.order.domain.model.valueobject.Store;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
-import cn.dextea.trade.pay.domain.model.PlatformEnum;
+import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

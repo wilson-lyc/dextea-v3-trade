@@ -1,9 +1,9 @@
-package cn.dextea.trade.pay.domain.port;
+package cn.dextea.trade.pay.domain.gateway;
 
 /**
- * 支付结果同步端口
+ * 支付结果同步网关
  */
-public interface PaymentResultSyncPort {
+public interface PaymentResultSyncGateway {
 
     /**
      * 同步支付成功结果。

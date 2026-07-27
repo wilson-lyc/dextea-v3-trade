@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.domain.model;
+package cn.dextea.trade.pay.domain.enums;
 
 import cn.dextea.trade.common.enums.CodeEnum;
 import cn.dextea.trade.common.enums.EnumUtils;

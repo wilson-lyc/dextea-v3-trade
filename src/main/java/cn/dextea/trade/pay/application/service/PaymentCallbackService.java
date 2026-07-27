@@ -1,6 +1,6 @@
-package cn.dextea.trade.pay.application;
+package cn.dextea.trade.pay.application.service;
 
-import cn.dextea.trade.pay.interfaces.dto.PaymentCallbackMessage;
+import cn.dextea.trade.pay.api.dto.PaymentCallbackMessage;
 
 /**
  * 支付回单处理应用服务。

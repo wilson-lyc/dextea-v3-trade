@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.application;
+package cn.dextea.trade.pay.application.service;
 
 import cn.dextea.trade.pay.application.command.CreatePaymentCommand;
 

@@ -1,9 +1,9 @@
-package cn.dextea.trade.pay.infrastructure.adapter;
+package cn.dextea.trade.pay.infrastructure.gateway.impl;
 
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
-import cn.dextea.trade.pay.domain.model.Payment;
-import cn.dextea.trade.pay.domain.port.PaymentPort;
+import cn.dextea.trade.pay.domain.gateway.PaymentGateway;
+import cn.dextea.trade.pay.domain.model.aggregate.Payment;
 import cn.dextea.trade.pay.infrastructure.config.AlipayPaymentConfig;
 import com.alipay.v3.ApiClient;
 import com.alipay.v3.ApiException;
@@ -18,16 +18,16 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * 支付宝支付客户端：{@link PaymentPort} 的支付宝实现，封装支付宝 SDK 细节。
+ * 支付宝支付网关实现：{@link PaymentGateway} 的支付宝实现，封装支付宝 SDK 细节。
  */
 @Slf4j
 @Component
-public class AlipayPaymentClient implements PaymentPort {
+public class AlipayPaymentGatewayImpl implements PaymentGateway {
 
     private final AlipayTradeApi tradeApi;
     private final AlipayPaymentConfig config;
 
-    public AlipayPaymentClient(AlipayPaymentConfig config) {
+    public AlipayPaymentGatewayImpl(AlipayPaymentConfig config) {
         this.config = config;
         this.tradeApi = new AlipayTradeApi(buildApiClient(config));
     }

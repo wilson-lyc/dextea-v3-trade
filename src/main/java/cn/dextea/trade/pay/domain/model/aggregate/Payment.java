@@ -1,5 +1,6 @@
-package cn.dextea.trade.pay.domain.model;
+package cn.dextea.trade.pay.domain.model.aggregate;
 
+import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import lombok.Builder;
 import lombok.Value;
 

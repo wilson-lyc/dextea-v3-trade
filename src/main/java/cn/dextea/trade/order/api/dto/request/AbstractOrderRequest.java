@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.api.dto.request;
 
-import cn.dextea.trade.pay.domain.model.PlatformEnum;
+import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

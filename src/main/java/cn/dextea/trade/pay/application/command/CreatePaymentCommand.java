@@ -1,6 +1,6 @@
 package cn.dextea.trade.pay.application.command;
 
-import cn.dextea.trade.pay.domain.model.PlatformEnum;
+import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

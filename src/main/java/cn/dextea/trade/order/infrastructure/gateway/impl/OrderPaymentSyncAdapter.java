@@ -6,7 +6,7 @@ import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderStatusDomainService;
-import cn.dextea.trade.pay.domain.port.PaymentResultSyncPort;
+import cn.dextea.trade.pay.domain.gateway.PaymentResultSyncGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
- * 订单域对支付域 {@link PaymentResultSyncPort} 端口的适配器实现。
+ * 订单域对支付域 {@link PaymentResultSyncGateway} 网关的适配器实现。
  *
  * <p>负责把支付结果映射为订单事件（PAY / PAY_AND_FINISH / REFUND / CLOSE），
  * 并委托 {@link OrderStatusDomainService} 完成状态流转与幂等判定。</p>
@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderPaymentSyncAdapter implements PaymentResultSyncPort {
+public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
 
     private final OrderRepository orderRepository;
     private final OrderStatusDomainService orderStatusDomainService;
