@@ -67,8 +67,6 @@ public final class OrderApiAssembler {
         return PreBuildOrderResponse.builder()
                 .unavailable(toUnavailable(result))
                 .products(toProductItems(result.getProducts()))
-                .storeAvailable(result.isStoreAvailable())
-                .customerAvailable(result.isCustomerAvailable())
                 .totalQuantity(result.getTotalQuantity())
                 .totalPrice(result.getTotalPrice())
                 .build();
@@ -83,8 +81,6 @@ public final class OrderApiAssembler {
                 .payExpireAt(result.getPayExpireAt())
                 .unavailable(toUnavailable(pre))
                 .products(toProductItems(pre.getProducts()))
-                .storeAvailable(pre.isStoreAvailable())
-                .customerAvailable(pre.isCustomerAvailable())
                 .totalQuantity(pre.getTotalQuantity())
                 .totalPrice(pre.getTotalPrice())
                 .build();

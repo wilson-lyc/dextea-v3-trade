@@ -22,14 +22,12 @@ import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderPlacementDomainService;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.domain.enums.PlatformEnum;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,7 +46,6 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
     private final PaymentClientGateway paymentClientGateway;
     private final ExternalDataFacade externalDataFacade;
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
     private final OrderPaymentProperties orderPaymentProperties;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem:";
@@ -75,22 +72,13 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
         String idempotencyKey = command.getIdempotencyKey();
         String redisKey = IDEMPOTENCY_KEY_PREFIX + idempotencyKey;
 
-        // 1. Redis 快校验：命中说明已创建过，直接返回结果
-        OrderCreateResult cached = getCachedResult(redisKey);
-        if (cached != null) {
-            return cached;
+        // 1. Redis 幂等校验：命中说明是重复请求，直接抛出业务异常
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
+            throw new BizError(OrderErrorCode.ORDER_DUPLICATE_REQUEST, "重复请求，请勿重复下单");
         }
 
-        // 2. 构建订单：校验数据合法性并计价
+        // 2. 构建订单：校验数据合法性并计价（门店/顾客不可用已在 preBuild 中抛业务异常）
         PreBuildResult summary = placementDomainService.preBuild(toContext(command));
-
-        // 门店或顾客不可用时直接拒绝下单
-        if (!Boolean.TRUE.equals(summary.isStoreAvailable())) {
-            throw new BizError(OrderErrorCode.STORE_NOT_OPEN, "门店不可下单: " + command.getStoreId());
-        }
-        if (!Boolean.TRUE.equals(summary.isCustomerAvailable())) {
-            throw new BizError(OrderErrorCode.CUSTOMER_NOT_ACTIVE, "顾客不可下单: " + command.getCustomerId());
-        }
 
         // 存在不可用项时不创建订单记录，也不占用幂等键，允许修正购物车后正常重试
         if (hasUnavailable(summary)) {
@@ -110,8 +98,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                         .build())
                 .toList();
 
-        // 支付过期时间点由本系统计算（当前时间 + 配置的超时时长），落库并同步给支付宝，
-        // 保证系统与支付宝两端关单时刻一致，前端可据此做支付倒计时
+        // 计算订单支付过期时间
         LocalDateTime payExpireAt = LocalDateTime.now().plus(orderPaymentProperties.payTimeout());
 
         Order order = Order.createInitial(
@@ -127,17 +114,13 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                 payExpireAt,
                 items);
 
-        boolean newlyCreated = true;
         try {
             orderRepository.save(order);
+            // 落库成功后标记幂等键，后续携带相同幂等键的请求将被判定为重复请求
+            markProcessed(redisKey);
         } catch (DuplicateKeyException e) {
-            // Redis 快校验过期但 DB 已有记录：查回已存在订单，复用其订单号与交易号
-            Order existing = orderRepository.findByIdempotencyKey(idempotencyKey);
-            if (existing == null) {
-                throw new BizError(OrderErrorCode.ORDER_CREATE_FAILED, "订单创建冲突，请稍后重试");
-            }
-            order = existing;
-            newlyCreated = false;
+            // Redis 标记过期但 DB 已有记录，同样视为重复请求
+            throw new BizError(OrderErrorCode.ORDER_DUPLICATE_REQUEST, "重复请求，请勿重复下单");
         }
 
         // 4. 支付宝支付：创建交易并回填 trade_no
@@ -153,7 +136,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
             orderRepository.updateTradeNo(order.getId(), tradeNo);
         }
 
-        // 5. 缓存首次结果，后续携带相同幂等键的请求直接返回，无需再查 DB
+        // 5. 组装创建结果返回
         OrderCreateResult result = OrderCreateResult.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
@@ -161,9 +144,6 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                 .payExpireAt(order.getPayExpireAt())
                 .preBuild(summary)
                 .build();
-        if (newlyCreated) {
-            cacheResult(redisKey, result);
-        }
         return result;
     }
 
@@ -195,25 +175,11 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
         return products || customization;
     }
 
-    private OrderCreateResult getCachedResult(String redisKey) {
+    private void markProcessed(String redisKey) {
         try {
-            String json = redisTemplate.opsForValue().get(redisKey);
-            if (json == null) {
-                return null;
-            }
-            return objectMapper.readValue(json, OrderCreateResult.class);
-        } catch (RuntimeException | IOException e) {
-            log.warn("Redis 读取幂等结果失败，降级至 MySQL 唯一索引: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    private void cacheResult(String redisKey, OrderCreateResult result) {
-        try {
-            String json = objectMapper.writeValueAsString(result);
-            redisTemplate.opsForValue().set(redisKey, json, IDEMPOTENCY_TTL);
-        } catch (RuntimeException | IOException e) {
-            log.warn("Redis 缓存幂等结果失败（不影响下单）: {}", e.getMessage());
+            redisTemplate.opsForValue().set(redisKey, "1", IDEMPOTENCY_TTL);
+        } catch (RuntimeException e) {
+            log.warn("Redis 标记幂等键失败（不影响下单）: {}", e.getMessage());
         }
     }
 }

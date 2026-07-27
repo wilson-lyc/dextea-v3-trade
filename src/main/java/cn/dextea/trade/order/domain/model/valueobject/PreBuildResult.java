@@ -18,10 +18,6 @@ import java.util.List;
 @Jacksonized
 public class PreBuildResult {
 
-    private boolean storeAvailable;
-
-    private boolean customerAvailable;
-
     private List<UnavailableProduct> unavailableProducts;
 
     private List<UnavailableCustomization> unavailableCustomizations;

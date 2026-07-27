@@ -59,14 +59,12 @@ public class OrderPlacementDomainService {
         Long customerId = ctx.getCustomerId();
         List<PreBuildProductInput> items = ctx.getProducts();
 
-        // 1. 校验门店与顾客可用性
-        boolean storeAvailable = isStoreAvailable(storeId);
-        boolean customerAvailable = isCustomerAvailable(customerId);
-        if (!storeAvailable || !customerAvailable) {
-            return PreBuildResult.builder()
-                    .storeAvailable(storeAvailable)
-                    .customerAvailable(customerAvailable)
-                    .build();
+        // 1. 校验门店与顾客可用性，不可用直接抛业务异常（与下单逻辑统一）
+        if (!isStoreAvailable(storeId)) {
+            throw new BizError(OrderErrorCode.STORE_NOT_OPEN, "门店不可下单: " + storeId);
+        }
+        if (!isCustomerAvailable(customerId)) {
+            throw new BizError(OrderErrorCode.CUSTOMER_NOT_ACTIVE, "顾客不可下单: " + customerId);
         }
 
         // 2. 解析 skuId，获取商品/选项/客制化项目 ID
@@ -126,8 +124,6 @@ public class OrderPlacementDomainService {
                 .unavailableProducts(unavailableProducts)
                 .unavailableCustomizations(unavailableOptions)
                 .products(availableProducts)
-                .storeAvailable(true)
-                .customerAvailable(true)
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
