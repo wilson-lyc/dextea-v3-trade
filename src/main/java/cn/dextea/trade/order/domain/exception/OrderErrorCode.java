@@ -12,6 +12,8 @@ public enum OrderErrorCode implements BizErrorCode {
     STORE_NOT_OPEN(1014, "门店未营业，无法下单"),
     CUSTOMER_NOT_ACTIVE(1015, "顾客未激活，无法下单"),
     ORDER_CREATE_FAILED(1009, "订单创建失败"),
+    PAY_PLATFORM_NOT_SUPPORTED(1013, "暂不支持的支付方式"),
+    ALIPAY_BUYER_NOT_BOUND(1010, "顾客未绑定支付宝，无法创建支付"),
     DINING_METHOD_INVALID(1012, "用餐方式错误"),
     ORDER_NOT_FOUND(1016, "订单不存在"),
     ORDER_ACCESS_DENIED(1017, "订单不属于该顾客"),

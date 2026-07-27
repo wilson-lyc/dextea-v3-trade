@@ -1,10 +1,12 @@
 package cn.dextea.trade.order.domain.model.aggregate;
 
 import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
 import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
+import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -77,16 +80,17 @@ public class Order {
     private LocalDateTime updatedAt;
 
     /**
-     * 聚合内订单明细（仅在创建时由应用层装配，查询场景走 {@code OrderRepository} 独立加载）。
+     * 聚合内订单明细（由领域工厂在创建时装配，查询场景走 {@code OrderRepository} 独立加载）。
      */
     private List<OrderItem> items;
 
     /**
      * 聚合根工厂：基于预构建结果与下单指令，创建一个处于「待支付」初始态的订单聚合。
      *
-     * <p>所有创建期不变式在此集中校验，保证聚合一经创建即处于合法状态：至少含一条明细、
-     * 金额非负、数量为正。初始交易状态固定为 {@link TradeStatusEnum#TRADE_WAIT_PAY}，
-     * 制作状态固定为 {@link MakingStatusEnum#MAKING_WAIT}，版本号从 0 起算。</p>
+     * <p>所有创建期不变式在此集中校验，保证聚合一经创建即处于合法状态：用餐方式合法、
+     * 至少含一条明细、金额非负、数量为正、支付过期时间合法。初始交易状态固定为
+     * {@link TradeStatusEnum#TRADE_WAIT_PAY}，制作状态固定为 {@link MakingStatusEnum#MAKING_WAIT}，
+     * 版本号从 0 起算。</p>
      *
      * <p>注：本类仍保留 Lombok {@code @Data} 的 setter，仅为满足 MyBatis 回填主键与
      * Redis 序列化等持久化需要；领域代码应优先通过本工厂与 {@link #markTradeNo} 等
@@ -96,6 +100,9 @@ public class Order {
                                     int payMethod, int diningMethod, String note,
                                     BigDecimal totalPrice, int totalQuantity,
                                     LocalDateTime payExpireAt, List<OrderItem> items) {
+        if (DiningMethodEnum.of(diningMethod) == null) {
+            throw new BizError(OrderErrorCode.DINING_METHOD_INVALID, "用餐方式错误: " + diningMethod);
+        }
         if (items == null || items.isEmpty()) {
             throw new BizError(OrderErrorCode.ORDER_ITEMS_EMPTY, "订单明细不能为空");
         }
@@ -124,6 +131,37 @@ public class Order {
                 .payExpireAt(payExpireAt)
                 .items(items)
                 .build();
+    }
+
+    /**
+     * 基于预构建结果装配订单聚合（领域工厂）。
+     *
+     * <p>将 {@link PreBuildResult} 中的计价明细映射为订单明细实体，并按系统支付超时策略
+     * 计算支付过期时间点（{@code 当前时间 + payTimeout}），再委托 {@link #createInitial}
+     * 完成不变式校验与初始态构建。明细映射、过期时间计算与创建校验在此一并收敛于领域，
+     * 应用层只需传入原始指令与外界配置（支付超时时长），不再承担聚合装配职责。</p>
+     *
+     * @param payTimeout 支付超时时长（由应用层从配置读取后传入），用于推导 {@code payExpireAt}
+     */
+    public static Order createFromPreBuild(String orderNo, String idempotencyKey, Long customerId, Long storeId,
+                                           int payMethod, int diningMethod, String note,
+                                           Duration payTimeout, PreBuildResult preBuild) {
+        List<OrderItem> items = preBuild.getProducts().stream()
+                .map(p -> OrderItem.builder()
+                        .productId(p.getProductId())
+                        .skuId(p.getSkuId())
+                        .productName(p.getProductName())
+                        .coverId(p.getCoverId())
+                        .quantity(p.getQuantity())
+                        .unitPrice(p.getUnitPrice())
+                        .subtotal(p.getSubtotal())
+                        .build())
+                .toList();
+        LocalDateTime payExpireAt = LocalDateTime.now().plus(payTimeout);
+        return createInitial(orderNo, idempotencyKey, customerId, storeId,
+                payMethod, diningMethod, note,
+                preBuild.getTotalPrice(), preBuild.getTotalQuantity(),
+                payExpireAt, items);
     }
 
     /**

@@ -3,6 +3,7 @@ package cn.dextea.trade.order.infrastructure.config;
 import cn.dextea.trade.order.domain.gateway.CustomizationGateway;
 import cn.dextea.trade.order.domain.gateway.CustomerGateway;
 import cn.dextea.trade.order.domain.gateway.OrderLockGateway;
+import cn.dextea.trade.order.domain.gateway.PaymentClientGateway;
 import cn.dextea.trade.order.domain.gateway.ProductGateway;
 import cn.dextea.trade.order.domain.gateway.StoreGateway;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
@@ -24,9 +25,10 @@ public class OrderDomainConfig {
             ProductGateway productGateway,
             CustomizationGateway customizationGateway,
             StoreGateway storeGateway,
-            CustomerGateway customerGateway) {
+            CustomerGateway customerGateway,
+            PaymentClientGateway paymentClientGateway) {
         return new OrderPlacementDomainService(
-                productGateway, customizationGateway, storeGateway, customerGateway);
+                productGateway, customizationGateway, storeGateway, customerGateway, paymentClientGateway);
     }
 
     @Bean

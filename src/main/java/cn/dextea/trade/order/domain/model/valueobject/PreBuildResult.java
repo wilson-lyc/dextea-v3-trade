@@ -27,4 +27,14 @@ public class PreBuildResult {
     private int totalQuantity;
 
     private BigDecimal totalPrice;
+
+    /**
+     * 是否存在不可用项（商品级或客制化级下架/禁用）。
+     * <p>作为值对象自身的行为，供应用层在落库前判断是否需要中断下单流程。</p>
+     */
+    public boolean hasUnavailable() {
+        boolean products = unavailableProducts != null && !unavailableProducts.isEmpty();
+        boolean customization = unavailableCustomizations != null && !unavailableCustomizations.isEmpty();
+        return products || customization;
+    }
 }

@@ -1,12 +1,15 @@
 package cn.dextea.trade.order.domain.service;
 
 import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.gateway.CustomerGateway;
 import cn.dextea.trade.order.domain.gateway.CustomizationGateway;
+import cn.dextea.trade.order.domain.gateway.PaymentClientGateway;
 import cn.dextea.trade.order.domain.gateway.ProductCover;
 import cn.dextea.trade.order.domain.gateway.ProductGateway;
 import cn.dextea.trade.order.domain.gateway.StoreGateway;
+import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildContext;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildProductInput;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
@@ -53,6 +56,14 @@ public class OrderPlacementDomainService {
     private final CustomizationGateway customizationGateway;
     private final StoreGateway storeGateway;
     private final CustomerGateway customerGateway;
+    private final PaymentClientGateway paymentClientGateway;
+
+    /**
+     * 支付平台编码（整型跨域契约，与 pay 域 {@code PlatformEnum} 的 code 约定保持一致）。
+     * 订单域仅以整型视图消费该契约，不依赖 pay 域类型，从而保持限界上下文自封闭。
+     * 当前仅开放支付宝（2），微信（1）暂未实现。
+     */
+    private static final int ALIPAY_PLATFORM_CODE = 2;
 
     public PreBuildResult preBuild(PreBuildContext ctx) {
         Long storeId = ctx.getStoreId();
@@ -127,6 +138,60 @@ public class OrderPlacementDomainService {
                 .totalQuantity(totalQuantity)
                 .totalPrice(totalPrice.setScale(2, RoundingMode.HALF_UP))
                 .build();
+    }
+
+    /**
+     * 下单前领域规则校验：支付平台可用性与用餐方式合法性。
+     *
+     * <p>这两项均属订单上下文的不变式：当前仅开放支付宝、暂不支持微信；用餐方式必须命中
+     * 领域枚举。原本散落在应用层的平台拦截与用餐方式校验收归此处，使业务规则沉淀在领域层，
+     * 应用层无需关心具体判据。校验失败抛出对应业务异常交由上层转换为错误响应。</p>
+     *
+     * @param platformCode 支付平台编码（整型契约，由应用层从 {@code PlatformEnum} 翻译而来）
+     */
+    public void validatePlacement(int platformCode, Integer diningMethodCode) {
+        if (!isPlatformSupported(platformCode)) {
+            throw new BizError(OrderErrorCode.PAY_PLATFORM_NOT_SUPPORTED, "暂不支持的支付方式: " + platformCode);
+        }
+        DiningMethodEnum diningMethod = DiningMethodEnum.of(diningMethodCode);
+        if (diningMethod == null) {
+            throw new BizError(OrderErrorCode.DINING_METHOD_INVALID, "用餐方式错误: " + diningMethodCode);
+        }
+    }
+
+    /**
+     * 发起支付：封装「是否需要立即创建交易」的业务决策与「顾客须已绑定支付宝」的不变式。
+     *
+     * <p>当前仅支付宝需要在下单时同步创建交易并回填 {@code trade_no}；微信暂未开放（已于
+     * {@link #validatePlacement} 拦截）。方法通过领域网关获取顾客快照、经支付网关创建交易，
+     * 并以聚合行为方法 {@link Order#markTradeNo} 写入交易号，调用方（应用层）仅负责持久化回填。</p>
+     */
+    public void initiatePayment(Order order) {
+        if (!needsImmediatePayment(order.getPayMethod())) {
+            return;
+        }
+        Customer customer = customerGateway.findCustomer(order.getCustomerId());
+        if (customer == null || customer.getAlipayOpenId() == null) {
+            throw new BizError(OrderErrorCode.ALIPAY_BUYER_NOT_BOUND, "顾客未绑定支付宝，无法创建支付");
+        }
+        String tradeNo = paymentClientGateway.createPayment(
+                order.getOrderNo(), order.getTotalPrice(), customer.getAlipayOpenId(),
+                order.getTotalQuantity(), order.getPayMethod(), order.getPayExpireAt());
+        order.markTradeNo(tradeNo);
+    }
+
+    /**
+     * 当前支付方式是否需要在下单时立即创建支付交易。
+     */
+    private boolean needsImmediatePayment(Integer payMethod) {
+        return ALIPAY_PLATFORM_CODE == payMethod;
+    }
+
+    /**
+     * 支付平台可用性策略：当前仅开放支付宝。
+     */
+    private boolean isPlatformSupported(int platformCode) {
+        return ALIPAY_PLATFORM_CODE == platformCode;
     }
 
     private SkuResolution resolveSkuIds(List<PreBuildProductInput> items) {
