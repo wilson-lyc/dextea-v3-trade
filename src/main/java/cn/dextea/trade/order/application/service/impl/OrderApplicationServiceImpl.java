@@ -80,7 +80,13 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                 orderPaymentProperties.payTimeout(),
                 summary);
 
-        // 4. 落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单
+        // 4. 先发起支付：平台决策 + 绑卡校验 + 调用支付网关，由领域服务封装并回填 trade_no。
+        //    若支付创建失败，订单尚未落库、幂等键也未标记，用户可携相同幂等键安全重试（不会卡死）。
+        //    initiatePayment 仅依赖聚合内已有字段（orderNo/totalPrice 等），不依赖 DB 自增 id。
+        placementDomainService.initiatePayment(order);
+
+        // 5. 再落库：MySQL 唯一索引兜底，真正保证同幂等键只创建一个订单。
+        //    trade_no 已在第 4 步写入聚合，insert SQL 一并持久化，无需二次 updateTradeNo。
         try {
             orderRepository.save(order);
             // 落库成功后标记幂等键，后续携带相同幂等键的请求将被判定为重复请求
@@ -88,12 +94,6 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
         } catch (DuplicateKeyException e) {
             // Redis 标记过期但 DB 已有记录，同样视为重复请求
             throw new BizError(OrderErrorCode.ORDER_DUPLICATE_REQUEST, "重复请求，请勿重复下单");
-        }
-
-        // 5. 发起支付：平台决策 + 绑卡校验 + 调用支付网关，由领域服务封装；回填 trade_no 后持久化
-        placementDomainService.initiatePayment(order);
-        if (order.getTradeNo() != null) {
-            orderRepository.updateTradeNo(order.getId(), order.getTradeNo());
         }
 
         // 6. 组装创建结果返回
