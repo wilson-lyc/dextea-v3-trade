@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.mapper;
 
-import cn.dextea.trade.order.domain.model.OrderStatusLog;
+import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;

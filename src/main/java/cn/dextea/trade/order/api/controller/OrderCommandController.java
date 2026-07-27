@@ -18,7 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 订单命令接口：承载写操作（创建订单、订单预构建）。
+ * 订单命令接口
+ * 承载写操作（创建订单、订单预构建）
  */
 @RestController
 @RequestMapping("/api/v1/orders")

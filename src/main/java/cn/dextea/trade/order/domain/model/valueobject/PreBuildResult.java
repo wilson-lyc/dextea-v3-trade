@@ -1,4 +1,4 @@
-package cn.dextea.trade.order.domain.model;
+package cn.dextea.trade.order.domain.model.valueobject;
 
 import lombok.Builder;
 import lombok.Getter;

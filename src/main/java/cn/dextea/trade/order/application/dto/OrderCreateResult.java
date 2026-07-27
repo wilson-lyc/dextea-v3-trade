@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.application.dto;
 
-import cn.dextea.trade.order.domain.model.PreBuildResult;
+import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;

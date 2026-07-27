@@ -18,8 +18,8 @@ import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
-import cn.dextea.trade.order.domain.model.PreBuildResult;
-import cn.dextea.trade.order.domain.model.PricedOrderItem;
+import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
+import cn.dextea.trade.order.domain.model.valueobject.PricedOrderItem;
 
 import java.util.List;
 

@@ -5,7 +5,7 @@ import cn.dextea.trade.order.domain.enums.OrderEventEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.gateway.OrderLockGateway;
-import cn.dextea.trade.order.domain.model.OrderStatusLog;
+import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;

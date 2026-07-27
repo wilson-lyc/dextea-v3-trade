@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.repository;
 
-import cn.dextea.trade.order.domain.model.OrderStatusLog;
+import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
