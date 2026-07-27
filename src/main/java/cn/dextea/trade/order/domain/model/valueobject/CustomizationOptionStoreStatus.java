@@ -1,0 +1,38 @@
+package cn.dextea.trade.order.domain.model.valueobject;
+
+import cn.dextea.trade.order.domain.enums.CustomizationOptionStoreStatusEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+/**
+ * 客制化选项门店维度状态只读快照值对象。
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CustomizationOptionStoreStatus {
+
+    private Long customizationOptionId;
+
+    private Long storeId;
+
+    private Integer status;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    public Optional<CustomizationOptionStoreStatusEnum> getStoreStatus() {
+        return status == null ? Optional.empty() : Optional.of(CustomizationOptionStoreStatusEnum.of(status));
+    }
+
+    public boolean isAvailable() {
+        return status != null && CustomizationOptionStoreStatusEnum.AVAILABLE.getCode() == status;
+    }
+}

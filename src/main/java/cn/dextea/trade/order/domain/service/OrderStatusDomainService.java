@@ -4,10 +4,10 @@ import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.enums.OrderEventEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.model.Order;
+import cn.dextea.trade.order.domain.gateway.OrderLockGateway;
 import cn.dextea.trade.order.domain.model.OrderStatusLog;
-import cn.dextea.trade.order.domain.port.OrderLockPort;
-import cn.dextea.trade.order.domain.port.OrderRepository;
+import cn.dextea.trade.order.domain.model.aggregate.Order;
+import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 /**
  * 订单状态流转领域服务：承载「查询→状态机校验→CAS 更新→写日志→加锁」的聚合行为。
  *
- * <p>通过 {@link OrderRepository} 与 {@link OrderLockPort} 完成持久化与并发保护，
+ * <p>通过 {@link OrderRepository} 与 {@link OrderLockGateway} 完成持久化与并发保护，
  * 去除对具体 Mapper / 锁实现的依赖。</p>
  */
 @Slf4j
@@ -27,12 +27,12 @@ import java.time.LocalDateTime;
 public class OrderStatusDomainService {
 
     private final OrderRepository orderRepository;
-    private final OrderLockPort orderLockPort;
+    private final OrderLockGateway orderLockGateway;
 
     @Transactional(rollbackFor = Exception.class)
     public void changeStatus(String orderNo, OrderEventEnum event, String operator,
                              String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt) {
-        orderLockPort.executeWithLock(orderNo, () -> {
+        orderLockGateway.executeWithLock(orderNo, () -> {
             // 1. 查询当前订单
             Order order = orderRepository.findByOrderNo(orderNo);
             if (order == null) {

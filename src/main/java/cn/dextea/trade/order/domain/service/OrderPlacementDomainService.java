@@ -1,22 +1,25 @@
 package cn.dextea.trade.order.domain.service;
 
-import cn.dextea.trade.catalog.domain.model.Customization;
-import cn.dextea.trade.catalog.domain.model.CustomizationOption;
-import cn.dextea.trade.catalog.domain.model.CustomizationOptionStoreStatus;
-import cn.dextea.trade.catalog.domain.model.Customer;
-import cn.dextea.trade.catalog.domain.model.Gallery;
-import cn.dextea.trade.catalog.domain.model.Product;
-import cn.dextea.trade.catalog.domain.model.ProductStoreStatus;
-import cn.dextea.trade.catalog.domain.model.Store;
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
+import cn.dextea.trade.order.domain.gateway.CustomerGateway;
+import cn.dextea.trade.order.domain.gateway.CustomizationGateway;
+import cn.dextea.trade.order.domain.gateway.ProductCover;
+import cn.dextea.trade.order.domain.gateway.ProductGateway;
+import cn.dextea.trade.order.domain.gateway.StoreGateway;
 import cn.dextea.trade.order.domain.model.PreBuildContext;
 import cn.dextea.trade.order.domain.model.PreBuildProductInput;
 import cn.dextea.trade.order.domain.model.PreBuildResult;
 import cn.dextea.trade.order.domain.model.PricedOrderItem;
 import cn.dextea.trade.order.domain.model.UnavailableCustomization;
 import cn.dextea.trade.order.domain.model.UnavailableProduct;
-import cn.dextea.trade.order.domain.port.CatalogPort;
+import cn.dextea.trade.order.domain.model.valueobject.Customer;
+import cn.dextea.trade.order.domain.model.valueobject.Customization;
+import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
+import cn.dextea.trade.order.domain.model.valueobject.CustomizationOptionStoreStatus;
+import cn.dextea.trade.order.domain.model.valueobject.Product;
+import cn.dextea.trade.order.domain.model.valueobject.ProductStoreStatus;
+import cn.dextea.trade.order.domain.model.valueobject.Store;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,15 +41,20 @@ import java.util.stream.Collectors;
 /**
  * 订单预构建（下单前只读计价与可用性校验）领域服务。
  *
- * <p>通过商品目录防腐端口获取只读快照，完成 skuId 解析、商品/客制化可用性校验、计价与明细构建，
- * 产出 {@link PreBuildResult}。所有外部支撑数据均经端口访问，不依赖 catalog 持久化细节。</p>
+ * <p>通过商品/客制化/门店/顾客四个领域网关获取只读快照，完成 skuId 解析、
+ * 商品/客制化可用性校验、计价与明细构建，产出 {@link PreBuildResult}。
+ * 所有外部支撑数据均经网关接口访问，不依赖外部域持久化细节
+ * （如图库表结构由基础设施层清洗为 productId → 封面 的映射后提供）。</p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderPlacementDomainService {
 
-    private final CatalogPort catalogPort;
+    private final ProductGateway productGateway;
+    private final CustomizationGateway customizationGateway;
+    private final StoreGateway storeGateway;
+    private final CustomerGateway customerGateway;
 
     public PreBuildResult preBuild(PreBuildContext ctx) {
         Long storeId = ctx.getStoreId();
@@ -66,7 +74,7 @@ public class OrderPlacementDomainService {
         // 2. 解析 skuId，获取商品/选项/客制化项目 ID
         SkuResolution resolution = resolveSkuIds(items);
 
-        // 3. 批量加载所有关联实体（商品、封面、门店状态、客制化项目、选项）
+        // 3. 批量加载所有关联快照（商品、封面、门店状态、客制化项目、选项）
         LoadedEntities entities = loadAllEntities(resolution, storeId);
 
         // 4. 逐项分类：商品级剔除 → 选项级剔除 → 有效商品汇总
@@ -110,7 +118,7 @@ public class OrderPlacementDomainService {
 
             // 有效商品：计价并构建明细
             PricedItem priced = priceItem(item, product, opts, entities.optionMap(),
-                    entities.productCoverMap(), entities.productCoverUrlMap());
+                    entities.productCoverMap());
             totalQuantity += priced.quantity();
             totalPrice = totalPrice.add(priced.subtotal());
             availableProducts.add(priced.detail());
@@ -150,13 +158,12 @@ public class OrderPlacementDomainService {
 
     private LoadedEntities loadAllEntities(SkuResolution resolution, Long storeId) {
         Map<Long, Product> productMap = loadProducts(resolution.allProductIds());
-        Map<Long, Long> productCoverMap = loadCoverIds(resolution.allProductIds());
-        Map<Long, String> productCoverUrlMap = loadCoverUrls(productCoverMap);
+        Map<Long, ProductCover> productCoverMap = loadProductCovers(resolution.allProductIds());
         Map<Long, ProductStoreStatus> productStoreStatusMap = loadProductStoreStatus(resolution.allProductIds(), storeId);
         Map<Long, Customization> customizationMap = loadCustomizations(resolution.allItemIds());
         Map<Long, CustomizationOption> optionMap = loadOptions(resolution.allOptionIds());
         Map<Long, CustomizationOptionStoreStatus> optionStoreStatusMap = loadOptionStoreStatus(resolution.allOptionIds(), storeId);
-        return new LoadedEntities(productMap, productCoverMap, productCoverUrlMap,
+        return new LoadedEntities(productMap, productCoverMap,
                 productStoreStatusMap, customizationMap, optionMap, optionStoreStatusMap);
     }
 
@@ -205,8 +212,7 @@ public class OrderPlacementDomainService {
     }
 
     private PricedItem priceItem(PreBuildProductInput item, Product product, List<Long> opts,
-            Map<Long, CustomizationOption> optionMap, Map<Long, Long> productCoverMap,
-            Map<Long, String> productCoverUrlMap) {
+            Map<Long, CustomizationOption> optionMap, Map<Long, ProductCover> productCoverMap) {
         int quantity = item.getQuantity();
         BigDecimal unitPrice = nullToZero(product.getPrice());
         for (Long optionId : opts) {
@@ -219,13 +225,14 @@ public class OrderPlacementDomainService {
                 .map(CustomizationOption::getName)
                 .filter(name -> name != null && !name.isBlank())
                 .collect(Collectors.joining(" / "));
+        ProductCover cover = productCoverMap.get(product.getId());
         PricedOrderItem detail = PricedOrderItem.builder()
                 .skuId(item.getSkuId())
                 .quantity(quantity)
                 .productId(product.getId())
                 .productName(product.getName())
-                .coverId(productCoverMap.get(product.getId()))
-                .coverUrl(productCoverUrlMap.get(product.getId()))
+                .coverId(cover != null ? cover.coverId() : null)
+                .coverUrl(cover != null ? cover.coverUrl() : null)
                 .customizationText(customizationText.isEmpty() ? null : customizationText)
                 .unitPrice(unitPrice.setScale(2, RoundingMode.HALF_UP))
                 .subtotal(subtotal.setScale(2, RoundingMode.HALF_UP))
@@ -234,12 +241,12 @@ public class OrderPlacementDomainService {
     }
 
     private boolean isStoreAvailable(Long storeId) {
-        Store store = catalogPort.findStore(storeId);
+        Store store = storeGateway.findStore(storeId);
         return store != null && store.isOpen();
     }
 
     private boolean isCustomerAvailable(Long customerId) {
-        Customer customer = catalogPort.findCustomer(customerId);
+        Customer customer = customerGateway.findCustomer(customerId);
         return customer != null && customer.isActive();
     }
 
@@ -265,38 +272,15 @@ public class OrderPlacementDomainService {
     }
 
     private Map<Long, Product> loadProducts(Set<Long> productIds) {
-        return loadByIds(productIds, catalogPort::findProducts, Product::getId,
+        return loadByIds(productIds, productGateway::findProducts, Product::getId,
                 OrderErrorCode.PRODUCT_NOT_FOUND, "商品");
     }
 
-    private Map<Long, Long> loadCoverIds(Set<Long> productIds) {
-        Map<Long, Long> map = new HashMap<>();
+    private Map<Long, ProductCover> loadProductCovers(Set<Long> productIds) {
         if (productIds.isEmpty()) {
-            return map;
+            return Map.of();
         }
-        catalogPort.findCoverImages(new ArrayList<>(productIds))
-                .forEach(pi -> map.putIfAbsent(pi.getProductId(), pi.getImageId()));
-        return map;
-    }
-
-    private Map<Long, String> loadCoverUrls(Map<Long, Long> productCoverMap) {
-        Map<Long, String> map = new HashMap<>();
-        if (productCoverMap == null || productCoverMap.isEmpty()) {
-            return map;
-        }
-        Set<Long> imageIds = new LinkedHashSet<>(productCoverMap.values());
-        if (imageIds.isEmpty()) {
-            return map;
-        }
-        Map<Long, String> urlMap = catalogPort.findGalleries(new ArrayList<>(imageIds)).stream()
-                .collect(Collectors.toMap(Gallery::getId, Gallery::getUrl, (a, b) -> a));
-        productCoverMap.forEach((productId, imageId) -> {
-            String url = urlMap.get(imageId);
-            if (url != null) {
-                map.put(productId, url);
-            }
-        });
-        return map;
+        return productGateway.findProductCovers(new ArrayList<>(productIds));
     }
 
     private Map<Long, ProductStoreStatus> loadProductStoreStatus(Set<Long> productIds, Long storeId) {
@@ -304,18 +288,18 @@ public class OrderPlacementDomainService {
         if (productIds.isEmpty()) {
             return map;
         }
-        catalogPort.findProductStoreStatus(new ArrayList<>(productIds), storeId)
+        productGateway.findProductStoreStatus(new ArrayList<>(productIds), storeId)
                 .forEach(s -> map.put(s.getProductId(), s));
         return map;
     }
 
     private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
-        return loadByIds(itemIds, catalogPort::findCustomizations, Customization::getId,
+        return loadByIds(itemIds, customizationGateway::findCustomizations, Customization::getId,
                 OrderErrorCode.CUSTOMIZATION_NOT_FOUND, "客制化项目");
     }
 
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
-        return loadByIds(optionIds, catalogPort::findOptions, CustomizationOption::getId,
+        return loadByIds(optionIds, customizationGateway::findOptions, CustomizationOption::getId,
                 OrderErrorCode.CUSTOMIZATION_OPTION_NOT_FOUND, "客制化选项");
     }
 
@@ -324,7 +308,7 @@ public class OrderPlacementDomainService {
         if (optionIds.isEmpty()) {
             return map;
         }
-        catalogPort.findOptionStoreStatus(new ArrayList<>(optionIds), storeId)
+        customizationGateway.findOptionStoreStatus(new ArrayList<>(optionIds), storeId)
                 .forEach(s -> map.put(s.getCustomizationOptionId(), s));
         return map;
     }
@@ -347,8 +331,7 @@ public class OrderPlacementDomainService {
 
     private record LoadedEntities(
             Map<Long, Product> productMap,
-            Map<Long, Long> productCoverMap,
-            Map<Long, String> productCoverUrlMap,
+            Map<Long, ProductCover> productCoverMap,
             Map<Long, ProductStoreStatus> productStoreStatusMap,
             Map<Long, Customization> customizationMap,
             Map<Long, CustomizationOption> optionMap,

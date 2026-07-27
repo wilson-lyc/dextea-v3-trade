@@ -1,0 +1,79 @@
+package cn.dextea.trade.order.api.dto.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@Schema(description = "订单详情响应")
+public class OrderDetailResponse {
+
+    @Schema(description = "订单ID", example = "1")
+    private Long id;
+
+    @Schema(description = "订单号", example = "20150320010101001")
+    private String orderNo;
+
+    @Schema(description = "交易号", example = "2015042321001004720200028594")
+    private String tradeNo;
+
+    @Schema(description = "交易状态（支付维度）：0-待支付 1-已支付 2-已结算 3-已关闭 4-退款中 5-已退款", example = "1")
+    private Integer tradeStatus;
+
+    @Schema(description = "交易状态文案", example = "已支付")
+    private String tradeStatusDesc;
+
+    @Schema(description = "制作进度状态：0-待制作 1-制作中 2-制作完成 3-已交付", example = "0")
+    private Integer makingStatus;
+
+    @Schema(description = "制作进度文案", example = "待制作")
+    private String makingStatusDesc;
+
+    @Schema(description = "订单总价", example = "99.00")
+    private BigDecimal totalPrice;
+
+    @Schema(description = "商品总数量", example = "3")
+    private Integer totalQuantity;
+
+    @Schema(description = "支付方式：0-未指定 1-微信支付 2-支付宝 3-银行卡", example = "2")
+    private Integer payMethod;
+
+    @Schema(description = "支付方式文案", example = "支付宝")
+    private String payMethodDesc;
+
+    @Schema(description = "用餐方式：0-堂食 1-外带", example = "0")
+    private Integer diningMethod;
+
+    @Schema(description = "用餐方式文案", example = "堂食")
+    private String diningMethodDesc;
+
+    @Schema(description = "订单备注", example = "少冰少糖")
+    private String note;
+
+    @Schema(description = "下单时间", example = "2026-04-23T15:30:00")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "支付时间", example = "2026-04-23T15:35:00")
+    private LocalDateTime paidAt;
+
+    @Schema(description = "退款时间", example = "2026-04-24T10:00:00")
+    private LocalDateTime refundedAt;
+
+    @Schema(description = "更新时间", example = "2026-04-23T15:35:00")
+    private LocalDateTime updatedAt;
+
+    @Schema(description = "门店信息")
+    private StoreInfo store;
+
+    @Schema(description = "商品明细列表")
+    private List<OrderDetailItem> items;
+}
