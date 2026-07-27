@@ -80,6 +80,7 @@ public final class OrderApiAssembler {
                 .id(result.getId())
                 .orderNo(result.getOrderNo())
                 .tradeNo(result.getTradeNo())
+                .payExpireAt(result.getPayExpireAt())
                 .unavailable(toUnavailable(pre))
                 .products(toProductItems(pre.getProducts()))
                 .storeAvailable(pre.isStoreAvailable())
@@ -132,6 +133,7 @@ public final class OrderApiAssembler {
                 .makingStatusDesc(v.getMakingStatusDesc())
                 .totalPrice(v.getTotalPrice())
                 .totalQuantity(v.getTotalQuantity())
+                .payExpireAt(v.getPayExpireAt())
                 .coverUrls(v.getCoverUrls())
                 .build();
     }
@@ -169,6 +171,7 @@ public final class OrderApiAssembler {
                 .diningMethod(v.getDiningMethod())
                 .diningMethodDesc(v.getDiningMethodDesc())
                 .note(v.getNote())
+                .payExpireAt(v.getPayExpireAt())
                 .createdAt(v.getCreatedAt())
                 .paidAt(v.getPaidAt())
                 .refundedAt(v.getRefundedAt())

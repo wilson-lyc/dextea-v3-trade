@@ -17,6 +17,7 @@ import cn.dextea.trade.order.domain.model.PreBuildResult;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.model.valueobject.Customer;
+import cn.dextea.trade.order.application.config.OrderPaymentProperties;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderPlacementDomainService;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -47,6 +49,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
     private final ExternalDataFacade externalDataFacade;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+    private final OrderPaymentProperties orderPaymentProperties;
 
     private static final String IDEMPOTENCY_KEY_PREFIX = "dextea:order:idem:";
     private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
@@ -107,6 +110,10 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                         .build())
                 .toList();
 
+        // 支付过期时间点由本系统计算（当前时间 + 配置的超时时长），落库并同步给支付宝，
+        // 保证系统与支付宝两端关单时刻一致，前端可据此做支付倒计时
+        LocalDateTime payExpireAt = LocalDateTime.now().plus(orderPaymentProperties.payTimeout());
+
         Order order = Order.createInitial(
                 orderIdGeneratorGateway.generateOrderNo(),
                 idempotencyKey,
@@ -117,6 +124,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                 command.getNote(),
                 summary.getTotalPrice(),
                 summary.getTotalQuantity(),
+                payExpireAt,
                 items);
 
         boolean newlyCreated = true;
@@ -140,7 +148,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
             }
             String tradeNo = paymentClientGateway.createPayment(
                     order.getOrderNo(), order.getTotalPrice(), customer.getAlipayOpenId(),
-                    order.getTotalQuantity(), order.getPayMethod());
+                    order.getTotalQuantity(), order.getPayMethod(), order.getPayExpireAt());
             order.markTradeNo(tradeNo);
             orderRepository.updateTradeNo(order.getId(), tradeNo);
         }
@@ -150,6 +158,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
+                .payExpireAt(order.getPayExpireAt())
                 .preBuild(summary)
                 .build();
         if (newlyCreated) {

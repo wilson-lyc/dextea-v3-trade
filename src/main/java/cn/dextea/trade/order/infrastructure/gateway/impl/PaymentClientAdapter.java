@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 支付客户端适配器：实现订单领域 {@link PaymentClientGateway}，委派 pay 应用服务创建支付交易。
@@ -20,13 +21,15 @@ public class PaymentClientAdapter implements PaymentClientGateway {
 
     @Override
     public String createPayment(String orderNo, BigDecimal totalPrice,
-                               String customerOpenId, Integer totalQuantity, int platform) {
+                               String customerOpenId, Integer totalQuantity, int platform,
+                               LocalDateTime payExpireAt) {
         CreatePaymentCommand command = CreatePaymentCommand.builder()
                 .orderNo(orderNo)
                 .totalPrice(totalPrice)
                 .customerOpenId(customerOpenId)
                 .totalQuantity(totalQuantity)
                 .platform(PlatformEnum.of(platform))
+                .payExpireAt(payExpireAt)
                 .build();
         return paymentService.createPayment(command);
     }

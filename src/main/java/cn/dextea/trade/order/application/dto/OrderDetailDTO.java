@@ -46,6 +46,9 @@ public class OrderDetailDTO {
 
     private String note;
 
+    /** 支付过期时间点（系统计算并已同步支付宝），待支付订单前端可据此做倒计时 */
+    private LocalDateTime payExpireAt;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime paidAt;

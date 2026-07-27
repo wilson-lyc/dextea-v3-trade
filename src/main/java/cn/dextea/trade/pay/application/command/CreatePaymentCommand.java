@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 创建支付命令
@@ -31,4 +32,7 @@ public class CreatePaymentCommand {
 
     /** 支付平台 */
     private PlatformEnum platform;
+
+    /** 支付过期时间点（由订单系统计算，透传给支付渠道保证两端关单时刻一致） */
+    private LocalDateTime payExpireAt;
 }

@@ -24,6 +24,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .customerOpenId(command.getCustomerOpenId())
                 .totalQuantity(command.getTotalQuantity())
                 .platform(command.getPlatform())
+                .payExpireAt(command.getPayExpireAt())
                 .build();
         return paymentGateway.createPayment(payment);
     }

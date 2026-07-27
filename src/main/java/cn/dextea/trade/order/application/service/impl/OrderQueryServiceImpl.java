@@ -88,6 +88,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                     .makingStatusDesc(safeEnumDesc(() -> MakingStatusEnum.of(order.getMakingStatus()).getDescription()))
                     .totalPrice(order.getTotalPrice())
                     .totalQuantity(order.getTotalQuantity())
+                    .payExpireAt(order.getPayExpireAt())
                     .coverUrls(coverUrls)
                     .build());
         }
@@ -148,6 +149,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 .diningMethod(order.getDiningMethod())
                 .diningMethodDesc(safeEnumDesc(() -> DiningMethodEnum.of(order.getDiningMethod()).getDescription()))
                 .note(order.getNote())
+                .payExpireAt(order.getPayExpireAt())
                 .createdAt(order.getCreatedAt())
                 .paidAt(order.getPaidAt())
                 .refundedAt(order.getRefundedAt())

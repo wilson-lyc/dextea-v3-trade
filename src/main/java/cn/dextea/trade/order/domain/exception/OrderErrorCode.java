@@ -20,7 +20,8 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_ITEMS_EMPTY(1021, "订单明细不能为空"),
     ORDER_PRICE_INVALID(1022, "订单金额非法"),
     ORDER_QUANTITY_INVALID(1023, "订单数量非法"),
-    ORDER_TRADE_NO_ALREADY_SET(1024, "trade_no 已存在，不可重复设置");
+    ORDER_TRADE_NO_ALREADY_SET(1024, "trade_no 已存在，不可重复设置"),
+    ORDER_PAY_EXPIRE_AT_INVALID(1025, "支付过期时间非法");
 
     private final int code;
 

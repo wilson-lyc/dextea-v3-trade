@@ -10,8 +10,6 @@ import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.function.Function;
@@ -23,7 +21,6 @@ import java.util.function.Function;
  * 状态有向图的合法性由 {@link Order} 聚合根守卫；{@link OrderEventEnum} 仅作为审计日志标签。</p>
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class OrderStatusDomainService {
 
@@ -33,7 +30,6 @@ public class OrderStatusDomainService {
     /**
      * 支付成功：待支付 → 已支付，记录交易号与支付时间。
      */
-    @Transactional(rollbackFor = Exception.class)
     public void markPaid(String orderNo, String tradeNo, LocalDateTime paidAt, String operator) {
         transition(orderNo, operator, OrderEventEnum.PAY,
                 order -> order.markPaid(tradeNo, paidAt),
@@ -43,7 +39,6 @@ public class OrderStatusDomainService {
     /**
      * 超时未支付关闭：待支付 → 支付超时。
      */
-    @Transactional(rollbackFor = Exception.class)
     public void markPayTimeout(String orderNo, String operator) {
         transition(orderNo, operator, OrderEventEnum.PAY_TIMEOUT,
                 Order::markPayTimeout,
@@ -53,7 +48,6 @@ public class OrderStatusDomainService {
     /**
      * 全额退款完成：已支付 → 已退款，记录退款时间。
      */
-    @Transactional(rollbackFor = Exception.class)
     public void markRefunded(String orderNo, LocalDateTime refundedAt, String operator) {
         transition(orderNo, operator, OrderEventEnum.REFUND,
                 order -> order.markRefunded(refundedAt),

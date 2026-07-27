@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
@@ -23,4 +25,8 @@ public class CreateOrderResponse extends AbstractOrderResponse {
 
     @Schema(description = "交易号", example = "2015042321001004720200028594")
     private String tradeNo;
+
+    @Schema(description = "支付过期时间点（系统计算并已同步支付宝，前端可据此做支付倒计时）",
+            example = "2026-04-23T15:45:00")
+    private LocalDateTime payExpireAt;
 }

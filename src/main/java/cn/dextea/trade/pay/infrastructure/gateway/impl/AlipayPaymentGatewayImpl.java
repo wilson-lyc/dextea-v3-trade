@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 
 /**
  * 支付宝支付网关实现：{@link PaymentGateway} 的支付宝实现，封装支付宝 SDK 细节。
@@ -23,6 +24,10 @@ import java.math.BigDecimal;
 @Slf4j
 @Component
 public class AlipayPaymentGatewayImpl implements PaymentGateway {
+
+    /** 支付宝 time_expire 要求的时间格式（绝对时间，东八区） */
+    private static final DateTimeFormatter TIME_EXPIRE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final AlipayTradeApi tradeApi;
     private final AlipayPaymentConfig config;
@@ -87,15 +92,22 @@ public class AlipayPaymentGatewayImpl implements PaymentGateway {
     }
 
     /**
-     * 转换为支付宝 SDK 所需的 {@link AlipayTradeCreateModel}，仅填充必填字段。
+     * 转换为支付宝 SDK 所需的 {@link AlipayTradeCreateModel}。
+     *
+     * <p>过期时间采用 time_expire（绝对时间点）而非 timeout_express（相对时长）：
+     * 时间点由订单系统计算并已落库，两端以同一时刻关单，保证一致性。</p>
      */
     private AlipayTradeCreateModel toAlipayTradeCreateModel(Payment payment) {
-        return new AlipayTradeCreateModel()
+        AlipayTradeCreateModel model = new AlipayTradeCreateModel()
                 .outTradeNo(payment.getOrderNo())
                 .totalAmount(payment.getTotalPrice().toPlainString())
                 .productCode("JSAPI_PAY")
                 .subject(config.getSubject())
                 .opAppId(config.getAppId())
                 .buyerOpenId(payment.getCustomerOpenId());
+        if (payment.getPayExpireAt() != null) {
+            model.timeExpire(payment.getPayExpireAt().format(TIME_EXPIRE_FORMATTER));
+        }
+        return model;
     }
 }

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
+import java.time.LocalDateTime;
+
 /**
  * 创建订单结果（应用层 DTO），供接口层映射为对外响应。
  *
@@ -22,6 +24,9 @@ public class OrderCreateResult {
     private String orderNo;
 
     private String tradeNo;
+
+    /** 支付过期时间点（系统计算并已同步支付宝），前端可据此做支付倒计时 */
+    private LocalDateTime payExpireAt;
 
     private PreBuildResult preBuild;
 }

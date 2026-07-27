@@ -4,7 +4,6 @@ import cn.dextea.trade.pay.domain.gateway.PaymentResultSyncGateway;
 import cn.dextea.trade.pay.domain.model.PaymentResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 /**
  * 支付领域服务：根据支付结果的终态判定，驱动支付结果同步网关。
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
  * <p>订单事件映射与幂等判定属于订单域知识，由网关的订单域适配器负责。</p>
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class PaymentDomainService {
 

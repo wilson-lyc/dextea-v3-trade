@@ -59,6 +59,10 @@ public class OrderDetailResponse {
     @Schema(description = "订单备注", example = "少冰少糖")
     private String note;
 
+    @Schema(description = "支付过期时间点（系统计算并已同步支付宝，待支付订单前端可据此做倒计时）",
+            example = "2026-04-23T15:45:00")
+    private LocalDateTime payExpireAt;
+
     @Schema(description = "下单时间", example = "2026-04-23T15:30:00")
     private LocalDateTime createdAt;
 

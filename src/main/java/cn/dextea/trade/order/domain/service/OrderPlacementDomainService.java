@@ -23,7 +23,6 @@ import cn.dextea.trade.order.domain.model.valueobject.Store;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,7 +46,6 @@ import java.util.stream.Collectors;
  * （如图库表结构由基础设施层清洗为 productId → 封面 的映射后提供）。</p>
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class OrderPlacementDomainService {
 

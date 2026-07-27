@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 支付领域对象
@@ -27,4 +28,7 @@ public class Payment {
 
     /** 订单总金额（元） */
     BigDecimal totalPrice;
+
+    /** 支付过期时间点（订单系统计算的绝对时间，透传给支付渠道保证两端关单时刻一致） */
+    LocalDateTime payExpireAt;
 }

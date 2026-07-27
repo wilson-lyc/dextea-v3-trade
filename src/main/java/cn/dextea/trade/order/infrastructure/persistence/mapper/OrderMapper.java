@@ -14,8 +14,8 @@ import java.util.List;
 @Mapper
 public interface OrderMapper {
 
-    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, trade_status, making_status, version, pay_method, dining_method, note, total_price, total_quantity) " +
-            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{tradeStatus}, #{makingStatus}, 0, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity})")
+    @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, trade_status, making_status, version, pay_method, dining_method, note, total_price, total_quantity, pay_expire_at) " +
+            "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{tradeStatus}, #{makingStatus}, 0, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity}, #{payExpireAt})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Order order);
 

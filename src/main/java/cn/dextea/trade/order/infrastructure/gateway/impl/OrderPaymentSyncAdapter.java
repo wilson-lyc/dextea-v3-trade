@@ -9,6 +9,7 @@ import cn.dextea.trade.pay.domain.gateway.PaymentResultSyncGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -27,6 +28,7 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
     private final OrderStatusDomainService orderStatusDomainService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncPaid(String orderNo, String tradeNo, String rawStatus, String traceId) {
         Order order = orderRepository.findByOrderNo(orderNo);
         if (order == null) {
@@ -56,6 +58,7 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncClosed(String orderNo, String traceId) {
         Order order = orderRepository.findByOrderNo(orderNo);
         if (order == null) {

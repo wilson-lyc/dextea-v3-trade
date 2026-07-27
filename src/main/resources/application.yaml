@@ -36,6 +36,9 @@ cosid:
       order:
         namespace: ${COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE:${spring.application.name}}
 
+order:
+  pay-timeout-minutes: ${ORDER_PAY_TIMEOUT_MINUTES:15}
+
 alipay:
   server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
   app-id: ${ALIPAY_APP_ID}

@@ -61,6 +61,13 @@ public class Order {
 
     private String note;
 
+    /**
+     * 支付过期时间点（由本系统在下单时基于超时时长计算），对应库表 pay_expire_at 列。
+     * <p>该时间点同步传递给支付宝（time_expire），保证两端关单时刻一致；
+     * 前端可据此实现支付倒计时。</p>
+     */
+    private LocalDateTime payExpireAt;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime paidAt;
@@ -87,7 +94,8 @@ public class Order {
      */
     public static Order createInitial(String orderNo, String idempotencyKey, Long customerId, Long storeId,
                                     int payMethod, int diningMethod, String note,
-                                    BigDecimal totalPrice, int totalQuantity, List<OrderItem> items) {
+                                    BigDecimal totalPrice, int totalQuantity,
+                                    LocalDateTime payExpireAt, List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
             throw new BizError(OrderErrorCode.ORDER_ITEMS_EMPTY, "订单明细不能为空");
         }
@@ -96,6 +104,9 @@ public class Order {
         }
         if (totalQuantity <= 0) {
             throw new BizError(OrderErrorCode.ORDER_QUANTITY_INVALID, "订单数量非法: " + totalQuantity);
+        }
+        if (payExpireAt == null || !payExpireAt.isAfter(LocalDateTime.now())) {
+            throw new BizError(OrderErrorCode.ORDER_PAY_EXPIRE_AT_INVALID, "支付过期时间非法: " + payExpireAt);
         }
         return Order.builder()
                 .orderNo(orderNo)
@@ -110,6 +121,7 @@ public class Order {
                 .note(note)
                 .totalPrice(totalPrice)
                 .totalQuantity(totalQuantity)
+                .payExpireAt(payExpireAt)
                 .items(items)
                 .build();
     }
