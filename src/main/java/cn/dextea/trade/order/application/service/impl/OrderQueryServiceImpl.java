@@ -3,6 +3,7 @@ package cn.dextea.trade.order.application.service.impl;
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderItemDTO;
+import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.application.dto.StoreInfoDTO;
 import cn.dextea.trade.order.application.facade.ExternalDataFacade;
@@ -197,6 +198,33 @@ public class OrderQueryServiceImpl implements OrderQueryService {
             result.put(item.getId(), text.isEmpty() ? null : text);
         }
         return result;
+    }
+
+    @Override
+    public OrderStatusDTO getOrderStatus(Long orderId, Long customerId) {
+        Order order = orderRepository.findById(orderId);
+        if (order == null) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_FOUND, "订单不存在: " + orderId);
+        }
+        if (!Objects.equals(order.getCustomerId(), customerId)) {
+            throw new BizError(OrderErrorCode.ORDER_ACCESS_DENIED, "订单不属于该顾客: " + orderId);
+        }
+
+        Integer tradeStatus = order.getTradeStatus();
+        boolean terminal = !Objects.equals(tradeStatus, TradeStatusEnum.TRADE_WAIT_PAY.getCode());
+        return OrderStatusDTO.builder()
+                .orderId(order.getId())
+                .orderNo(order.getOrderNo())
+                .tradeNo(order.getTradeNo())
+                .tradeStatus(tradeStatus)
+                .tradeStatusDesc(safeEnumDesc(() -> TradeStatusEnum.of(tradeStatus).getDescription()))
+                .makingStatus(order.getMakingStatus())
+                .makingStatusDesc(safeEnumDesc(() -> MakingStatusEnum.of(order.getMakingStatus()).getDescription()))
+                .payExpireAt(order.getPayExpireAt())
+                .paidAt(order.getPaidAt())
+                .updatedAt(order.getUpdatedAt())
+                .terminal(terminal)
+                .build();
     }
 
     private static String safeEnumDesc(Supplier<String> supplier) {

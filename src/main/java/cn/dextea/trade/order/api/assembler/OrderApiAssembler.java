@@ -9,6 +9,7 @@ import cn.dextea.trade.order.api.dto.response.CreateOrderUnavailableCustomizatio
 import cn.dextea.trade.order.api.dto.response.CreateOrderUnavailableProduct;
 import cn.dextea.trade.order.api.dto.response.OrderDetailItem;
 import cn.dextea.trade.order.api.dto.response.OrderDetailResponse;
+import cn.dextea.trade.order.api.dto.response.OrderStatusResponse;
 import cn.dextea.trade.order.api.dto.response.OrderSummary;
 import cn.dextea.trade.order.api.dto.response.PreBuildOrderResponse;
 import cn.dextea.trade.order.api.dto.response.StoreInfo;
@@ -17,6 +18,7 @@ import cn.dextea.trade.order.application.command.OrderProductCommand;
 import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
+import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import cn.dextea.trade.order.domain.model.valueobject.PricedOrderItem;
@@ -131,6 +133,22 @@ public final class OrderApiAssembler {
                 .totalQuantity(v.getTotalQuantity())
                 .payExpireAt(v.getPayExpireAt())
                 .coverUrls(v.getCoverUrls())
+                .build();
+    }
+
+    public static OrderStatusResponse toStatus(OrderStatusDTO v) {
+        return OrderStatusResponse.builder()
+                .orderId(v.getOrderId())
+                .orderNo(v.getOrderNo())
+                .tradeNo(v.getTradeNo())
+                .tradeStatus(v.getTradeStatus())
+                .tradeStatusDesc(v.getTradeStatusDesc())
+                .makingStatus(v.getMakingStatus())
+                .makingStatusDesc(v.getMakingStatusDesc())
+                .payExpireAt(v.getPayExpireAt())
+                .paidAt(v.getPaidAt())
+                .updatedAt(v.getUpdatedAt())
+                .terminal(v.getTerminal())
                 .build();
     }
 
