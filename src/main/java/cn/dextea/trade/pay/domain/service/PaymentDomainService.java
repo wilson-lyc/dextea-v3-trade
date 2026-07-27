@@ -24,7 +24,7 @@ public class PaymentDomainService {
     public void process(PaymentResult result) {
         if (result.isSuccess()) {
             paymentResultSyncGateway.syncPaid(result.getOrderNo(), result.getTradeNo(),
-                    result.isSettled(), result.getRawStatus(), result.getTraceId());
+                    result.getRawStatus(), result.getTraceId());
         } else if (result.isClosed()) {
             paymentResultSyncGateway.syncClosed(result.getOrderNo(), result.getTraceId());
         } else {

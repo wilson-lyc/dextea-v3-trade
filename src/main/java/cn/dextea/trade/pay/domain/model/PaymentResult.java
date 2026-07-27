@@ -25,9 +25,6 @@ public class PaymentResult {
     /** 是否支付成功（TRADE_SUCCESS / TRADE_FINISHED） */
     boolean success;
 
-    /** 是否已结算（TRADE_FINISHED） */
-    boolean settled;
-
     /** 是否交易关闭（TRADE_CLOSED） */
     boolean closed;
 
@@ -40,7 +37,6 @@ public class PaymentResult {
     public static PaymentResult evaluate(String orderNo, String tradeNo, String platform,
                                          String rawStatus, String traceId) {
         boolean success = "TRADE_SUCCESS".equals(rawStatus) || "TRADE_FINISHED".equals(rawStatus);
-        boolean settled = "TRADE_FINISHED".equals(rawStatus);
         boolean closed = "TRADE_CLOSED".equals(rawStatus);
         return PaymentResult.builder()
                 .orderNo(orderNo)
@@ -48,7 +44,6 @@ public class PaymentResult {
                 .platform(platform)
                 .rawStatus(rawStatus)
                 .success(success)
-                .settled(settled)
                 .closed(closed)
                 .traceId(traceId)
                 .build();

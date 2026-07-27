@@ -123,4 +123,57 @@ public class Order {
         }
         this.tradeNo = tradeNo;
     }
+
+    /**
+     * 当前交易状态（枚举视图）。
+     */
+    public TradeStatusEnum tradeStatusEnum() {
+        return TradeStatusEnum.of(this.tradeStatus);
+    }
+
+    /**
+     * 支付成功：待支付 → 已支付，并记录交易号与支付时间。
+     */
+    public TradeStatusEnum markPaid(String tradeNo, LocalDateTime paidAt) {
+        TradeStatusEnum target = transitionTo(TradeStatusEnum.TRADE_PAID, TradeStatusEnum.TRADE_WAIT_PAY);
+        if (this.tradeNo == null) {
+            this.tradeNo = tradeNo;
+        }
+        this.paidAt = paidAt;
+        return target;
+    }
+
+    /**
+     * 超时未支付关闭：待支付 → 支付超时。
+     */
+    public TradeStatusEnum markPayTimeout() {
+        return transitionTo(TradeStatusEnum.TRADE_PAY_TIMEOUT, TradeStatusEnum.TRADE_WAIT_PAY);
+    }
+
+    /**
+     * 全额退款完成：已支付 → 已退款，并记录退款时间。
+     */
+    public TradeStatusEnum markRefunded(LocalDateTime refundedAt) {
+        TradeStatusEnum target = transitionTo(TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_PAID);
+        this.refundedAt = refundedAt;
+        return target;
+    }
+
+    /**
+     * 沿交易状态有向图流转：仅当当前状态在 {@code allowedFrom} 白名单内才允许迁移到 {@code target}。
+     *
+     * <p>交易状态的不可逆约束（如「已退款」不可回到「已支付」）由此方法统一守卫，
+     * 非法流转抛 {@link OrderErrorCode#ORDER_STATUS_TRANSITION_INVALID}，聚合状态不变。</p>
+     */
+    private TradeStatusEnum transitionTo(TradeStatusEnum target, TradeStatusEnum... allowedFrom) {
+        TradeStatusEnum current = tradeStatusEnum();
+        for (TradeStatusEnum from : allowedFrom) {
+            if (current == from) {
+                this.tradeStatus = target.getCode();
+                return target;
+            }
+        }
+        throw new BizError(OrderErrorCode.ORDER_STATUS_TRANSITION_INVALID,
+                String.format("非法状态流转：%s → %s", current, target));
+    }
 }

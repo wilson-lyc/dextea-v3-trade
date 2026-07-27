@@ -1,7 +1,6 @@
 package cn.dextea.trade.order.infrastructure.gateway.impl;
 
 import cn.dextea.trade.common.error.BizError;
-import cn.dextea.trade.order.domain.enums.OrderEventEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 /**
  * 订单域对支付域 {@link PaymentResultSyncGateway} 网关的适配器实现。
  *
- * <p>负责把支付结果映射为订单事件（PAY / PAY_AND_FINISH / REFUND / CLOSE），
+ * <p>负责把支付结果映射为订单侧意图（支付成功 / 全额退款 / 超时关闭），
  * 并委托 {@link OrderStatusDomainService} 完成状态流转与幂等判定。</p>
  */
 @Slf4j
@@ -28,7 +27,7 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
     private final OrderStatusDomainService orderStatusDomainService;
 
     @Override
-    public void syncPaid(String orderNo, String tradeNo, boolean settled, String rawStatus, String traceId) {
+    public void syncPaid(String orderNo, String tradeNo, String rawStatus, String traceId) {
         Order order = orderRepository.findByOrderNo(orderNo);
         if (order == null) {
             log.error("支付回单对应的订单不存在，忽略: orderNo={}, traceId={}", orderNo, traceId);
@@ -41,13 +40,8 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
             return;
         }
 
-        OrderEventEnum event = settled ? OrderEventEnum.PAY_AND_FINISH : OrderEventEnum.PAY;
-
         try {
-            orderStatusDomainService.changeStatus(
-                    orderNo, event, "system-pay-callback",
-                    tradeNo, LocalDateTime.now(), null
-            );
+            orderStatusDomainService.markPaid(orderNo, tradeNo, LocalDateTime.now(), "system-pay-callback");
             log.info("订单支付状态更新成功: orderNo={}, tradeNo={}, tradeStatus={}, traceId={}",
                     orderNo, tradeNo, rawStatus, traceId);
         } catch (BizError e) {
@@ -72,22 +66,13 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
 
         try {
             if (isStatus(cur, TradeStatusEnum.TRADE_PAID)) {
-                orderStatusDomainService.changeStatus(
-                        orderNo, OrderEventEnum.REFUND, "system-pay-callback",
-                        null, null, LocalDateTime.now()
-                );
+                orderStatusDomainService.markRefunded(orderNo, LocalDateTime.now(), "system-pay-callback");
                 log.info("订单全额退款完成（支付后关闭）: orderNo={}, traceId={}", orderNo, traceId);
-            } else if (isStatus(cur, TradeStatusEnum.TRADE_FINISHED)) {
-                orderStatusDomainService.changeStatus(
-                        orderNo, OrderEventEnum.REFUND, "system-pay-callback",
-                        null, null, LocalDateTime.now()
-                );
-                log.info("订单全额退款完成（结算后关闭）: orderNo={}, traceId={}", orderNo, traceId);
             } else if (isStatus(cur, TradeStatusEnum.TRADE_WAIT_PAY)) {
-                orderStatusDomainService.changeStatus(orderNo, OrderEventEnum.CLOSE, "system-pay-callback", null, null, null);
+                orderStatusDomainService.markPayTimeout(orderNo, "system-pay-callback");
                 log.info("订单超时未支付已关闭: orderNo={}, traceId={}", orderNo, traceId);
             } else {
-                log.info("订单已处于退款/关闭终态，忽略关闭通知: orderNo={}, status={}, traceId={}", orderNo, cur, traceId);
+                log.info("订单已处于退款/超时终态，忽略关闭通知: orderNo={}, status={}, traceId={}", orderNo, cur, traceId);
             }
         } catch (BizError e) {
             log.info("订单关闭/退款状态更新未生效（可能已被并发处理），忽略: orderNo={}, target={}, err={}",
@@ -96,11 +81,11 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
     }
 
     private static boolean isPaidTerminal(Integer status) {
-        return isStatus(status, TradeStatusEnum.TRADE_PAID, TradeStatusEnum.TRADE_FINISHED, TradeStatusEnum.TRADE_REFUNDED);
+        return isStatus(status, TradeStatusEnum.TRADE_PAID, TradeStatusEnum.TRADE_REFUNDED);
     }
 
     private static boolean isClosedTerminal(Integer status) {
-        return isStatus(status, TradeStatusEnum.TRADE_CLOSED, TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_REFUNDING);
+        return isStatus(status, TradeStatusEnum.TRADE_PAY_TIMEOUT, TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_REFUNDING);
     }
 
     private static boolean isStatus(Integer actual, TradeStatusEnum... expected) {

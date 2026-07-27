@@ -43,7 +43,7 @@ alipay:
   alipay-public-key: ${ALIPAY_PUBLIC_KEY}
   subject: ${ALIPAY_SUBJECT:dextea-order}
   force-amount: ${ALIPAY_FORCE_AMOUNT:}
-  notify-url: ${ALIPAY_NOTIFY_URL:}
+  notify-url: ${ALIPAY_NOTIFY_URL}
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

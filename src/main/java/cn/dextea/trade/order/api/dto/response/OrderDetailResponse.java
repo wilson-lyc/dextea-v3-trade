@@ -26,7 +26,7 @@ public class OrderDetailResponse {
     @Schema(description = "交易号", example = "2015042321001004720200028594")
     private String tradeNo;
 
-    @Schema(description = "交易状态（支付维度）：0-待支付 1-已支付 2-已结算 3-已关闭 4-退款中 5-已退款", example = "1")
+    @Schema(description = "交易状态（支付维度）：0-待支付 1-已支付 2-支付超时 3-退款中 4-已退款", example = "1")
     private Integer tradeStatus;
 
     @Schema(description = "交易状态文案", example = "已支付")

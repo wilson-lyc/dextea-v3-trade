@@ -14,12 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.function.Function;
 
 /**
- * 订单状态流转领域服务：承载「查询→状态机校验→CAS 更新→写日志→加锁」的聚合行为。
+ * 订单状态流转领域服务：承载「查询→聚合流转→CAS 更新→写日志→加锁」的编排。
  *
- * <p>通过 {@link OrderRepository} 与 {@link OrderLockGateway} 完成持久化与并发保护，
- * 去除对具体 Mapper / 锁实现的依赖。</p>
+ * <p>对外暴露意图明确的方法（{@link #markPaid}、{@link #markPayTimeout}、{@link #markRefunded}），
+ * 状态有向图的合法性由 {@link Order} 聚合根守卫；{@link OrderEventEnum} 仅作为审计日志标签。</p>
  */
 @Slf4j
 @Service
@@ -29,9 +30,39 @@ public class OrderStatusDomainService {
     private final OrderRepository orderRepository;
     private final OrderLockGateway orderLockGateway;
 
+    /**
+     * 支付成功：待支付 → 已支付，记录交易号与支付时间。
+     */
     @Transactional(rollbackFor = Exception.class)
-    public void changeStatus(String orderNo, OrderEventEnum event, String operator,
-                             String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt) {
+    public void markPaid(String orderNo, String tradeNo, LocalDateTime paidAt, String operator) {
+        transition(orderNo, operator, OrderEventEnum.PAY,
+                order -> order.markPaid(tradeNo, paidAt),
+                tradeNo, paidAt, null);
+    }
+
+    /**
+     * 超时未支付关闭：待支付 → 支付超时。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void markPayTimeout(String orderNo, String operator) {
+        transition(orderNo, operator, OrderEventEnum.PAY_TIMEOUT,
+                Order::markPayTimeout,
+                null, null, null);
+    }
+
+    /**
+     * 全额退款完成：已支付 → 已退款，记录退款时间。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void markRefunded(String orderNo, LocalDateTime refundedAt, String operator) {
+        transition(orderNo, operator, OrderEventEnum.REFUND,
+                order -> order.markRefunded(refundedAt),
+                null, null, refundedAt);
+    }
+
+    private void transition(String orderNo, String operator, OrderEventEnum event,
+                            Function<Order, TradeStatusEnum> mutation,
+                            String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt) {
         orderLockGateway.executeWithLock(orderNo, () -> {
             // 1. 查询当前订单
             Order order = orderRepository.findByOrderNo(orderNo);
@@ -39,14 +70,15 @@ public class OrderStatusDomainService {
                 throw new BizError(OrderErrorCode.ORDER_NOT_FOUND, "订单不存在: " + orderNo);
             }
 
-            TradeStatusEnum currentStatus = TradeStatusEnum.of(order.getTradeStatus());
+            TradeStatusEnum currentStatus = order.tradeStatusEnum();
 
-            // 2. 状态机校验：查询 (当前状态, 事件) → 目标状态，不在白名单则拒绝
-            TradeStatusEnum targetStatus = OrderStatusMachine.getTarget(currentStatus, event);
-            if (targetStatus == null) {
+            // 2. 聚合根守卫「有向图」不变式，非法流转直接抛错
+            TradeStatusEnum targetStatus;
+            try {
+                targetStatus = mutation.apply(order);
+            } catch (BizError e) {
                 log.warn("非法状态流转被拒绝: orderNo={}, current={}, event={}", orderNo, currentStatus, event);
-                throw new BizError(OrderErrorCode.ORDER_STATUS_TRANSITION_INVALID,
-                        String.format("非法状态流转：%s + %s", currentStatus, event));
+                throw e;
             }
 
             // 3. CAS 更新：WHERE order_no=? AND trade_status=? AND version=?
