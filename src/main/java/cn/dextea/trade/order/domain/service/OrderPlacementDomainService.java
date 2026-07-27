@@ -193,9 +193,20 @@ public class OrderPlacementDomainService {
             boolean optionNotBelongToItem = option != null && option.getCustomizationId() != null
                     && !option.getCustomizationId().equals(itemId);
 
+            // 绑定关系非法：直接抛异常，交由上层转换为业务错误（不入不可用项）
+            if (itemNotBelongToProduct) {
+                throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID,
+                        "客制化项目" + itemId + "不属于商品" + productId);
+            }
+            if (optionNotBelongToItem) {
+                throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID,
+                        "客制化选项" + optionId + "不属于客制化项目" + itemId);
+            }
+
+            // 合法但下架/禁用：进入不可用项，供前端提示用户删除
             boolean itemUnavailable = customization == null || !customization.isGloballyAvailable();
             boolean optionUnavailable = option == null || !option.isAvailableInStore(optionStoreStatusMap.get(optionId));
-            if (itemUnavailable || optionUnavailable || itemNotBelongToProduct || optionNotBelongToItem) {
+            if (itemUnavailable || optionUnavailable) {
                 badOptions.add(UnavailableCustomization.builder()
                         .optionId(optionId)
                         .optionName(option != null ? option.getName() : null)
