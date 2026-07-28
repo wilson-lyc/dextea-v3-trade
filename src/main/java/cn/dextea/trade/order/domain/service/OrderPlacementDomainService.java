@@ -252,12 +252,10 @@ public class OrderPlacementDomainService {
 
             // 绑定关系非法：直接抛异常，交由上层转换为业务错误（不入不可用项）
             if (itemNotBelongToProduct) {
-                throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID,
-                        "客制化项目" + itemId + "不属于商品" + productId);
+                throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID);
             }
             if (optionNotBelongToItem) {
-                throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID,
-                        "客制化选项" + optionId + "不属于客制化项目" + itemId);
+                throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID);
             }
 
             // 合法但下架/禁用：进入不可用项，供前端提示用户删除
@@ -342,14 +340,14 @@ public class OrderPlacementDomainService {
                 .filter(id -> !map.containsKey(id))
                 .toList();
         if (!notFound.isEmpty()) {
-            throw new BizError(errorCode, entityName + "ID错误: " + join(notFound));
+            throw new BizError(errorCode, entityName + "ID非法: " + join(notFound));
         }
         return map;
     }
 
     private Map<Long, Product> loadProducts(Set<Long> productIds) {
         return loadByIds(productIds, productGateway::findProducts, Product::getId,
-                OrderErrorCode.PRODUCT_NOT_FOUND, "商品");
+                OrderErrorCode.PRODUCT_ID_INVALID, "商品");
     }
 
     private Map<Long, ProductCover> loadProductCovers(Set<Long> productIds) {
@@ -371,12 +369,12 @@ public class OrderPlacementDomainService {
 
     private Map<Long, Customization> loadCustomizations(Set<Long> itemIds) {
         return loadByIds(itemIds, customizationGateway::findCustomizations, Customization::getId,
-                OrderErrorCode.CUSTOMIZATION_NOT_FOUND, "客制化项目");
+                OrderErrorCode.CUSTOMIZATION_ID_INVALID, "客制化项目");
     }
 
     private Map<Long, CustomizationOption> loadOptions(Set<Long> optionIds) {
         return loadByIds(optionIds, customizationGateway::findOptions, CustomizationOption::getId,
-                OrderErrorCode.CUSTOMIZATION_OPTION_NOT_FOUND, "客制化选项");
+                OrderErrorCode.CUSTOMIZATION_OPTION_ID_INVALID, "客制化选项");
     }
 
     private Map<Long, CustomizationOptionStoreStatus> loadOptionStoreStatus(Set<Long> optionIds, Long storeId) {

@@ -5,10 +5,10 @@ import cn.dextea.trade.common.error.BizErrorCode;
 public enum OrderErrorCode implements BizErrorCode {
 
     // ===== 商品相关 =====
-    PRODUCT_NOT_FOUND(101001, "商品ID错误"),
+    PRODUCT_ID_INVALID(101001, "商品ID非法"),
     SKU_INVALID(101002, "skuId 格式非法"),
-    CUSTOMIZATION_OPTION_NOT_FOUND(101003, "客制化选项ID错误"),
-    CUSTOMIZATION_NOT_FOUND(101004, "客制化项目ID错误"),
+    CUSTOMIZATION_OPTION_ID_INVALID(101003, "客制化选项ID非法"),
+    CUSTOMIZATION_ID_INVALID(101004, "客制化项目ID非法"),
     CUSTOMIZATION_BINDING_INVALID(101005, "客制化绑定关系非法"),
 
     // ===== 门店相关 =====
