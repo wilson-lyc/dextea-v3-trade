@@ -1,5 +1,4 @@
 package cn.dextea.trade.order.api.controller;
-
 import cn.dextea.trade.common.api.APIResponse;
 import cn.dextea.trade.order.api.assembler.OrderApiAssembler;
 import cn.dextea.trade.order.api.dto.request.CreateOrderRequest;
@@ -30,26 +29,16 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
-
-/**
- * 订单服务接口：承载订单的读操作（列表、详情、交易状态）与写操作（预构建、创建）。
- *
- * <p>顾客 ID 统一从上游鉴权层写入的 {@code X-Customer-Id} Header 提取。</p>
- */
 @RestController
 @RequestMapping("/api/v1/orders")
 @Validated
 @Tag(name = "订单服务")
 @RequiredArgsConstructor
 public class OrderController {
-
     private static final String CUSTOMER_ID_HEADER = "X-Customer-Id";
-
     private final OrderApplicationService orderApplicationService;
     private final OrderQueryService orderQueryService;
-
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -91,7 +80,7 @@ public class OrderController {
                                             "productId": 1,
                                             "productName": "青芒酸",
                                             "coverId": 1,
-                                            "coverUrl": "https://dextea-1313412108.cos.ap-guangzhou.myqcloud.com/gallery_1784530228002_4OqY4Fg2.png",
+                                            "coverUrl": "https:
                                             "customizationText": "推荐 / 少甜(推荐) / 标准酸 / 标准(含柠檬叶)",
                                             "unitPrice": 22.00,
                                             "subtotal": 22.00
@@ -109,7 +98,6 @@ public class OrderController {
                 orderApplicationService.preBuildOrder(OrderApiAssembler.toPreBuildCommand(request, customerId)));
         return APIResponse.success(result);
     }
-
     @PostMapping
     @Operation(summary = "创建订单")
     public APIResponse<CreateOrderResponse> create(
@@ -119,7 +107,6 @@ public class OrderController {
                 orderApplicationService.createOrder(OrderApiAssembler.toCreateCommand(request, customerId)));
         return APIResponse.success(result);
     }
-
     @GetMapping
     @Operation(summary = "获取用户指定年月的订单列表")
     public APIResponse<List<OrderSummary>> getOrdersByCustomer(
@@ -131,7 +118,6 @@ public class OrderController {
                 .toList();
         return APIResponse.success(result);
     }
-
     @GetMapping("/{orderId}")
     @Operation(summary = "获取订单详情")
     public APIResponse<OrderDetailResponse> getOrderDetail(
@@ -140,7 +126,6 @@ public class OrderController {
         OrderDetailResponse result = OrderApiAssembler.toDetail(orderQueryService.getOrderDetail(orderId, customerId));
         return APIResponse.success(result);
     }
-
     @GetMapping("/{orderId}/status")
     @Operation(summary = "获取订单交易状态")
     public APIResponse<OrderStatusResponse> getOrderStatus(

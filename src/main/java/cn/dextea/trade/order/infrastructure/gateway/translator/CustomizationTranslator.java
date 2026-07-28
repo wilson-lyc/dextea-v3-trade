@@ -1,23 +1,15 @@
 package cn.dextea.trade.order.infrastructure.gateway.translator;
-
 import cn.dextea.trade.order.domain.model.valueobject.Customization;
 import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
 import cn.dextea.trade.order.domain.model.valueobject.CustomizationOptionStoreStatus;
 import cn.dextea.trade.order.infrastructure.gateway.po.CustomizationOptionPO;
 import cn.dextea.trade.order.infrastructure.gateway.po.CustomizationOptionStoreStatusPO;
 import cn.dextea.trade.order.infrastructure.gateway.po.CustomizationPO;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
-/**
- * 客制化 PO → 领域值对象清洗器。
- */
 public final class CustomizationTranslator {
-
     private CustomizationTranslator() {
     }
-
     public static Customization toCustomization(CustomizationPO po) {
         if (po == null) {
             return null;
@@ -29,12 +21,10 @@ public final class CustomizationTranslator {
                 .status(po.getStatus())
                 .build();
     }
-
     public static List<Customization> toCustomizations(List<CustomizationPO> pos) {
         return pos == null ? List.of()
                 : pos.stream().map(CustomizationTranslator::toCustomization).collect(Collectors.toList());
     }
-
     public static CustomizationOption toOption(CustomizationOptionPO po) {
         if (po == null) {
             return null;
@@ -47,12 +37,10 @@ public final class CustomizationTranslator {
                 .status(po.getStatus())
                 .build();
     }
-
     public static List<CustomizationOption> toOptions(List<CustomizationOptionPO> pos) {
         return pos == null ? List.of()
                 : pos.stream().map(CustomizationTranslator::toOption).collect(Collectors.toList());
     }
-
     public static CustomizationOptionStoreStatus toOptionStoreStatus(CustomizationOptionStoreStatusPO po) {
         if (po == null) {
             return null;
@@ -63,7 +51,6 @@ public final class CustomizationTranslator {
                 .status(po.getStatus())
                 .build();
     }
-
     public static List<CustomizationOptionStoreStatus> toOptionStoreStatusList(List<CustomizationOptionStoreStatusPO> pos) {
         return pos == null ? List.of()
                 : pos.stream().map(CustomizationTranslator::toOptionStoreStatus).collect(Collectors.toList());

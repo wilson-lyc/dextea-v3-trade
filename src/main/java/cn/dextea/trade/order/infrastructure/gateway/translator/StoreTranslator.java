@@ -1,16 +1,9 @@
 package cn.dextea.trade.order.infrastructure.gateway.translator;
-
 import cn.dextea.trade.order.domain.model.valueobject.Store;
 import cn.dextea.trade.order.infrastructure.gateway.po.StorePO;
-
-/**
- * 门店 PO → 领域值对象清洗器。
- */
 public final class StoreTranslator {
-
     private StoreTranslator() {
     }
-
     public static Store toStore(StorePO po) {
         if (po == null) {
             return null;

@@ -1,5 +1,4 @@
 package cn.dextea.trade.order.api.assembler;
-
 import cn.dextea.trade.order.api.dto.request.CreateOrderProductItem;
 import cn.dextea.trade.order.api.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.api.dto.request.PreBuildOrderRequest;
@@ -22,17 +21,10 @@ import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import cn.dextea.trade.order.domain.model.valueobject.PricedOrderItem;
-
 import java.util.List;
-
-/**
- * 订单接口层装配器：在请求 DTO / 应用层命令与 DTO / 响应 DTO 之间进行转换。
- */
 public final class OrderApiAssembler {
-
     private OrderApiAssembler() {
     }
-
     public static PreBuildOrderCommand toPreBuildCommand(PreBuildOrderRequest request, Long customerId) {
         return PreBuildOrderCommand.builder()
                 .storeId(request.getStoreId())
@@ -43,7 +35,6 @@ public final class OrderApiAssembler {
                 .products(toProductCommands(request.getProducts()))
                 .build();
     }
-
     public static CreateOrderCommand toCreateCommand(CreateOrderRequest request, Long customerId) {
         return CreateOrderCommand.builder()
                 .storeId(request.getStoreId())
@@ -55,7 +46,6 @@ public final class OrderApiAssembler {
                 .idempotencyKey(request.getIdempotencyKey())
                 .build();
     }
-
     private static List<OrderProductCommand> toProductCommands(List<CreateOrderProductItem> items) {
         if (items == null) {
             return List.of();
@@ -64,7 +54,6 @@ public final class OrderApiAssembler {
                 .map(i -> OrderProductCommand.builder().skuId(i.getSkuId()).quantity(i.getQuantity()).build())
                 .toList();
     }
-
     public static PreBuildOrderResponse toPreBuildResponse(PreBuildResult result) {
         return PreBuildOrderResponse.builder()
                 .unavailable(toUnavailable(result))
@@ -73,7 +62,6 @@ public final class OrderApiAssembler {
                 .totalPrice(result.getTotalPrice())
                 .build();
     }
-
     public static CreateOrderResponse toCreateResponse(OrderCreateResult result) {
         PreBuildResult pre = result.getPreBuild();
         return CreateOrderResponse.builder()
@@ -87,7 +75,6 @@ public final class OrderApiAssembler {
                 .totalPrice(pre.getTotalPrice())
                 .build();
     }
-
     private static CreateOrderUnavailable toUnavailable(PreBuildResult result) {
         return CreateOrderUnavailable.builder()
                 .products(result.getUnavailableProducts() == null ? null
@@ -103,7 +90,6 @@ public final class OrderApiAssembler {
                         .toList())
                 .build();
     }
-
     private static List<CreateOrderProductItem> toProductItems(List<PricedOrderItem> items) {
         if (items == null) {
             return List.of();
@@ -120,7 +106,6 @@ public final class OrderApiAssembler {
                 .subtotal(p.getSubtotal())
                 .build()).toList();
     }
-
     public static OrderSummary toSummary(OrderSummaryDTO v) {
         return OrderSummary.builder()
                 .storeName(v.getStoreName())
@@ -135,7 +120,6 @@ public final class OrderApiAssembler {
                 .coverUrls(v.getCoverUrls())
                 .build();
     }
-
     public static OrderStatusResponse toStatus(OrderStatusDTO v) {
         return OrderStatusResponse.builder()
                 .orderId(v.getOrderId())
@@ -150,7 +134,6 @@ public final class OrderApiAssembler {
                 .terminal(v.getTerminal())
                 .build();
     }
-
     public static OrderDetailResponse toDetail(OrderDetailDTO v) {
         List<OrderDetailItem> items;
         if (v.getItems() == null) {

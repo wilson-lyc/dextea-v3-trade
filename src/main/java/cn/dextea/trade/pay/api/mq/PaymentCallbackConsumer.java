@@ -1,5 +1,4 @@
 package cn.dextea.trade.pay.api.mq;
-
 import cn.dextea.trade.pay.api.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.application.service.PaymentCallbackService;
 import cn.dextea.trade.pay.infrastructure.config.RocketMqConfig;
@@ -21,39 +20,26 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-
-/**
- * 支付回单 RocketMQ 消费入口。
- *
- * <p>通过配置 {@code rocketmq.enabled}（环境变量 {@code ROCKETMQ_ENABLED}）控制是否启用。
- * 关闭后该 Bean 不会被创建，项目可在不依赖消息队列的环境下正常启动，便于开发联调其他功能。</p>
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "rocketmq.enabled", havingValue = "true", matchIfMissing = true)
 public class PaymentCallbackConsumer {
-
     private final RocketMqConfig properties;
     private final PaymentCallbackService paymentCallbackService;
     private final ObjectMapper objectMapper;
-
     @Value("${spring.application.name:dextea-trade}")
     private String applicationName;
-
     private PushConsumer pushConsumer;
-
     @PostConstruct
     public void start() {
         validateConfig();
-
         ClientServiceProvider provider = ClientServiceProvider.loadService();
         ClientConfigurationBuilder builder = ClientConfiguration.newBuilder()
                 .setEndpoints(properties.getEndpoints());
@@ -66,11 +52,9 @@ public class PaymentCallbackConsumer {
             builder.setCredentialProvider(credentialsProvider);
         }
         ClientConfiguration clientConfiguration = builder.build();
-
         FilterExpression filterExpression = new FilterExpression(
                 StringUtils.hasText(properties.getTag()) ? properties.getTag() : "*",
                 FilterExpressionType.TAG);
-
         try {
             pushConsumer = provider.newPushConsumerBuilder()
                     .setClientConfiguration(clientConfiguration)
@@ -84,7 +68,6 @@ public class PaymentCallbackConsumer {
             throw new IllegalStateException("初始化 RocketMQ PushConsumer 失败", e);
         }
     }
-
     private ConsumeResult handle(MessageView messageView) {
         String msgId = String.valueOf(messageView.getMessageId());
         try {
@@ -103,7 +86,6 @@ public class PaymentCallbackConsumer {
             return ConsumeResult.FAILURE;
         }
     }
-
     private void validateConfig() {
         if (!StringUtils.hasText(properties.getEndpoints())
                 || !StringUtils.hasText(properties.getTopic())
@@ -111,7 +93,6 @@ public class PaymentCallbackConsumer {
             throw new IllegalStateException("RocketMQ 配置不完整：endpoints/topic/consumerGroup 均为必填");
         }
     }
-
     @PreDestroy
     public void stop() {
         if (pushConsumer != null) {

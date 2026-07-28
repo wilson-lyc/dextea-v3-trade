@@ -1,5 +1,4 @@
 package cn.dextea.trade.order.application.service.impl;
-
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderItemDTO;
@@ -22,7 +21,6 @@ import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,21 +32,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-/**
- * 订单查询应用服务实现：组装订单列表与详情视图。
- *
- * <p>封面 URL 由 {@link ExternalDataFacade}（底层为 ProductGateway）以 coverId → url
- * 的清洗结果提供，应用层不感知图库表结构。</p>
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderQueryServiceImpl implements OrderQueryService {
-
     private final OrderRepository orderRepository;
     private final ExternalDataFacade externalDataFacade;
-
     @Override
     public List<OrderSummaryDTO> getOrdersByCustomer(Long customerId, int year, int month) {
         LocalDate firstDay = LocalDate.of(year, month, 1);
@@ -61,7 +50,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         if (orders.isEmpty()) {
             return List.of();
         }
-
         List<Long> orderIds = orders.stream().map(Order::getId).toList();
         Map<Long, List<Long>> coverIdsByOrder = new HashMap<>();
         Set<Long> allCoverIds = new LinkedHashSet<>();
@@ -72,11 +60,9 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 allCoverIds.add(coverId);
             }
         }
-
         Map<Long, String> coverUrlMap = allCoverIds.isEmpty()
                 ? Map.of()
                 : externalDataFacade.findCoverUrls(new ArrayList<>(allCoverIds));
-
         List<OrderSummaryDTO> result = new ArrayList<>(orders.size());
         for (Order order : orders) {
             List<String> coverUrls = coverIdsByOrder.getOrDefault(order.getId(), List.of()).stream()
@@ -101,7 +87,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         }
         return result;
     }
-
     @Override
     public OrderDetailDTO getOrderDetail(Long orderId, Long customerId) {
         Order order = orderRepository.findById(orderId);
@@ -111,7 +96,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         if (!Objects.equals(order.getCustomerId(), customerId)) {
             throw new BizError(OrderErrorCode.ORDER_ACCESS_DENIED, "订单不属于该顾客: " + orderId);
         }
-
         StoreInfoDTO storeInfo = null;
         Store store = externalDataFacade.findStore(order.getStoreId());
         if (store != null) {
@@ -123,24 +107,22 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                     .businessHours(store.getBusinessHours())
                     .build();
         }
-
         List<OrderItem> items = orderRepository.findFullItemsByOrderId(orderId);
         Map<Long, String> coverUrlMap = resolveCoverUrls(items);
         Map<Long, String> customizationTextMap = resolveCustomizationTexts(items);
-
         List<OrderItemDTO> detailItems = items.stream()
                 .map(item -> OrderItemDTO.builder()
                         .productId(item.getProductId())
                         .productName(item.getProductName())
                         .skuId(item.getSkuId())
                         .coverUrl(item.getCoverId() != null ? coverUrlMap.get(item.getCoverId()) : null)
-                        .customizationText(customizationTextMap.get(item.getId()))
+                        .customizationText(item.getCustomizationText() != null
+                                ? item.getCustomizationText() : customizationTextMap.get(item.getId()))
                         .quantity(item.getQuantity())
                         .unitPrice(item.getUnitPrice())
                         .subtotal(item.getSubtotal())
                         .build())
                 .collect(Collectors.<OrderItemDTO>toList());
-
         return OrderDetailDTO.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
@@ -166,7 +148,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 .items(detailItems)
                 .build();
     }
-
     private Map<Long, String> resolveCoverUrls(List<OrderItem> items) {
         Set<Long> coverIds = items.stream()
                 .map(OrderItem::getCoverId)
@@ -177,7 +158,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         }
         return externalDataFacade.findCoverUrls(new ArrayList<>(coverIds));
     }
-
     private Map<Long, String> resolveCustomizationTexts(List<OrderItem> items) {
         Set<Long> optionIds = new LinkedHashSet<>();
         for (OrderItem item : items) {
@@ -206,7 +186,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         }
         return result;
     }
-
     @Override
     public OrderStatusDTO getOrderStatus(Long orderId, Long customerId) {
         Order order = orderRepository.findById(orderId);
@@ -216,7 +195,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         if (!Objects.equals(order.getCustomerId(), customerId)) {
             throw new BizError(OrderErrorCode.ORDER_ACCESS_DENIED, "订单不属于该顾客: " + orderId);
         }
-
         Integer tradeStatus = order.getTradeStatus();
         boolean terminal = !Objects.equals(tradeStatus, TradeStatusEnum.TRADE_WAIT_PAY.getCode());
         return OrderStatusDTO.builder()
@@ -232,7 +210,6 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 .terminal(terminal)
                 .build();
     }
-
     private static String safeEnumDesc(Supplier<String> supplier) {
         try {
             return supplier.get();

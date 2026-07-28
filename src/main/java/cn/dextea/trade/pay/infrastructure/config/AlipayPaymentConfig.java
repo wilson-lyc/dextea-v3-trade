@@ -1,5 +1,4 @@
 package cn.dextea.trade.pay.infrastructure.config;
-
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -9,43 +8,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-
 import java.math.BigDecimal;
-
-/**
- * 支付宝支付配置
- * 配置前缀为 alipay。
- */
 @Slf4j
 @Data
 @Validated
 @Component
 @ConfigurationProperties(prefix = "alipay")
 public class AlipayPaymentConfig {
-
-    /** 支付宝网关地址 */
-    private String serverUrl = "https://openapi.alipay.com";
-
+    private String serverUrl = "https:
     @NotBlank(message = "alipay.app-id 必须配置")
     private String appId;
-
     @NotBlank(message = "alipay.private-key 必须配置")
     @ToString.Exclude
     private String privateKey;
-
     @NotBlank(message = "alipay.alipay-public-key 必须配置")
     @ToString.Exclude
     private String alipayPublicKey;
-
     private String subject = "德贤茶庄订单";
-
     @NotBlank(message = "alipay.notify-url 必须配置，用于接收支付宝异步回调")
     private String notifyUrl;
-
     @Getter(AccessLevel.NONE)
     @ToString.Exclude
     private String forceAmount;
-
     public BigDecimal getForceAmount() {
         if (forceAmount == null || forceAmount.isBlank()) {
             return null;

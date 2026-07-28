@@ -1,5 +1,4 @@
 package cn.dextea.trade.pay.infrastructure.gateway.impl;
-
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.domain.gateway.PaymentGateway;
@@ -14,38 +13,19 @@ import com.alipay.v3.Configuration;
 import com.alipay.v3.util.model.AlipayConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
-
-/**
- * 支付宝支付网关实现：{@link PaymentGateway} 的支付宝实现，封装支付宝 SDK 细节。
- */
 @Slf4j
 @Component
 public class AlipayPaymentGatewayImpl implements PaymentGateway {
-
-    /** 支付宝 time_expire 要求的时间格式（绝对时间，东八区） */
     private static final DateTimeFormatter TIME_EXPIRE_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     private final AlipayTradeApi tradeApi;
     private final AlipayPaymentConfig config;
-
     public AlipayPaymentGatewayImpl(AlipayPaymentConfig config) {
         this.config = config;
         this.tradeApi = new AlipayTradeApi(buildApiClient(config));
     }
-
-    /**
-     * 构建支付宝 API 客户端。
-     *
-     * <p>从全局默认的 {@link ApiClient} 获取实例，并将网关配置（网关地址、appId、密钥等）
-     * 封装为 SDK 的 {@link AlipayConfig} 写入客户端，完成支付宝 SDK 的初始化。</p>
-     *
-     * @param config 支付宝支付配置（来自 {@link AlipayPaymentConfig}）
-     * @return 已完成配置初始化的 {@link ApiClient} 实例
-     */
     private static ApiClient buildApiClient(AlipayPaymentConfig config) {
         ApiClient client = Configuration.getDefaultApiClient();
         AlipayConfig sdkConfig = new AlipayConfig();
@@ -60,19 +40,15 @@ public class AlipayPaymentGatewayImpl implements PaymentGateway {
         }
         return client;
     }
-
     @Override
     public String createPayment(Payment payment) {
-        // 由支付领域对象转换为支付宝 SDK 所需的 AlipayTradeCreateModel
         AlipayTradeCreateModel model = toAlipayTradeCreateModel(payment);
-        // 开发/测试环境下，将订单总额强制限制为固定金额，避免产生真实交易金额
         BigDecimal forceAmount = config.getForceAmount();
         if (forceAmount != null) {
             log.warn("开发环境：将订单 {} 的交易金额从 {} 覆盖为固定值 {}",
                     payment.getOrderNo(), payment.getTotalPrice(), forceAmount);
             model.totalAmount(forceAmount.toPlainString());
         }
-        // 支付宝异步支付回调地址（notify_url）：非空才设置，空则不传给支付宝
         String notifyUrl = config.getNotifyUrl();
         if (notifyUrl != null && !notifyUrl.isBlank()) {
             model.notifyUrl(notifyUrl);
@@ -90,13 +66,6 @@ public class AlipayPaymentGatewayImpl implements PaymentGateway {
                     "支付宝创建交易失败: " + e.getMessage());
         }
     }
-
-    /**
-     * 转换为支付宝 SDK 所需的 {@link AlipayTradeCreateModel}。
-     *
-     * <p>过期时间采用 time_expire（绝对时间点）而非 timeout_express（相对时长）：
-     * 时间点由订单系统计算并已落库，两端以同一时刻关单，保证一致性。</p>
-     */
     private AlipayTradeCreateModel toAlipayTradeCreateModel(Payment payment) {
         AlipayTradeCreateModel model = new AlipayTradeCreateModel()
                 .outTradeNo(payment.getOrderNo())

@@ -1,28 +1,15 @@
 package cn.dextea.trade.order.infrastructure.persistence.translator;
-
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderStatusLogPO;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
-/**
- * 订单领域模型 ↔ 持久化对象（PO）互转器。
- *
- * <p>将领域聚合/实体与库表结构隔离：写库时由领域模型转 PO 交给 Mapper，
- * 读库时由 PO 还原为领域模型。所有跨层数据转换收敛于此，仓储实现保持纯粹。</p>
- */
 public final class OrderTranslator {
-
     private OrderTranslator() {
     }
-
-    // ---------- Order ----------
-
     public static OrderPO toOrderPO(Order order) {
         if (order == null) {
             return null;
@@ -50,7 +37,6 @@ public final class OrderTranslator {
                 .updatedAt(order.getUpdatedAt())
                 .build();
     }
-
     public static Order toOrder(OrderPO po) {
         if (po == null) {
             return null;
@@ -79,13 +65,9 @@ public final class OrderTranslator {
                 .build();
         return order;
     }
-
     public static List<Order> toOrders(List<OrderPO> pos) {
         return pos == null ? List.of() : pos.stream().map(OrderTranslator::toOrder).collect(Collectors.toList());
     }
-
-    // ---------- OrderItem ----------
-
     public static OrderItemPO toOrderItemPO(OrderItem item) {
         if (item == null) {
             return null;
@@ -97,6 +79,7 @@ public final class OrderTranslator {
                 .skuId(item.getSkuId())
                 .productName(item.getProductName())
                 .coverId(item.getCoverId())
+                .customizationText(item.getCustomizationText())
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .subtotal(item.getSubtotal())
@@ -104,7 +87,6 @@ public final class OrderTranslator {
                 .updatedAt(item.getUpdatedAt())
                 .build();
     }
-
     public static OrderItem toOrderItem(OrderItemPO po) {
         if (po == null) {
             return null;
@@ -116,6 +98,7 @@ public final class OrderTranslator {
                 .skuId(po.getSkuId())
                 .productName(po.getProductName())
                 .coverId(po.getCoverId())
+                .customizationText(po.getCustomizationText())
                 .quantity(po.getQuantity())
                 .unitPrice(po.getUnitPrice())
                 .subtotal(po.getSubtotal())
@@ -123,18 +106,13 @@ public final class OrderTranslator {
                 .updatedAt(po.getUpdatedAt())
                 .build();
     }
-
     public static List<OrderItemPO> toOrderItemPOs(List<OrderItem> items) {
         return items == null ? List.of()
                 : items.stream().map(OrderTranslator::toOrderItemPO).collect(Collectors.toList());
     }
-
     public static List<OrderItem> toOrderItems(List<OrderItemPO> pos) {
         return pos == null ? List.of() : pos.stream().map(OrderTranslator::toOrderItem).collect(Collectors.toList());
     }
-
-    // ---------- OrderStatusLog ----------
-
     public static OrderStatusLogPO toOrderStatusLogPO(OrderStatusLog log) {
         if (log == null) {
             return null;
@@ -150,7 +128,6 @@ public final class OrderTranslator {
                 .createdAt(log.getCreatedAt())
                 .build();
     }
-
     public static OrderStatusLog toOrderStatusLog(OrderStatusLogPO po) {
         if (po == null) {
             return null;

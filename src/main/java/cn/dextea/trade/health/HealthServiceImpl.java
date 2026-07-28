@@ -1,30 +1,24 @@
 package cn.dextea.trade.health;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
-
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class HealthServiceImpl implements HealthService {
-
     private final DataSource dataSource;
     private final RedisConnectionFactory redisConnectionFactory;
-
     @Value("${spring.application.name:dextea-trade}")
     private String applicationName;
-
     @Override
     public HealthResult checkMysql() {
         long start = System.currentTimeMillis();
@@ -48,7 +42,6 @@ public class HealthServiceImpl implements HealthService {
             return HealthResult.down("mysql", "MySQL 连接不可用", cost, details);
         }
     }
-
     @Override
     public HealthResult checkRedis() {
         long start = System.currentTimeMillis();
@@ -70,7 +63,6 @@ public class HealthServiceImpl implements HealthService {
             return HealthResult.down("redis", "Redis 连接不可用", cost, details);
         }
     }
-
     @Override
     public HealthResult checkBackend() {
         long start = System.currentTimeMillis();

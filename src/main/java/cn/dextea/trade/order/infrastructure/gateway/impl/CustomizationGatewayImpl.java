@@ -1,5 +1,4 @@
 package cn.dextea.trade.order.infrastructure.gateway.impl;
-
 import cn.dextea.trade.order.domain.gateway.CustomizationGateway;
 import cn.dextea.trade.order.domain.model.valueobject.Customization;
 import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
@@ -8,18 +7,11 @@ import cn.dextea.trade.order.infrastructure.gateway.mapper.CatalogMapper;
 import cn.dextea.trade.order.infrastructure.gateway.translator.CustomizationTranslator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
-
-/**
- * 客制化网关实现（ACL）：查询外部客制化表并清洗为领域值对象。
- */
 @Component
 @RequiredArgsConstructor
 public class CustomizationGatewayImpl implements CustomizationGateway {
-
     private final CatalogMapper catalogMapper;
-
     @Override
     public List<Customization> findCustomizations(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
@@ -27,7 +19,6 @@ public class CustomizationGatewayImpl implements CustomizationGateway {
         }
         return CustomizationTranslator.toCustomizations(catalogMapper.selectCustomizationsByIds(ids));
     }
-
     @Override
     public List<CustomizationOption> findOptions(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
@@ -35,7 +26,6 @@ public class CustomizationGatewayImpl implements CustomizationGateway {
         }
         return CustomizationTranslator.toOptions(catalogMapper.selectCustomizationOptionsByIds(ids));
     }
-
     @Override
     public List<CustomizationOptionStoreStatus> findOptionStoreStatus(List<Long> optionIds, Long storeId) {
         if (optionIds == null || optionIds.isEmpty()) {

@@ -1,16 +1,11 @@
 package cn.dextea.trade.order.domain.util;
-
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public final class SkuIdParser {
-
     private SkuIdParser() {
     }
-
     public static Long parseProductId(String skuId) {
         if (skuId == null || skuId.isBlank()) {
             throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
@@ -21,7 +16,6 @@ public final class SkuIdParser {
         }
         return parseLong(skuId.substring(0, hashIndex), skuId);
     }
-
     public static List<Long> parseItemIds(String skuId) {
         if (skuId == null || skuId.isBlank()) {
             throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
@@ -35,7 +29,6 @@ public final class SkuIdParser {
         if (customizationPart.isBlank()) {
             return itemIds;
         }
-
         String[] pairs = customizationPart.split("-");
         for (String pair : pairs) {
             if (pair.isBlank()) {
@@ -49,7 +42,6 @@ public final class SkuIdParser {
         }
         return itemIds;
     }
-
     public static List<Long> parseOptionIds(String skuId) {
         if (skuId == null || skuId.isBlank()) {
             throw new BizError(OrderErrorCode.SKU_INVALID, "skuId 不能为空");
@@ -63,7 +55,6 @@ public final class SkuIdParser {
         if (customizationPart.isBlank()) {
             return optionIds;
         }
-
         String[] pairs = customizationPart.split("-");
         for (String pair : pairs) {
             if (pair.isBlank()) {
@@ -77,7 +68,6 @@ public final class SkuIdParser {
         }
         return optionIds;
     }
-
     private static long parseLong(String value, String skuId) {
         try {
             return Long.parseLong(value.trim());

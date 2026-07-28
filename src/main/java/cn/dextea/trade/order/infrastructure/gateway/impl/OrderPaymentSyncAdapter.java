@@ -1,5 +1,4 @@
 package cn.dextea.trade.order.infrastructure.gateway.impl;
-
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
@@ -10,23 +9,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
-
-/**
- * 订单域对支付域 {@link PaymentResultSyncGateway} 网关的适配器实现。
- *
- * <p>负责把支付结果映射为订单侧意图（支付成功 / 全额退款 / 超时关闭），
- * 并委托 {@link OrderStatusDomainService} 完成状态流转与幂等判定。</p>
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
-
     private final OrderRepository orderRepository;
     private final OrderStatusDomainService orderStatusDomainService;
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncPaid(String orderNo, String tradeNo, String rawStatus, String traceId) {
@@ -35,13 +24,11 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
             log.error("支付回单对应的订单不存在，忽略: orderNo={}, traceId={}", orderNo, traceId);
             return;
         }
-
         Integer cur = order.getTradeStatus();
         if (isPaidTerminal(cur)) {
             log.info("订单已处于支付终态，幂等跳过: orderNo={}, status={}", orderNo, cur);
             return;
         }
-
         try {
             orderStatusDomainService.markPaid(orderNo, tradeNo, LocalDateTime.now(), "system-pay-callback");
             log.info("订单支付状态更新成功: orderNo={}, tradeNo={}, tradeStatus={}, traceId={}",
@@ -56,7 +43,6 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
             }
         }
     }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncClosed(String orderNo, String traceId) {
@@ -66,7 +52,6 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
             return;
         }
         Integer cur = order.getTradeStatus();
-
         try {
             if (isStatus(cur, TradeStatusEnum.TRADE_PAID)) {
                 orderStatusDomainService.markRefunded(orderNo, LocalDateTime.now(), "system-pay-callback");
@@ -82,15 +67,12 @@ public class OrderPaymentSyncAdapter implements PaymentResultSyncGateway {
                     orderNo, cur, e.getMessage());
         }
     }
-
     private static boolean isPaidTerminal(Integer status) {
         return isStatus(status, TradeStatusEnum.TRADE_PAID, TradeStatusEnum.TRADE_REFUNDED);
     }
-
     private static boolean isClosedTerminal(Integer status) {
         return isStatus(status, TradeStatusEnum.TRADE_PAY_TIMEOUT, TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_REFUNDING);
     }
-
     private static boolean isStatus(Integer actual, TradeStatusEnum... expected) {
         if (actual == null) {
             return false;
