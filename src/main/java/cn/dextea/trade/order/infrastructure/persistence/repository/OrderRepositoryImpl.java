@@ -1,5 +1,7 @@
 package cn.dextea.trade.order.infrastructure.persistence.repository;
 
+import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
+import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
@@ -34,6 +36,12 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Order save(Order order) {
+        if (order.getTradeStatus() == null) {
+            order.setTradeStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode());
+        }
+        if (order.getMakingStatus() == null) {
+            order.setMakingStatus(MakingStatusEnum.MAKING_WAIT.getCode());
+        }
         OrderPO orderPO = OrderTranslator.toOrderPO(order);
         orderMapper.insert(orderPO);
         order.setId(orderPO.getId());
