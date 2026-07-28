@@ -55,7 +55,7 @@ public class OrderQueryController {
     }
 
     @GetMapping("/{orderId}/status")
-    @Operation(summary = "获取订单交易状态（前端轮询交易结果）")
+    @Operation(summary = "获取订单交易状态")
     public APIResponse<OrderStatusResponse> getOrderStatus(
             @PathVariable Long orderId,
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId) {
