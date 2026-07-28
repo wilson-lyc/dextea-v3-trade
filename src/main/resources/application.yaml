@@ -55,6 +55,7 @@ mybatis:
     map-underscore-to-camel-case: true
 
 rocketmq:
+  enabled: ${ROCKETMQ_ENABLED:true}
   endpoints: ${ROCKETMQ_ENDPOINTS}
   topic: ${ROCKETMQ_TOPIC}
   consumer-group: ${ROCKETMQ_CONSUMER_GROUP}

@@ -18,6 +18,7 @@ import org.apache.rocketmq.client.apis.consumer.FilterExpressionType;
 import org.apache.rocketmq.client.apis.consumer.PushConsumer;
 import org.apache.rocketmq.client.apis.message.MessageView;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -30,10 +31,14 @@ import java.util.Collections;
 
 /**
  * 支付回单 RocketMQ 消费入口。
+ *
+ * <p>通过配置 {@code rocketmq.enabled}（环境变量 {@code ROCKETMQ_ENABLED}）控制是否启用。
+ * 关闭后该 Bean 不会被创建，项目可在不依赖消息队列的环境下正常启动，便于开发联调其他功能。</p>
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "rocketmq.enabled", havingValue = "true", matchIfMissing = true)
 public class PaymentCallbackConsumer {
 
     private final RocketMqConfig properties;
