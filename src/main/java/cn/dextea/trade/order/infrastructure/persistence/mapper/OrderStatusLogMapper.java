@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Select;
 public interface OrderStatusLogMapper {
 
     @Insert("INSERT INTO order_status_log (order_no, from_status, to_status, event, operator, version) " +
-            "VALUES (#{orderNo}, #{fromStatus}, #{toStatus}, #{event}, #{operator}, #{version})")
+            "VALUES (#{orderId}, #{fromStatus}, #{toStatus}, #{event}, #{operator}, #{version})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OrderStatusLogPO log);
 

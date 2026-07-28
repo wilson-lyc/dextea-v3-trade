@@ -21,8 +21,8 @@ public class OrderStatusLog {
 
     private Long id;
 
-    /** 订单号（与 orders.order_no 对齐，便于按业务键检索） */
-    private String orderNo;
+    /** 订单ID（内部数据流转标识，对应 orders 表的 order_no 列） */
+    private String orderId;
 
     /** 变更前状态码，取值见 {@link cn.dextea.trade.order.domain.enums.TradeStatusEnum} */
     private Integer fromStatus;

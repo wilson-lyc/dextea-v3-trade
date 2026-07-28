@@ -108,7 +108,7 @@ public class OrderStatusDomainService {
 
             // 5. 记录状态变更日志（审计用）
             OrderStatusLog statusLog = OrderStatusLog.builder()
-                    .orderNo(orderNo)
+                    .orderId(orderNo)
                     .fromStatus(currentStatus.getCode())
                     .toStatus(targetStatus.getCode())
                     .event(event.name())

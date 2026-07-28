@@ -141,7 +141,7 @@ public final class OrderTranslator {
         }
         return OrderStatusLogPO.builder()
                 .id(log.getId())
-                .orderNo(log.getOrderNo())
+                .orderId(log.getOrderId())
                 .fromStatus(log.getFromStatus())
                 .toStatus(log.getToStatus())
                 .event(log.getEvent())
@@ -157,7 +157,7 @@ public final class OrderTranslator {
         }
         return OrderStatusLog.builder()
                 .id(po.getId())
-                .orderNo(po.getOrderNo())
+                .orderId(po.getOrderId())
                 .fromStatus(po.getFromStatus())
                 .toStatus(po.getToStatus())
                 .event(po.getEvent())
