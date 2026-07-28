@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class OrderStatusLogPO {
     private Long id;
-    private String orderId;
+    private Long orderId;
     private Integer fromStatus;
     private Integer toStatus;
     private String event;

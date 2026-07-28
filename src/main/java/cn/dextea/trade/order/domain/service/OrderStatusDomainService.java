@@ -72,7 +72,7 @@ public class OrderStatusDomainService {
                 throw new BizError(OrderErrorCode.ORDER_STATUS_CAS_FAILED, "订单状态已变更，请刷新后重试");
             }
             OrderStatusLog statusLog = OrderStatusLog.builder()
-                    .orderId(orderNo)
+                    .orderId(order.getId())
                     .fromStatus(currentStatus.getCode())
                     .toStatus(targetStatus.getCode())
                     .event(event.name())

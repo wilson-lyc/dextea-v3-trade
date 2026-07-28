@@ -7,10 +7,10 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface OrderStatusLogMapper {
-    @Insert("INSERT INTO order_status_log (order_no, from_status, to_status, event, operator, version) " +
+    @Insert("INSERT INTO order_status_log (order_id, from_status, to_status, event, operator, version) " +
             "VALUES (#{orderId}, #{fromStatus}, #{toStatus}, #{event}, #{operator}, #{version})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OrderStatusLogPO log);
-    @Select("SELECT COUNT(*) FROM order_status_log WHERE order_no = #{orderNo}")
-    int countByOrderNo(@Param("orderNo") String orderNo);
+    @Select("SELECT COUNT(*) FROM order_status_log WHERE order_id = #{orderId}")
+    int countByOrderId(@Param("orderId") Long orderId);
 }
