@@ -70,13 +70,9 @@ public class OrderPlacementDomainService {
         Long customerId = ctx.getCustomerId();
         List<PreBuildProductInput> items = ctx.getProducts();
 
-        // 1. 校验门店与顾客可用性，不可用直接抛业务异常（与下单逻辑统一）
-        if (!isStoreAvailable(storeId)) {
-            throw new BizError(OrderErrorCode.STORE_NOT_OPEN, "门店不可下单: " + storeId);
-        }
-        if (!isCustomerAvailable(customerId)) {
-            throw new BizError(OrderErrorCode.CUSTOMER_NOT_ACTIVE, "顾客不可下单: " + customerId);
-        }
+        // 1. 校验门店与顾客：ID 非法或不可用直接抛业务异常（与下单逻辑统一）
+        validateStore(storeId);
+        validateCustomer(customerId);
 
         // 2. 解析 skuId，获取商品/选项/客制化项目 ID
         SkuResolution resolution = resolveSkuIds(items);
@@ -310,14 +306,24 @@ public class OrderPlacementDomainService {
         return new PricedItem(detail, quantity, subtotal);
     }
 
-    private boolean isStoreAvailable(Long storeId) {
+    private void validateStore(Long storeId) {
         Store store = storeGateway.findStore(storeId);
-        return store != null && store.isOpen();
+        if (store == null) {
+            throw new BizError(OrderErrorCode.STORE_ID_INVALID, "门店ID非法: " + storeId);
+        }
+        if (!store.isOpen()) {
+            throw new BizError(OrderErrorCode.STORE_UNAVAILABLE, "门店不可用，无法下单: " + storeId);
+        }
     }
 
-    private boolean isCustomerAvailable(Long customerId) {
+    private void validateCustomer(Long customerId) {
         Customer customer = customerGateway.findCustomer(customerId);
-        return customer != null && customer.isActive();
+        if (customer == null) {
+            throw new BizError(OrderErrorCode.CUSTOMER_ID_INVALID, "顾客ID非法: " + customerId);
+        }
+        if (!customer.isActive()) {
+            throw new BizError(OrderErrorCode.CUSTOMER_UNAVAILABLE, "顾客不可用，无法下单: " + customerId);
+        }
     }
 
     private <T> Map<Long, T> loadByIds(
