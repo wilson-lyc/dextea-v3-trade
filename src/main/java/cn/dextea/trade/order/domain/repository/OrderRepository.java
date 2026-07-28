@@ -27,7 +27,7 @@ public interface OrderRepository {
 
     void insertStatusLog(OrderStatusLog log);
 
-    List<Order> findByCustomerIdAndCreatedAfter(Long customerId, LocalDateTime since);
+    List<Order> findByCustomerIdAndCreatedBetween(Long customerId, LocalDateTime start, LocalDateTime end);
 
     List<OrderItem> findItemsByOrderIds(List<Long> orderIds);
 

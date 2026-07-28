@@ -78,8 +78,8 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public List<Order> findByCustomerIdAndCreatedAfter(Long customerId, LocalDateTime since) {
-        return OrderTranslator.toOrders(orderMapper.selectByCustomerIdAndCreatedAtAfter(customerId, since));
+    public List<Order> findByCustomerIdAndCreatedBetween(Long customerId, LocalDateTime start, LocalDateTime end) {
+        return OrderTranslator.toOrders(orderMapper.selectByCustomerIdAndCreatedBetween(customerId, start, end));
     }
 
     @Override

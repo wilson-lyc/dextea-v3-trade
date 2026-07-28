@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,9 +50,14 @@ public class OrderQueryServiceImpl implements OrderQueryService {
     private final ExternalDataFacade externalDataFacade;
 
     @Override
-    public List<OrderSummaryDTO> getOrdersByCustomer(Long customerId) {
-        LocalDateTime since = LocalDateTime.now().minusMonths(3);
-        List<Order> orders = orderRepository.findByCustomerIdAndCreatedAfter(customerId, since);
+    public List<OrderSummaryDTO> getOrdersByCustomer(Long customerId, int year, int month) {
+        LocalDate firstDay = LocalDate.of(year, month, 1);
+        if (firstDay.isAfter(LocalDate.now())) {
+            throw new BizError(OrderErrorCode.ORDER_QUERY_MONTH_INVALID, "查询年月不能晚于当前月份: " + year + "-" + month);
+        }
+        LocalDateTime start = firstDay.atStartOfDay();
+        LocalDateTime end = firstDay.plusMonths(1).atStartOfDay();
+        List<Order> orders = orderRepository.findByCustomerIdAndCreatedBetween(customerId, start, end);
         if (orders.isEmpty()) {
             return List.of();
         }

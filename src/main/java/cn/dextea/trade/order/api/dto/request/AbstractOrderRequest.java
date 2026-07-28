@@ -23,10 +23,6 @@ public abstract class AbstractOrderRequest {
     @Schema(description = "门店 ID", example = "1")
     private Long storeId;
 
-    @NotNull(message = "customerId 不能为空")
-    @Schema(description = "用户 ID", example = "1")
-    private Long customerId;
-
     @NotNull(message = "platform 不能为空")
     @Schema(description = "仅支持 weixin 和 alipay", example = "alipay")
     private PlatformEnum platform;

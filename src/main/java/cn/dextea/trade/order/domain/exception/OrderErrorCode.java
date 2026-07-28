@@ -36,7 +36,8 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_PRICE_INVALID(101021, "订单金额非法"),
     ORDER_QUANTITY_INVALID(101022, "订单数量非法"),
     ORDER_TRADE_NO_ALREADY_SET(101023, "trade_no 已存在，不可重复设置"),
-    ORDER_DUPLICATE_REQUEST(101024, "重复请求，请勿重复下单");
+    ORDER_DUPLICATE_REQUEST(101024, "重复请求，请勿重复下单"),
+    ORDER_QUERY_MONTH_INVALID(101025, "查询年月非法");
 
     private final int code;
 

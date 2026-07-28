@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface OrderQueryService {
 
-    List<OrderSummaryDTO> getOrdersByCustomer(Long customerId);
+    List<OrderSummaryDTO> getOrdersByCustomer(Long customerId, int year, int month);
 
     OrderDetailDTO getOrderDetail(Long orderId, Long customerId);
 

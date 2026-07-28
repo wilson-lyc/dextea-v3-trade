@@ -33,10 +33,10 @@ public final class OrderApiAssembler {
     private OrderApiAssembler() {
     }
 
-    public static PreBuildOrderCommand toPreBuildCommand(PreBuildOrderRequest request) {
+    public static PreBuildOrderCommand toPreBuildCommand(PreBuildOrderRequest request, Long customerId) {
         return PreBuildOrderCommand.builder()
                 .storeId(request.getStoreId())
-                .customerId(request.getCustomerId())
+                .customerId(customerId)
                 .platform(request.getPlatform())
                 .diningMethod(request.getDiningMethod())
                 .note(request.getNote())
@@ -44,10 +44,10 @@ public final class OrderApiAssembler {
                 .build();
     }
 
-    public static CreateOrderCommand toCreateCommand(CreateOrderRequest request) {
+    public static CreateOrderCommand toCreateCommand(CreateOrderRequest request, Long customerId) {
         return CreateOrderCommand.builder()
                 .storeId(request.getStoreId())
-                .customerId(request.getCustomerId())
+                .customerId(customerId)
                 .platform(request.getPlatform())
                 .diningMethod(request.getDiningMethod())
                 .note(request.getNote())

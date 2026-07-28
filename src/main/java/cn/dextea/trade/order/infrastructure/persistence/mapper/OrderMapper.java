@@ -59,6 +59,8 @@ public interface OrderMapper {
                         @Param("paidAt") LocalDateTime paidAt,
                         @Param("refundedAt") LocalDateTime refundedAt);
 
-    @Select("SELECT * FROM orders WHERE customer_id = #{customerId} AND created_at >= #{since} ORDER BY created_at DESC")
-    List<OrderPO> selectByCustomerIdAndCreatedAtAfter(@Param("customerId") Long customerId, @Param("since") LocalDateTime since);
+    @Select("SELECT * FROM orders WHERE customer_id = #{customerId} AND created_at >= #{start} AND created_at < #{end} ORDER BY created_at DESC")
+    List<OrderPO> selectByCustomerIdAndCreatedBetween(@Param("customerId") Long customerId,
+                                                      @Param("start") LocalDateTime start,
+                                                      @Param("end") LocalDateTime end);
 }
