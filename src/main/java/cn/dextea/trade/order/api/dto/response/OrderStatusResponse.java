@@ -24,11 +24,7 @@ public class OrderStatusResponse {
 
     private Integer tradeStatus;
 
-    private String tradeStatusDesc;
-
     private Integer makingStatus;
-
-    private String makingStatusDesc;
 
     private LocalDateTime payExpireAt;
 

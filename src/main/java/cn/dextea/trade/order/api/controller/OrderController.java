@@ -5,46 +5,55 @@ import cn.dextea.trade.order.api.assembler.OrderApiAssembler;
 import cn.dextea.trade.order.api.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.api.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.api.dto.response.CreateOrderResponse;
+import cn.dextea.trade.order.api.dto.response.OrderDetailResponse;
+import cn.dextea.trade.order.api.dto.response.OrderStatusResponse;
+import cn.dextea.trade.order.api.dto.response.OrderSummary;
 import cn.dextea.trade.order.api.dto.response.PreBuildOrderResponse;
 import cn.dextea.trade.order.application.service.OrderApplicationService;
+import cn.dextea.trade.order.application.service.OrderQueryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
- * 订单命令接口
- * 承载写操作（创建订单、订单预构建）
+ * 订单服务接口：承载订单的读操作（列表、详情、交易状态）与写操作（预构建、创建）。
+ *
+ * <p>顾客 ID 统一从上游鉴权层写入的 {@code X-Customer-Id} Header 提取。</p>
  */
 @RestController
 @RequestMapping("/api/v1/orders")
 @Validated
-@Tag(name = "订单服务-命令")
+@Tag(name = "订单服务")
 @RequiredArgsConstructor
-public class OrderCommandController {
+public class OrderController {
+
+    private static final String CUSTOMER_ID_HEADER = "X-Customer-Id";
 
     private final OrderApplicationService orderApplicationService;
-
-    @PostMapping
-    @Operation(summary = "创建订单")
-    public APIResponse<CreateOrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
-        CreateOrderResponse result = OrderApiAssembler.toCreateResponse(
-                orderApplicationService.createOrder(OrderApiAssembler.toCreateCommand(request)));
-        return APIResponse.success(result);
-    }
+    private final OrderQueryService orderQueryService;
 
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "订单预构建请求示例",
-            content = @io.swagger.v3.oas.annotations.media.Content(
+            content = @Content(
                     mediaType = "application/json",
-                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = """
+                    examples = @ExampleObject(value = """
                             {
                                 "storeId": 1,
                                 "customerId": 2,
@@ -59,12 +68,12 @@ public class OrderCommandController {
                                 ]
                             }
                             """)))
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+    @ApiResponse(
             responseCode = "200",
             description = "预构建订单正常响应示例",
-            content = @io.swagger.v3.oas.annotations.media.Content(
+            content = @Content(
                     mediaType = "application/json",
-                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = """
+                    examples = @ExampleObject(value = """
                             {
                                 "code": 0,
                                 "message": "成功",
@@ -94,6 +103,42 @@ public class OrderCommandController {
     public APIResponse<PreBuildOrderResponse> preBuildOrder(@Valid @RequestBody PreBuildOrderRequest request) {
         PreBuildOrderResponse result = OrderApiAssembler.toPreBuildResponse(
                 orderApplicationService.preBuildOrder(OrderApiAssembler.toPreBuildCommand(request)));
+        return APIResponse.success(result);
+    }
+
+    @PostMapping
+    @Operation(summary = "创建订单")
+    public APIResponse<CreateOrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
+        CreateOrderResponse result = OrderApiAssembler.toCreateResponse(
+                orderApplicationService.createOrder(OrderApiAssembler.toCreateCommand(request)));
+        return APIResponse.success(result);
+    }
+
+    @GetMapping
+    @Operation(summary = "获取用户近3个月订单")
+    public APIResponse<List<OrderSummary>> getOrdersByCustomer(
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId) {
+        List<OrderSummary> result = orderQueryService.getOrdersByCustomer(customerId).stream()
+                .map(OrderApiAssembler::toSummary)
+                .toList();
+        return APIResponse.success(result);
+    }
+
+    @GetMapping("/{orderId}")
+    @Operation(summary = "获取订单详情")
+    public APIResponse<OrderDetailResponse> getOrderDetail(
+            @PathVariable Long orderId,
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId) {
+        OrderDetailResponse result = OrderApiAssembler.toDetail(orderQueryService.getOrderDetail(orderId, customerId));
+        return APIResponse.success(result);
+    }
+
+    @GetMapping("/{orderId}/status")
+    @Operation(summary = "获取订单交易状态")
+    public APIResponse<OrderStatusResponse> getOrderStatus(
+            @PathVariable Long orderId,
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId) {
+        OrderStatusResponse result = OrderApiAssembler.toStatus(orderQueryService.getOrderStatus(orderId, customerId));
         return APIResponse.success(result);
     }
 }

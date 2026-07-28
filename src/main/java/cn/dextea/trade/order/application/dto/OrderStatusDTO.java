@@ -24,11 +24,7 @@ public class OrderStatusDTO {
 
     private Integer tradeStatus;
 
-    private String tradeStatusDesc;
-
     private Integer makingStatus;
-
-    private String makingStatusDesc;
 
     /** 支付过期时间点（待支付订单前端可据此做倒计时） */
     private LocalDateTime payExpireAt;
