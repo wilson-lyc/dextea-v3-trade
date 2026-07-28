@@ -5,8 +5,10 @@ import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderItemMapper;
+import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderMapper;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderStatusLogMapper;
+import cn.dextea.trade.order.infrastructure.persistence.translator.OrderTranslator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +17,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 订单仓储实现：在 MyBatis Mapper 与领域模型之间做适配。
+ * 订单仓储实现：在 MyBatis Mapper（PO）与领域模型之间做适配。
  *
- * <p>本实现直接以领域模型作为持久化对象（注解 SQL 已完成列名映射，避免过度设计），
- * 领域层通过 {@link OrderRepository} 仓储接口隔离持久化细节。</p>
+ * <p>持久化对象（PO）与领域模型在此通过 {@link OrderTranslator} 互转，
+ * 领域层只接触 {@link Order} / {@link OrderItem} / {@link OrderStatusLog}，
+ * 完全不感知库表结构与 MyBatis 细节。</p>
  */
 @Repository
 @RequiredArgsConstructor
@@ -31,29 +34,31 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Order save(Order order) {
-        orderMapper.insert(order);
+        OrderPO orderPO = OrderTranslator.toOrderPO(order);
+        orderMapper.insert(orderPO);
+        order.setId(orderPO.getId());
         if (order.getItems() != null && !order.getItems().isEmpty()) {
             for (OrderItem item : order.getItems()) {
                 item.setOrderId(order.getId());
             }
-            orderItemMapper.batchInsert(order.getItems());
+            orderItemMapper.batchInsert(OrderTranslator.toOrderItemPOs(order.getItems()));
         }
         return order;
     }
 
     @Override
     public Order findByOrderNo(String orderNo) {
-        return orderMapper.selectByOrderNo(orderNo);
+        return OrderTranslator.toOrder(orderMapper.selectByOrderNo(orderNo));
     }
 
     @Override
     public Order findById(Long id) {
-        return orderMapper.selectById(id);
+        return OrderTranslator.toOrder(orderMapper.selectById(id));
     }
 
     @Override
     public Order findByIdempotencyKey(String idempotencyKey) {
-        return orderMapper.selectByIdempotencyKey(idempotencyKey);
+        return OrderTranslator.toOrder(orderMapper.selectByIdempotencyKey(idempotencyKey));
     }
 
     @Override
@@ -69,12 +74,12 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public void insertStatusLog(OrderStatusLog log) {
-        orderStatusLogMapper.insert(log);
+        orderStatusLogMapper.insert(OrderTranslator.toOrderStatusLogPO(log));
     }
 
     @Override
     public List<Order> findByCustomerIdAndCreatedAfter(Long customerId, LocalDateTime since) {
-        return orderMapper.selectByCustomerIdAndCreatedAtAfter(customerId, since);
+        return OrderTranslator.toOrders(orderMapper.selectByCustomerIdAndCreatedAtAfter(customerId, since));
     }
 
     @Override
@@ -82,11 +87,11 @@ public class OrderRepositoryImpl implements OrderRepository {
         if (orderIds == null || orderIds.isEmpty()) {
             return List.of();
         }
-        return orderItemMapper.selectByOrderIds(orderIds);
+        return OrderTranslator.toOrderItems(orderItemMapper.selectByOrderIds(orderIds));
     }
 
     @Override
     public List<OrderItem> findFullItemsByOrderId(Long orderId) {
-        return orderItemMapper.selectFullByOrderId(orderId);
+        return OrderTranslator.toOrderItems(orderItemMapper.selectFullByOrderId(orderId));
     }
 }

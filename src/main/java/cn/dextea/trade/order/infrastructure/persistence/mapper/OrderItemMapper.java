@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.mapper;
 
-import cn.dextea.trade.order.domain.model.entity.OrderItem;
+import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -17,14 +17,14 @@ public interface OrderItemMapper {
             "(#{item.orderId}, #{item.productId}, #{item.skuId}, #{item.productName}, #{item.coverId}, #{item.quantity}, #{item.unitPrice}, #{item.subtotal})" +
             "</foreach>" +
             "</script>")
-    int batchInsert(@Param("items") List<OrderItem> items);
+    int batchInsert(@Param("items") List<OrderItemPO> items);
 
     @Select("<script>" +
             "SELECT order_id, cover_id FROM order_items WHERE order_id IN " +
             "<foreach collection='orderIds' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
             "</script>")
-    List<OrderItem> selectByOrderIds(@Param("orderIds") List<Long> orderIds);
+    List<OrderItemPO> selectByOrderIds(@Param("orderIds") List<Long> orderIds);
 
     @Select("SELECT * FROM order_items WHERE order_id = #{orderId} ORDER BY id ASC")
-    List<OrderItem> selectFullByOrderId(@Param("orderId") Long orderId);
+    List<OrderItemPO> selectFullByOrderId(@Param("orderId") Long orderId);
 }

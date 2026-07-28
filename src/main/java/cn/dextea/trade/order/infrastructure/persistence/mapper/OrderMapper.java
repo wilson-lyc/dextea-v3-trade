@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.mapper;
 
-import cn.dextea.trade.order.domain.model.aggregate.Order;
+import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
@@ -17,16 +17,16 @@ public interface OrderMapper {
     @Insert("INSERT INTO orders (order_no, trade_no, idempotency_key, customer_id, store_id, trade_status, making_status, version, pay_method, dining_method, note, total_price, total_quantity, pay_expire_at) " +
             "VALUES (#{orderNo}, #{tradeNo}, #{idempotencyKey}, #{customerId}, #{storeId}, #{tradeStatus}, #{makingStatus}, 0, #{payMethod}, #{diningMethod}, #{note}, #{totalPrice}, #{totalQuantity}, #{payExpireAt})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Order order);
+    int insert(OrderPO order);
 
     @Select("SELECT * FROM orders WHERE idempotency_key = #{idempotencyKey}")
-    Order selectByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
+    OrderPO selectByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 
     @Select("SELECT * FROM orders WHERE id = #{id}")
-    Order selectById(@Param("id") Long id);
+    OrderPO selectById(@Param("id") Long id);
 
     @Select("SELECT * FROM orders WHERE order_no = #{orderNo}")
-    Order selectByOrderNo(@Param("orderNo") String orderNo);
+    OrderPO selectByOrderNo(@Param("orderNo") String orderNo);
 
     @Update("UPDATE orders SET trade_no = #{tradeNo}, updated_at = NOW() WHERE id = #{id}")
     int updateTradeNo(@Param("id") Long id, @Param("tradeNo") String tradeNo);
@@ -60,5 +60,5 @@ public interface OrderMapper {
                         @Param("refundedAt") LocalDateTime refundedAt);
 
     @Select("SELECT * FROM orders WHERE customer_id = #{customerId} AND created_at >= #{since} ORDER BY created_at DESC")
-    List<Order> selectByCustomerIdAndCreatedAtAfter(@Param("customerId") Long customerId, @Param("since") LocalDateTime since);
+    List<OrderPO> selectByCustomerIdAndCreatedAtAfter(@Param("customerId") Long customerId, @Param("since") LocalDateTime since);
 }

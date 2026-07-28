@@ -50,7 +50,7 @@ alipay:
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
-  type-aliases-package: cn.dextea.trade.order.domain.model,cn.dextea.trade.order.infrastructure.gateway.po
+  type-aliases-package: cn.dextea.trade.order.domain.model,cn.dextea.trade.order.infrastructure.gateway.po,cn.dextea.trade.order.infrastructure.persistence.po
   configuration:
     map-underscore-to-camel-case: true
 
