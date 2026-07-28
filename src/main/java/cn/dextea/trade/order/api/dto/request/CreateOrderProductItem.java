@@ -27,7 +27,7 @@ public class CreateOrderProductItem {
     private String productName;
     @Schema(description = "商品封面图 ID（响应填充，请求无需传）", example = "1")
     private Long coverId;
-    @Schema(description = "商品封面图 URL（响应填充，请求无需传）", example = "https:
+    @Schema(description = "商品封面图 URL（响应填充，请求无需传）", example = "https://example.com/example.jpg")
     private String coverUrl;
     @Schema(description = "客制化选项文本，由选项名称拼接而成（响应填充，请求无需传）", example = "少冰 / 少甜 / 茉莉花茶")
     private String customizationText;

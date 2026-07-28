@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Component
 @ConfigurationProperties(prefix = "alipay")
 public class AlipayPaymentConfig {
-    private String serverUrl = "https:
+    private String serverUrl = "https://openapi.alipay.com";
     @NotBlank(message = "alipay.app-id 必须配置")
     private String appId;
     @NotBlank(message = "alipay.private-key 必须配置")
