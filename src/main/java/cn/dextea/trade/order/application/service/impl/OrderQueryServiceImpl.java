@@ -4,10 +4,8 @@ import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderItemDTO;
 import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
-import cn.dextea.trade.order.application.dto.StoreInfoDTO;
 import cn.dextea.trade.order.application.facade.ExternalDataFacade;
 import cn.dextea.trade.order.application.service.OrderQueryService;
-import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
 import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
@@ -17,7 +15,6 @@ import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
 import cn.dextea.trade.order.domain.model.valueobject.Store;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
-import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -96,16 +93,12 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         if (!Objects.equals(order.getCustomerId(), customerId)) {
             throw new BizError(OrderErrorCode.ORDER_ACCESS_DENIED, "订单不属于该顾客: " + orderId);
         }
-        StoreInfoDTO storeInfo = null;
+        Long storeId = null;
+        String storeName = null;
         Store store = externalDataFacade.findStore(order.getStoreId());
         if (store != null) {
-            storeInfo = StoreInfoDTO.builder()
-                    .id(store.getId())
-                    .name(store.getName())
-                    .address(store.getAddress())
-                    .phone(store.getPhone())
-                    .businessHours(store.getBusinessHours())
-                    .build();
+            storeId = store.getId();
+            storeName = store.getName();
         }
         List<OrderItem> items = orderRepository.findFullItemsByOrderId(orderId);
         Map<Long, String> coverUrlMap = resolveCoverUrls(items);
@@ -128,23 +121,20 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
                 .tradeStatus(order.getTradeStatus())
-                .tradeStatusDesc(safeEnumDesc(() -> TradeStatusEnum.of(order.getTradeStatus()).getDescription()))
                 .makingStatus(order.getMakingStatus())
-                .makingStatusDesc(safeEnumDesc(() -> MakingStatusEnum.of(order.getMakingStatus()).getDescription()))
                 .pickupCode(order.getPickupCode())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
                 .payMethod(order.getPayMethod())
-                .payMethodDesc(safeEnumDesc(() -> PlatformEnum.of(order.getPayMethod()).getDescription()))
                 .diningMethod(order.getDiningMethod())
-                .diningMethodDesc(safeEnumDesc(() -> DiningMethodEnum.of(order.getDiningMethod()).getDescription()))
                 .note(order.getNote())
                 .payExpireAt(order.getPayExpireAt())
                 .createdAt(order.getCreatedAt())
                 .paidAt(order.getPaidAt())
                 .refundedAt(order.getRefundedAt())
                 .updatedAt(order.getUpdatedAt())
-                .store(storeInfo)
+                .storeId(storeId)
+                .storeName(storeName)
                 .items(detailItems)
                 .build();
     }

@@ -11,7 +11,6 @@ import cn.dextea.trade.order.api.dto.response.OrderDetailResponse;
 import cn.dextea.trade.order.api.dto.response.OrderStatusResponse;
 import cn.dextea.trade.order.api.dto.response.OrderSummary;
 import cn.dextea.trade.order.api.dto.response.PreBuildOrderResponse;
-import cn.dextea.trade.order.api.dto.response.StoreInfo;
 import cn.dextea.trade.order.application.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.command.OrderProductCommand;
 import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
@@ -157,29 +156,20 @@ public final class OrderApiAssembler {
                 .orderNo(v.getOrderNo())
                 .tradeNo(v.getTradeNo())
                 .tradeStatus(v.getTradeStatus())
-                .tradeStatusDesc(v.getTradeStatusDesc())
                 .makingStatus(v.getMakingStatus())
-                .makingStatusDesc(v.getMakingStatusDesc())
                 .pickupCode(v.getPickupCode())
                 .totalPrice(v.getTotalPrice())
                 .totalQuantity(v.getTotalQuantity())
                 .payMethod(v.getPayMethod())
-                .payMethodDesc(v.getPayMethodDesc())
                 .diningMethod(v.getDiningMethod())
-                .diningMethodDesc(v.getDiningMethodDesc())
                 .note(v.getNote())
                 .payExpireAt(v.getPayExpireAt())
                 .createdAt(v.getCreatedAt())
                 .paidAt(v.getPaidAt())
                 .refundedAt(v.getRefundedAt())
                 .updatedAt(v.getUpdatedAt())
-                .store(v.getStore() == null ? null : StoreInfo.builder()
-                        .id(v.getStore().getId())
-                        .name(v.getStore().getName())
-                        .address(v.getStore().getAddress())
-                        .phone(v.getStore().getPhone())
-                        .businessHours(v.getStore().getBusinessHours())
-                        .build())
+                .storeId(v.getStoreId())
+                .storeName(v.getStoreName())
                 .items(items)
                 .build();
     }
