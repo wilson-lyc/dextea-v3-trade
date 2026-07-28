@@ -11,14 +11,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderSummaryDTO {
+    private Long orderId;
     private String storeName;
     private LocalDateTime orderTime;
     private Integer tradeStatus;
-    private String tradeStatusDesc;
     private Integer makingStatus;
-    private String makingStatusDesc;
     private BigDecimal totalPrice;
     private Integer totalQuantity;
-    private LocalDateTime payExpireAt;
     private List<String> coverUrls;
 }

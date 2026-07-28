@@ -6,7 +6,6 @@ import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.application.facade.ExternalDataFacade;
 import cn.dextea.trade.order.application.service.OrderQueryService;
-import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 @Slf4j
 @Service
@@ -70,15 +68,13 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                     .toList();
             Store store = externalDataFacade.findStore(order.getStoreId());
             result.add(OrderSummaryDTO.builder()
+                    .orderId(order.getId())
                     .storeName(store != null ? store.getName() : null)
                     .orderTime(order.getCreatedAt())
                     .tradeStatus(order.getTradeStatus())
-                    .tradeStatusDesc(safeEnumDesc(() -> TradeStatusEnum.of(order.getTradeStatus()).getDescription()))
                     .makingStatus(order.getMakingStatus())
-                    .makingStatusDesc(safeEnumDesc(() -> MakingStatusEnum.of(order.getMakingStatus()).getDescription()))
                     .totalPrice(order.getTotalPrice())
                     .totalQuantity(order.getTotalQuantity())
-                    .payExpireAt(order.getPayExpireAt())
                     .coverUrls(coverUrls)
                     .build());
         }
@@ -199,12 +195,5 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 .updatedAt(order.getUpdatedAt())
                 .terminal(terminal)
                 .build();
-    }
-    private static String safeEnumDesc(Supplier<String> supplier) {
-        try {
-            return supplier.get();
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 }

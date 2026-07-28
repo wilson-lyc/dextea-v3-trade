@@ -107,15 +107,13 @@ public final class OrderApiAssembler {
     }
     public static OrderSummary toSummary(OrderSummaryDTO v) {
         return OrderSummary.builder()
+                .orderId(v.getOrderId())
                 .storeName(v.getStoreName())
                 .orderTime(v.getOrderTime())
                 .tradeStatus(v.getTradeStatus())
-                .tradeStatusDesc(v.getTradeStatusDesc())
                 .makingStatus(v.getMakingStatus())
-                .makingStatusDesc(v.getMakingStatusDesc())
                 .totalPrice(v.getTotalPrice())
                 .totalQuantity(v.getTotalQuantity())
-                .payExpireAt(v.getPayExpireAt())
                 .coverUrls(v.getCoverUrls())
                 .build();
     }

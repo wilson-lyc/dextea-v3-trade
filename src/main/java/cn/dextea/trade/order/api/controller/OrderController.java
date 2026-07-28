@@ -108,7 +108,7 @@ public class OrderController {
         return APIResponse.success(result);
     }
     @GetMapping
-    @Operation(summary = "获取用户指定年月的订单列表")
+    @Operation(summary = "获取月订单列表")
     public APIResponse<List<OrderSummary>> getOrdersByCustomer(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @RequestParam @NotNull(message = "year 不能为空") @Min(2000) @Max(9999) Integer year,
