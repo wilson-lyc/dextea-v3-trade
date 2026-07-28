@@ -54,6 +54,12 @@ public class Order {
      */
     private Integer version;
 
+    /**
+     * 取餐码（如 "8011"），支付成功时按门店维度生成，对应库表 pickup_code 列。
+     * <p>待支付/超时/退款前该字段为 null。</p>
+     */
+    private String pickupCode;
+
     private BigDecimal totalPrice;
 
     private Integer totalQuantity;

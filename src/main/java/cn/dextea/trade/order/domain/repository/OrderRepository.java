@@ -23,7 +23,7 @@ public interface OrderRepository {
     void updateTradeNo(Long id, String tradeNo);
 
     int updateStatusCas(String orderNo, int targetStatus, int expectedStatus, int currentVersion,
-                        String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt);
+                        String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt, String pickupCode);
 
     void insertStatusLog(OrderStatusLog log);
 

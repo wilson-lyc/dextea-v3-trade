@@ -38,6 +38,9 @@ public class OrderDetailResponse {
     @Schema(description = "制作进度文案", example = "待制作")
     private String makingStatusDesc;
 
+    @Schema(description = "取餐码（支付成功后生成，未支付为 null）", example = "8011")
+    private String pickupCode;
+
     @Schema(description = "订单总价", example = "99.00")
     private BigDecimal totalPrice;
 

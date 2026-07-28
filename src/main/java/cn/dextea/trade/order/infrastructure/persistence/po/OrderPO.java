@@ -38,6 +38,12 @@ public class OrderPO {
     /** 制作进度状态，对应 orders.making_status 列 */
     private Integer makingStatus;
 
+    /**
+     * 取餐码，对应 orders.pickup_code 列（建议 DDL: pickup_code varchar(8) NULL）。
+     * <p>支付成功回调时生成并随交易状态一并写入；下单 INSERT 不含该列，允许为 NULL。</p>
+     */
+    private String pickupCode;
+
     /** 乐观锁版本号，对应 orders.version 列 */
     private Integer version;
 

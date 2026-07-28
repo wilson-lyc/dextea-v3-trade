@@ -32,6 +32,9 @@ public class OrderDetailDTO {
 
     private String makingStatusDesc;
 
+    /** 取餐码（支付成功后生成，如 "8011"；未支付为 null） */
+    private String pickupCode;
+
     private BigDecimal totalPrice;
 
     private Integer totalQuantity;

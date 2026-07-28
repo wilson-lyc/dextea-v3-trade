@@ -26,6 +26,9 @@ public class OrderStatusDTO {
 
     private Integer makingStatus;
 
+    /** 取餐码（支付成功后生成，如 "8011"；未支付为 null） */
+    private String pickupCode;
+
     /** 支付过期时间点（待支付订单前端可据此做倒计时） */
     private LocalDateTime payExpireAt;
 

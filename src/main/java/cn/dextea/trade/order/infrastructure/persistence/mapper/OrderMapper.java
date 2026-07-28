@@ -49,6 +49,7 @@ public interface OrderMapper {
             "<if test='tradeNo != null'>, trade_no = #{tradeNo}</if>" +
             "<if test='paidAt != null'>, paid_at = #{paidAt}</if>" +
             "<if test='refundedAt != null'>, refunded_at = #{refundedAt}</if>" +
+            "<if test='pickupCode != null'>, pickup_code = #{pickupCode}</if>" +
             " WHERE order_no = #{orderNo} AND trade_status = #{expectedStatus} AND version = #{currentVersion}" +
             "</script>")
     int updateStatusCas(@Param("orderNo") String orderNo,
@@ -57,7 +58,8 @@ public interface OrderMapper {
                         @Param("currentVersion") int currentVersion,
                         @Param("tradeNo") String tradeNo,
                         @Param("paidAt") LocalDateTime paidAt,
-                        @Param("refundedAt") LocalDateTime refundedAt);
+                        @Param("refundedAt") LocalDateTime refundedAt,
+                        @Param("pickupCode") String pickupCode);
 
     @Select("SELECT * FROM orders WHERE customer_id = #{customerId} AND created_at >= #{start} AND created_at < #{end} ORDER BY created_at DESC")
     List<OrderPO> selectByCustomerIdAndCreatedBetween(@Param("customerId") Long customerId,

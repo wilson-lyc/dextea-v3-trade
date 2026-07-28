@@ -76,8 +76,8 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public int updateStatusCas(String orderNo, int targetStatus, int expectedStatus, int currentVersion,
-                               String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt) {
-        return orderMapper.updateStatusCas(orderNo, targetStatus, expectedStatus, currentVersion, tradeNo, paidAt, refundedAt);
+                               String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt, String pickupCode) {
+        return orderMapper.updateStatusCas(orderNo, targetStatus, expectedStatus, currentVersion, tradeNo, paidAt, refundedAt, pickupCode);
     }
 
     @Override

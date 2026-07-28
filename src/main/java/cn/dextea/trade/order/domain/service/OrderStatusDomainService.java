@@ -5,6 +5,7 @@ import cn.dextea.trade.order.domain.enums.OrderEventEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.gateway.OrderLockGateway;
+import cn.dextea.trade.order.domain.gateway.PickupCodeGeneratorGateway;
 import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
@@ -26,14 +27,17 @@ public class OrderStatusDomainService {
 
     private final OrderRepository orderRepository;
     private final OrderLockGateway orderLockGateway;
+    private final PickupCodeGeneratorGateway pickupCodeGeneratorGateway;
 
     /**
-     * 支付成功：待支付 → 已支付，记录交易号与支付时间。
+     * 支付成功：待支付 → 已支付，记录交易号与支付时间，并按门店维度生成取餐码，
+     * 取餐码与交易状态在同一条 CAS UPDATE 中落库。
      */
     public void markPaid(String orderNo, String tradeNo, LocalDateTime paidAt, String operator) {
         transition(orderNo, operator, OrderEventEnum.PAY,
                 order -> order.markPaid(tradeNo, paidAt),
-                tradeNo, paidAt, null);
+                tradeNo, paidAt, null,
+                order -> pickupCodeGeneratorGateway.generate(order.getStoreId()));
     }
 
     /**
@@ -42,7 +46,7 @@ public class OrderStatusDomainService {
     public void markPayTimeout(String orderNo, String operator) {
         transition(orderNo, operator, OrderEventEnum.PAY_TIMEOUT,
                 Order::markPayTimeout,
-                null, null, null);
+                null, null, null, null);
     }
 
     /**
@@ -51,12 +55,13 @@ public class OrderStatusDomainService {
     public void markRefunded(String orderNo, LocalDateTime refundedAt, String operator) {
         transition(orderNo, operator, OrderEventEnum.REFUND,
                 order -> order.markRefunded(refundedAt),
-                null, null, refundedAt);
+                null, null, refundedAt, null);
     }
 
     private void transition(String orderNo, String operator, OrderEventEnum event,
                             Function<Order, TradeStatusEnum> mutation,
-                            String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt) {
+                            String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt,
+                            Function<Order, String> pickupCodeFn) {
         orderLockGateway.executeWithLock(orderNo, () -> {
             // 1. 查询当前订单
             Order order = orderRepository.findByOrderNo(orderNo);
@@ -75,7 +80,14 @@ public class OrderStatusDomainService {
                 throw e;
             }
 
-            // 3. CAS 更新：WHERE order_no=? AND trade_status=? AND version=?
+            // 3. 守卫通过后生成取餐码（仅支付路径），与状态变更同一条 UPDATE 落库
+            String pickupCode = pickupCodeFn == null ? null : pickupCodeFn.apply(order);
+            if (pickupCode != null) {
+                order.setPickupCode(pickupCode);
+                log.info("生成取餐码: orderNo={}, storeId={}, pickupCode={}", orderNo, order.getStoreId(), pickupCode);
+            }
+
+            // 4. CAS 更新：WHERE order_no=? AND trade_status=? AND version=?
             int rows = orderRepository.updateStatusCas(
                     orderNo,
                     targetStatus.getCode(),
@@ -83,7 +95,8 @@ public class OrderStatusDomainService {
                     order.getVersion(),
                     tradeNo,
                     paidAt,
-                    refundedAt
+                    refundedAt,
+                    pickupCode
             );
 
             if (rows == 0) {
@@ -93,7 +106,7 @@ public class OrderStatusDomainService {
                 throw new BizError(OrderErrorCode.ORDER_STATUS_CAS_FAILED, "订单状态已变更，请刷新后重试");
             }
 
-            // 4. 记录状态变更日志（审计用）
+            // 5. 记录状态变更日志（审计用）
             OrderStatusLog statusLog = OrderStatusLog.builder()
                     .orderNo(orderNo)
                     .fromStatus(currentStatus.getCode())
