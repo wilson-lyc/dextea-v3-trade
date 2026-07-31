@@ -1,0 +1,29 @@
+package cn.dextea.trade.order.infrastructure.id;
+
+import cn.dextea.trade.order.domain.exception.OrderNumberGeneratorException;
+import cn.dextea.trade.order.domain.port.OrderNumberGenerator;
+import lombok.RequiredArgsConstructor;
+import me.ahoo.cosid.provider.IdGeneratorProvider;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+@Component
+@RequiredArgsConstructor
+public class SnowflakeIdGenerator implements OrderNumberGenerator {
+    private static final String ORDER_ID_GENERATOR = "order";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private final IdGeneratorProvider idGeneratorProvider;
+
+    @Override
+    public String next() {
+        try {
+            String date = LocalDate.now().format(DATE_FORMATTER);
+            String snowflake = String.valueOf(idGeneratorProvider.getRequired(ORDER_ID_GENERATOR).generate());
+            return date + snowflake;
+        } catch (RuntimeException e) {
+            throw new OrderNumberGeneratorException("订单号生成失败", e);
+        }
+    }
+}

@@ -5,7 +5,9 @@ import cn.dextea.trade.order.domain.gateway.OrderLockGateway;
 import cn.dextea.trade.order.domain.gateway.PaymentClientGateway;
 import cn.dextea.trade.order.domain.gateway.PickupCodeGeneratorGateway;
 import cn.dextea.trade.order.domain.gateway.ProductGateway;
+import cn.dextea.trade.order.domain.factory.OrderNumberFactory;
 import cn.dextea.trade.order.domain.gateway.StoreGateway;
+import cn.dextea.trade.order.domain.port.OrderNumberGenerator;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderPlacementDomainService;
 import cn.dextea.trade.order.domain.service.OrderStatusDomainService;
@@ -22,6 +24,10 @@ public class OrderDomainConfig {
             PaymentClientGateway paymentClientGateway) {
         return new OrderPlacementDomainService(
                 productGateway, customizationGateway, storeGateway, customerGateway, paymentClientGateway);
+    }
+    @Bean
+    public OrderNumberFactory orderNumberFactory(OrderNumberGenerator generator) {
+        return new OrderNumberFactory(generator);
     }
     @Bean
     public OrderStatusDomainService orderStatusDomainService(

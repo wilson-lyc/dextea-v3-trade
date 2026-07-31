@@ -1,11 +1,16 @@
 package cn.dextea.trade.order.domain.model.aggregate;
+
 import cn.dextea.trade.common.error.BizError;
-import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
 import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
 import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
+import cn.dextea.trade.order.domain.model.valueobject.DiningMethod;
+import cn.dextea.trade.order.domain.model.valueobject.OrderNumber;
+import cn.dextea.trade.order.domain.model.valueobject.PickupCode;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
+import cn.dextea.trade.shared.domain.money.Money;
+import cn.dextea.trade.shared.domain.quantity.Quantity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,71 +19,83 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
     private Long id;
-    private String orderNo;
+    private OrderNumber orderNo;
     private String tradeNo;
     private String idempotencyKey;
     private Long customerId;
     private Long storeId;
-    private Integer tradeStatus;
-    private Integer makingStatus;
-    private Integer version;
-    private String pickupCode;
-    private BigDecimal totalPrice;
-    private Integer totalQuantity;
-    private Integer payMethod;
-    private Integer diningMethod;
+    private Money totalPrice;
+    private Quantity totalQuantity;
+    private DiningMethod diningMethod;
     private String note;
-    private LocalDateTime payExpireAt;
+    private PickupCode pickupCode;
+    private Integer makingStatus;
+    private Integer paymentMethod;
+    private Integer paymentStatus;
+    private LocalDateTime paymentExpiredAt;
+    private LocalDateTime paymentPaidAt;
+    private LocalDateTime paymentRefundedAt;
     private LocalDateTime createdAt;
-    private LocalDateTime paidAt;
-    private LocalDateTime refundedAt;
     private LocalDateTime updatedAt;
+    private Integer version;
     private List<OrderItem> items;
-    public static Order createInitial(String orderNo, String idempotencyKey, Long customerId, Long storeId,
-                                    int payMethod, int diningMethod, String note,
-                                    BigDecimal totalPrice, int totalQuantity,
-                                    LocalDateTime payExpireAt, List<OrderItem> items) {
-        if (DiningMethodEnum.of(diningMethod) == null) {
-            throw new BizError(OrderErrorCode.DINING_METHOD_INVALID, "用餐方式错误: " + diningMethod);
-        }
+
+    public static Order createInitial(OrderNumber orderNo, String idempotencyKey, Long customerId, Long storeId,
+            int paymentMethod, DiningMethod diningMethod, String note,
+            BigDecimal totalPrice, int totalQuantity,
+            LocalDateTime paymentExpiredAt, List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
             throw new BizError(OrderErrorCode.ORDER_ITEMS_EMPTY, "订单明细不能为空");
         }
-        if (totalPrice == null || totalPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new BizError(OrderErrorCode.ORDER_PRICE_INVALID, "订单金额非法: " + totalPrice);
+        Money money;
+        try {
+            money = Money.of(totalPrice);
+        } catch (IllegalArgumentException e) {
+            throw new BizError(OrderErrorCode.ORDER_PRICE_EMPTY, e.getMessage());
         }
-        if (totalQuantity <= 0) {
-            throw new BizError(OrderErrorCode.ORDER_QUANTITY_INVALID, "订单数量非法: " + totalQuantity);
+        Quantity quantity;
+        try {
+            quantity = Quantity.of(totalQuantity);
+        } catch (IllegalArgumentException e) {
+            throw new BizError(OrderErrorCode.ORDER_QUANTITY_INVALID, e.getMessage());
         }
-        if (payExpireAt == null || !payExpireAt.isAfter(LocalDateTime.now())) {
-            throw new BizError(OrderErrorCode.ORDER_PAY_EXPIRE_AT_INVALID, "支付过期时间非法: " + payExpireAt);
+        if (paymentExpiredAt == null || !paymentExpiredAt.isAfter(LocalDateTime.now())) {
+            throw new BizError(OrderErrorCode.ORDER_PAY_EXPIRE_AT_INVALID, "支付过期时间非法: " + paymentExpiredAt);
         }
         return Order.builder()
                 .orderNo(orderNo)
                 .idempotencyKey(idempotencyKey)
                 .customerId(customerId)
                 .storeId(storeId)
-                .tradeStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode())
+                .paymentStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode())
                 .makingStatus(MakingStatusEnum.MAKING_WAIT.getCode())
                 .version(0)
-                .payMethod(payMethod)
+                .paymentMethod(paymentMethod)
                 .diningMethod(diningMethod)
                 .note(note)
-                .totalPrice(totalPrice)
-                .totalQuantity(totalQuantity)
-                .payExpireAt(payExpireAt)
+                .totalPrice(money)
+                .totalQuantity(quantity)
+                .paymentExpiredAt(paymentExpiredAt)
                 .items(items)
                 .build();
     }
-    public static Order createFromPreBuild(String orderNo, String idempotencyKey, Long customerId, Long storeId,
-                                           int payMethod, int diningMethod, String note,
-                                           Duration payTimeout, PreBuildResult preBuild) {
+
+    public static Order createFromPreBuild(OrderNumber orderNo, String idempotencyKey, Long customerId, Long storeId,
+            int paymentMethod, int diningMethod, String note,
+            Duration payTimeout, PreBuildResult preBuild) {
+        DiningMethod method;
+        try {
+            method = DiningMethod.of(diningMethod);
+        } catch (IllegalArgumentException e) {
+            throw new BizError(OrderErrorCode.DINING_METHOD_INVALID, e.getMessage());
+        }
         List<OrderItem> items = preBuild.getProducts().stream()
                 .map(p -> OrderItem.builder()
                         .productId(p.getProductId())
@@ -91,42 +108,48 @@ public class Order {
                         .subtotal(p.getSubtotal())
                         .build())
                 .toList();
-        LocalDateTime payExpireAt = LocalDateTime.now().plus(payTimeout);
+        LocalDateTime paymentExpiredAt = LocalDateTime.now().plus(payTimeout);
         return createInitial(orderNo, idempotencyKey, customerId, storeId,
-                payMethod, diningMethod, note,
+                paymentMethod, method, note,
                 preBuild.getTotalPrice(), preBuild.getTotalQuantity(),
-                payExpireAt, items);
+                paymentExpiredAt, items);
     }
+
     public void markTradeNo(String tradeNo) {
         if (this.tradeNo != null) {
             throw new BizError(OrderErrorCode.ORDER_TRADE_NO_ALREADY_SET, "trade_no 已存在，不可重复设置");
         }
         this.tradeNo = tradeNo;
     }
-    public TradeStatusEnum tradeStatusEnum() {
-        return TradeStatusEnum.of(this.tradeStatus);
+
+    public TradeStatusEnum paymentStatusEnum() {
+        return TradeStatusEnum.of(this.paymentStatus);
     }
-    public TradeStatusEnum markPaid(String tradeNo, LocalDateTime paidAt) {
+
+    public TradeStatusEnum markPaid(String tradeNo, LocalDateTime paymentPaidAt) {
         TradeStatusEnum target = transitionTo(TradeStatusEnum.TRADE_PAID, TradeStatusEnum.TRADE_WAIT_PAY);
         if (this.tradeNo == null) {
             this.tradeNo = tradeNo;
         }
-        this.paidAt = paidAt;
+        this.paymentPaidAt = paymentPaidAt;
         return target;
     }
+
     public TradeStatusEnum markPayTimeout() {
         return transitionTo(TradeStatusEnum.TRADE_PAY_TIMEOUT, TradeStatusEnum.TRADE_WAIT_PAY);
     }
-    public TradeStatusEnum markRefunded(LocalDateTime refundedAt) {
+
+    public TradeStatusEnum markRefunded(LocalDateTime paymentRefundedAt) {
         TradeStatusEnum target = transitionTo(TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_PAID);
-        this.refundedAt = refundedAt;
+        this.paymentRefundedAt = paymentRefundedAt;
         return target;
     }
+
     private TradeStatusEnum transitionTo(TradeStatusEnum target, TradeStatusEnum... allowedFrom) {
-        TradeStatusEnum current = tradeStatusEnum();
+        TradeStatusEnum current = paymentStatusEnum();
         for (TradeStatusEnum from : allowedFrom) {
             if (current == from) {
-                this.tradeStatus = target.getCode();
+                this.paymentStatus = target.getCode();
                 return target;
             }
         }

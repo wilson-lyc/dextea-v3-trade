@@ -20,6 +20,7 @@ import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import cn.dextea.trade.order.domain.model.valueobject.PricedOrderItem;
+
 import java.util.List;
 public final class OrderApiAssembler {
     private OrderApiAssembler() {
