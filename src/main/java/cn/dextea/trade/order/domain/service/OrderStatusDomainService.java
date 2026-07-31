@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.domain.service;
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.enums.OrderEventEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.gateway.OrderLockGateway;

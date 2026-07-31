@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model.aggregate;
 
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.model.valueobject.DiningMethod;

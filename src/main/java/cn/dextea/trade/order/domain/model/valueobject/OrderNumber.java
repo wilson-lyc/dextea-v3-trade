@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model.valueobject;
 
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

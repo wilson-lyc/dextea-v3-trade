@@ -1,28 +1,28 @@
 package cn.dextea.trade.order.domain.service;
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.gateway.CustomerGateway;
 import cn.dextea.trade.order.domain.gateway.CustomizationGateway;
 import cn.dextea.trade.order.domain.gateway.PaymentClientGateway;
-import cn.dextea.trade.order.domain.gateway.ProductCover;
+import cn.dextea.trade.catalog.domain.model.valueobject.ProductCover;
 import cn.dextea.trade.order.domain.gateway.ProductGateway;
 import cn.dextea.trade.order.domain.gateway.StoreGateway;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
-import cn.dextea.trade.order.domain.model.valueobject.Customer;
+import cn.dextea.trade.catalog.domain.model.aggregate.Customer;
 import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
-import cn.dextea.trade.order.domain.model.valueobject.Customization;
-import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
-import cn.dextea.trade.order.domain.model.valueobject.CustomizationOptionStoreStatus;
+import cn.dextea.trade.catalog.domain.model.aggregate.Product;
+import cn.dextea.trade.catalog.domain.model.aggregate.Store;
+import cn.dextea.trade.catalog.domain.model.valueobject.Customization;
+import cn.dextea.trade.catalog.domain.model.valueobject.CustomizationOption;
+import cn.dextea.trade.catalog.domain.model.valueobject.CustomizationOptionStoreStatus;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildContext;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildProductInput;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import cn.dextea.trade.order.domain.model.valueobject.PricedOrderItem;
-import cn.dextea.trade.order.domain.model.valueobject.Product;
-import cn.dextea.trade.order.domain.model.valueobject.ProductStoreStatus;
-import cn.dextea.trade.order.domain.model.valueobject.Store;
-import cn.dextea.trade.order.domain.model.valueobject.UnavailableCustomization;
-import cn.dextea.trade.order.domain.model.valueobject.UnavailableProduct;
+import cn.dextea.trade.catalog.domain.model.valueobject.ProductStoreStatus;
+import cn.dextea.trade.catalog.domain.model.valueobject.UnavailableCustomization;
+import cn.dextea.trade.catalog.domain.model.valueobject.UnavailableProduct;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -178,18 +178,15 @@ public class OrderPlacementDomainService {
             Long itemId = itemIdsForItem.get(j);
             CustomizationOption option = optionMap.get(optionId);
             Customization customization = customizationMap.get(itemId);
-            boolean itemNotBelongToProduct = customization != null && customization.getProductId() != null
-                    && !customization.getProductId().equals(productId);
-            boolean optionNotBelongToItem = option != null && option.getCustomizationId() != null
-                    && !option.getCustomizationId().equals(itemId);
-            if (itemNotBelongToProduct) {
+            if (!product.isCustomizationBelongToProduct(itemId)) {
                 throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID);
             }
-            if (optionNotBelongToItem) {
+            if (!product.isOptionBelongToCustomization(itemId, optionId)) {
                 throw new BizError(OrderErrorCode.CUSTOMIZATION_BINDING_INVALID);
             }
             boolean itemUnavailable = customization == null || !customization.isGloballyAvailable();
-            boolean optionUnavailable = option == null || !option.isAvailableInStore(optionStoreStatusMap.get(optionId));
+            boolean optionUnavailable = option == null
+                    || !product.isOptionAvailableInStore(option, optionStoreStatusMap.get(optionId));
             if (itemUnavailable || optionUnavailable) {
                 badOptions.add(UnavailableCustomization.builder()
                         .optionId(optionId)

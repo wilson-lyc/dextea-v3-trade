@@ -1,4 +1,6 @@
 package cn.dextea.trade.order.domain.model.valueobject;
+import cn.dextea.trade.catalog.domain.model.valueobject.UnavailableCustomization;
+import cn.dextea.trade.catalog.domain.model.valueobject.UnavailableProduct;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;

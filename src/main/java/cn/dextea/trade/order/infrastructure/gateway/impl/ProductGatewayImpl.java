@@ -1,50 +1,38 @@
 package cn.dextea.trade.order.infrastructure.gateway.impl;
-import cn.dextea.trade.order.domain.gateway.ProductCover;
+
+import cn.dextea.trade.catalog.api.client.CatalogClient;
+import cn.dextea.trade.catalog.domain.model.aggregate.Product;
+import cn.dextea.trade.catalog.domain.model.valueobject.ProductCover;
+import cn.dextea.trade.catalog.domain.model.valueobject.ProductStoreStatus;
 import cn.dextea.trade.order.domain.gateway.ProductGateway;
-import cn.dextea.trade.order.domain.model.valueobject.Product;
-import cn.dextea.trade.order.domain.model.valueobject.ProductStoreStatus;
-import cn.dextea.trade.order.infrastructure.gateway.mapper.CatalogMapper;
-import cn.dextea.trade.order.infrastructure.gateway.po.GalleryPO;
-import cn.dextea.trade.order.infrastructure.gateway.po.ProductImagePO;
-import cn.dextea.trade.order.infrastructure.gateway.translator.ProductTranslator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class ProductGatewayImpl implements ProductGateway {
-    private final CatalogMapper catalogMapper;
+    private final CatalogClient catalogClient;
+
     @Override
     public List<Product> findProducts(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return List.of();
-        }
-        return ProductTranslator.toProducts(catalogMapper.selectProductsByIds(ids));
+        return catalogClient.findProducts(ids);
     }
+
     @Override
     public List<ProductStoreStatus> findProductStoreStatus(List<Long> productIds, Long storeId) {
-        if (productIds == null || productIds.isEmpty()) {
-            return List.of();
-        }
-        return ProductTranslator.toProductStoreStatusList(
-                catalogMapper.selectProductStoreStatusByProductIdsAndStoreId(productIds, storeId));
+        return catalogClient.findProductStoreStatusMap(productIds, storeId).values().stream().toList();
     }
+
     @Override
     public Map<Long, ProductCover> findProductCovers(List<Long> productIds) {
-        if (productIds == null || productIds.isEmpty()) {
-            return Map.of();
-        }
-        List<ProductImagePO> images = catalogMapper.selectCoverImagesByProductIds(productIds);
-        List<Long> imageIds = ProductTranslator.extractImageIds(images);
-        List<GalleryPO> galleries = imageIds.isEmpty() ? List.of() : catalogMapper.selectGalleriesByIds(imageIds);
-        return ProductTranslator.toProductCovers(images, galleries);
+        return catalogClient.findProductCovers(productIds);
     }
+
     @Override
     public Map<Long, String> findCoverUrls(List<Long> coverIds) {
-        if (coverIds == null || coverIds.isEmpty()) {
-            return Map.of();
-        }
-        return ProductTranslator.toCoverUrls(catalogMapper.selectGalleriesByIds(coverIds));
+        return catalogClient.findCoverUrls(coverIds);
     }
 }

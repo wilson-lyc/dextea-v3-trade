@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.infrastructure.gateway.impl;
 
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
 import cn.dextea.trade.order.domain.repository.OrderRepository;

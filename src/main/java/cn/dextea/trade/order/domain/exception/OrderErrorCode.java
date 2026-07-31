@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.domain.exception;
-import cn.dextea.trade.common.error.BizErrorCode;
+import cn.dextea.trade.shared.domain.error.BizErrorCode;
 public enum OrderErrorCode implements BizErrorCode {
     PRODUCT_ID_INVALID(101001, "商品ID非法"),
     SKU_INVALID(101002, "skuId 格式非法"),

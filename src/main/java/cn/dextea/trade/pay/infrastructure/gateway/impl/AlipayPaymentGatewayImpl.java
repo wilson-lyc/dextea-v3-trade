@@ -1,5 +1,5 @@
 package cn.dextea.trade.pay.infrastructure.gateway.impl;
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.domain.gateway.PaymentGateway;
 import cn.dextea.trade.pay.domain.model.aggregate.Payment;

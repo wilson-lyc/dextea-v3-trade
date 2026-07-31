@@ -1,5 +1,5 @@
 package cn.dextea.trade.health;
-import cn.dextea.trade.common.api.APIResponse;
+import cn.dextea.trade.shared.api.APIResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

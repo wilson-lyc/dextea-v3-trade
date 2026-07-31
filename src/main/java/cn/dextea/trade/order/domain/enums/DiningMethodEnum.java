@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.enums;
-import cn.dextea.trade.common.enums.CodeEnum;
-import cn.dextea.trade.common.enums.EnumUtils;
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 @Getter

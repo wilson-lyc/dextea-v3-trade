@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.application.service.impl;
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderItemDTO;
 import cn.dextea.trade.order.application.dto.OrderStatusDTO;
@@ -10,8 +10,8 @@ import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
-import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
-import cn.dextea.trade.order.domain.model.valueobject.Store;
+import cn.dextea.trade.catalog.domain.model.aggregate.Store;
+import cn.dextea.trade.catalog.domain.model.valueobject.CustomizationOption;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.util.SkuIdParser;
 import lombok.RequiredArgsConstructor;

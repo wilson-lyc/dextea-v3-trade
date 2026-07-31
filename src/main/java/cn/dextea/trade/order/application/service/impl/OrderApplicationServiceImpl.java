@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.application.service.impl;
-import cn.dextea.trade.common.error.BizError;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.application.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.command.OrderProductCommand;
 import cn.dextea.trade.order.application.command.PreBuildOrderCommand;

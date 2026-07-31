@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.api.controller;
-import cn.dextea.trade.common.api.APIResponse;
+import cn.dextea.trade.shared.api.APIResponse;
 import cn.dextea.trade.order.api.assembler.OrderApiAssembler;
 import cn.dextea.trade.order.api.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.api.dto.request.PreBuildOrderRequest;

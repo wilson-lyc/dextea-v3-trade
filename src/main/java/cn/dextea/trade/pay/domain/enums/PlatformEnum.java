@@ -1,7 +1,7 @@
 package cn.dextea.trade.pay.domain.enums;
-import cn.dextea.trade.common.enums.CodeEnum;
-import cn.dextea.trade.common.enums.EnumUtils;
-import cn.dextea.trade.common.enums.StringCodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
+import cn.dextea.trade.shared.domain.enumeration.StringCodeEnum;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
