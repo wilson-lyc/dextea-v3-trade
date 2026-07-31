@@ -2,9 +2,14 @@ package cn.dextea.trade.order.infrastructure.persistence.translator;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
+import cn.dextea.trade.order.domain.model.valueobject.MakingStatus;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderStatusLogPO;
+import cn.dextea.trade.shared.domain.money.Money;
+import cn.dextea.trade.shared.domain.quantity.Quantity;
 import java.util.List;
 import java.util.stream.Collectors;
 public final class OrderTranslator {
@@ -21,13 +26,13 @@ public final class OrderTranslator {
                 .idempotencyKey(order.getIdempotencyKey())
                 .customerId(order.getCustomerId())
                 .storeId(order.getStoreId())
-                .tradeStatus(order.getTradeStatus())
-                .makingStatus(order.getMakingStatus())
+                .tradeStatus(order.getPaymentStatus().getCode())
+                .makingStatus(order.getMakingStatus().getCode())
                 .version(order.getVersion())
                 .pickupCode(order.getPickupCode())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
-                .payMethod(order.getPayMethod())
+                .payMethod(order.getPaymentMethod().getCode())
                 .diningMethod(order.getDiningMethod())
                 .note(order.getNote())
                 .payExpireAt(order.getPayExpireAt())
@@ -48,13 +53,13 @@ public final class OrderTranslator {
                 .idempotencyKey(po.getIdempotencyKey())
                 .customerId(po.getCustomerId())
                 .storeId(po.getStoreId())
-                .tradeStatus(po.getTradeStatus())
-                .makingStatus(po.getMakingStatus())
+                .tradeStatus(PaymentStatus.of(po.getTradeStatus()))
+                .makingStatus(MakingStatus.of(po.getMakingStatus()))
                 .version(po.getVersion())
                 .pickupCode(po.getPickupCode())
                 .totalPrice(po.getTotalPrice())
                 .totalQuantity(po.getTotalQuantity())
-                .payMethod(po.getPayMethod())
+                .payMethod(PaymentMethod.of(po.getPayMethod()))
                 .diningMethod(po.getDiningMethod())
                 .note(po.getNote())
                 .payExpireAt(po.getPayExpireAt())
@@ -76,13 +81,13 @@ public final class OrderTranslator {
                 .id(item.getId())
                 .orderId(item.getOrderId())
                 .productId(item.getProductId())
-                .skuId(item.getSkuId())
                 .productName(item.getProductName())
+                .skuId(item.getSkuId())
+                .customization(item.getCustomization())
                 .coverId(item.getCoverId())
-                .customizationText(item.getCustomizationText())
-                .quantity(item.getQuantity())
-                .unitPrice(item.getUnitPrice())
-                .subtotal(item.getSubtotal())
+                .quantity(item.getQuantity() == null ? null : item.getQuantity().getValue())
+                .unitPrice(item.getUnitPrice() == null ? null : item.getUnitPrice().getValue())
+                .subtotal(item.getSubtotal() == null ? null : item.getSubtotal().getValue())
                 .createdAt(item.getCreatedAt())
                 .updatedAt(item.getUpdatedAt())
                 .build();
@@ -95,13 +100,13 @@ public final class OrderTranslator {
                 .id(po.getId())
                 .orderId(po.getOrderId())
                 .productId(po.getProductId())
-                .skuId(po.getSkuId())
                 .productName(po.getProductName())
+                .skuId(po.getSkuId())
+                .customization(po.getCustomization())
                 .coverId(po.getCoverId())
-                .customizationText(po.getCustomizationText())
-                .quantity(po.getQuantity())
-                .unitPrice(po.getUnitPrice())
-                .subtotal(po.getSubtotal())
+                .quantity(po.getQuantity() == null ? null : Quantity.of(po.getQuantity()))
+                .unitPrice(po.getUnitPrice() == null ? null : Money.of(po.getUnitPrice()))
+                .subtotal(po.getSubtotal() == null ? null : Money.of(po.getSubtotal()))
                 .createdAt(po.getCreatedAt())
                 .updatedAt(po.getUpdatedAt())
                 .build();

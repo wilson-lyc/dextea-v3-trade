@@ -8,9 +8,9 @@ import java.util.List;
 @Mapper
 public interface OrderItemMapper {
     @Insert("<script>" +
-            "INSERT INTO order_items (order_id, product_id, sku_id, product_name, cover_id, customization_text, quantity, unit_price, subtotal) VALUES " +
+            "INSERT INTO order_items (order_id, product_id, product_name, sku_id, customization, cover_id, quantity, unit_price, subtotal) VALUES " +
             "<foreach collection='items' item='item' separator=','>" +
-            "(#{item.orderId}, #{item.productId}, #{item.skuId}, #{item.productName}, #{item.coverId}, #{item.customizationText}, #{item.quantity}, #{item.unitPrice}, #{item.subtotal})" +
+            "(#{item.orderId}, #{item.productId}, #{item.productName}, #{item.skuId}, #{item.customization}, #{item.coverId}, #{item.quantity}, #{item.unitPrice}, #{item.subtotal})" +
             "</foreach>" +
             "</script>")
     int batchInsert(@Param("items") List<OrderItemPO> items);

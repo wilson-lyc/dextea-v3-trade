@@ -6,7 +6,7 @@ import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.application.facade.ExternalDataFacade;
 import cn.dextea.trade.order.application.service.OrderQueryService;
-import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
@@ -71,9 +71,9 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                     .orderId(order.getId())
                     .storeName(store != null ? store.getName() : null)
                     .orderTime(order.getCreatedAt())
-                    .tradeStatus(order.getTradeStatus())
-                    .makingStatus(order.getMakingStatus())
-                    .totalPrice(order.getTotalPrice())
+                .tradeStatus(order.getPaymentStatus().getCode())
+                .makingStatus(order.getMakingStatus().getCode())
+                .totalPrice(order.getTotalPrice())
                     .totalQuantity(order.getTotalQuantity())
                     .coverUrls(coverUrls)
                     .build());
@@ -105,23 +105,23 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                         .productName(item.getProductName())
                         .skuId(item.getSkuId())
                         .coverUrl(item.getCoverId() != null ? coverUrlMap.get(item.getCoverId()) : null)
-                        .customizationText(item.getCustomizationText() != null
-                                ? item.getCustomizationText() : customizationTextMap.get(item.getId()))
-                        .quantity(item.getQuantity())
-                        .unitPrice(item.getUnitPrice())
-                        .subtotal(item.getSubtotal())
+                        .customizationText(item.getCustomization() != null
+                                ? item.getCustomization() : customizationTextMap.get(item.getId()))
+                        .quantity(item.getQuantity() == null ? null : item.getQuantity().getValue())
+                        .unitPrice(item.getUnitPrice() == null ? null : item.getUnitPrice().getValue())
+                        .subtotal(item.getSubtotal() == null ? null : item.getSubtotal().getValue())
                         .build())
                 .collect(Collectors.<OrderItemDTO>toList());
         return OrderDetailDTO.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
-                .tradeStatus(order.getTradeStatus())
-                .makingStatus(order.getMakingStatus())
+                .tradeStatus(order.getPaymentStatus().getCode())
+                .makingStatus(order.getMakingStatus().getCode())
                 .pickupCode(order.getPickupCode())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
-                .payMethod(order.getPayMethod())
+                .payMethod(order.getPaymentMethod().getCode())
                 .diningMethod(order.getDiningMethod())
                 .note(order.getNote())
                 .payExpireAt(order.getPayExpireAt())
@@ -181,14 +181,13 @@ public class OrderQueryServiceImpl implements OrderQueryService {
         if (!Objects.equals(order.getCustomerId(), customerId)) {
             throw new BizError(OrderErrorCode.ORDER_ACCESS_DENIED, "订单不属于该顾客: " + orderId);
         }
-        Integer tradeStatus = order.getTradeStatus();
-        boolean terminal = !Objects.equals(tradeStatus, TradeStatusEnum.TRADE_WAIT_PAY.getCode());
+        boolean terminal = !Objects.equals(order.getPaymentStatus(), PaymentStatus.PENDING);
         return OrderStatusDTO.builder()
                 .orderId(order.getId())
                 .orderNo(order.getOrderNo())
                 .tradeNo(order.getTradeNo())
-                .tradeStatus(tradeStatus)
-                .makingStatus(order.getMakingStatus())
+                .tradeStatus(order.getPaymentStatus().getCode())
+                .makingStatus(order.getMakingStatus().getCode())
                 .pickupCode(order.getPickupCode())
                 .payExpireAt(order.getPayExpireAt())
                 .paidAt(order.getPaidAt())

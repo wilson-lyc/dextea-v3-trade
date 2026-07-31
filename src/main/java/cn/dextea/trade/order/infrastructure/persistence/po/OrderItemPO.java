@@ -15,8 +15,8 @@ public class OrderItemPO {
     private Long productId;
     private String productName;
     private String skuId;
+    private String customization;
     private Long coverId;
-    private String customizationText;
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;

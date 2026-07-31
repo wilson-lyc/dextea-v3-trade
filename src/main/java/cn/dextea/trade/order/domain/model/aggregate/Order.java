@@ -1,12 +1,13 @@
 package cn.dextea.trade.order.domain.model.aggregate;
 
 import cn.dextea.trade.common.error.BizError;
-import cn.dextea.trade.order.domain.enums.MakingStatusEnum;
-import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.model.valueobject.DiningMethod;
+import cn.dextea.trade.order.domain.model.valueobject.MakingStatus;
 import cn.dextea.trade.order.domain.model.valueobject.OrderNumber;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
 import cn.dextea.trade.order.domain.model.valueobject.PickupCode;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import cn.dextea.trade.shared.domain.money.Money;
@@ -36,9 +37,9 @@ public class Order {
     private DiningMethod diningMethod;
     private String note;
     private PickupCode pickupCode;
-    private Integer makingStatus;
-    private Integer paymentMethod;
-    private Integer paymentStatus;
+    private MakingStatus makingStatus;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
     private LocalDateTime paymentExpiredAt;
     private LocalDateTime paymentPaidAt;
     private LocalDateTime paymentRefundedAt;
@@ -48,7 +49,7 @@ public class Order {
     private List<OrderItem> items;
 
     public static Order createInitial(OrderNumber orderNo, String idempotencyKey, Long customerId, Long storeId,
-            int paymentMethod, DiningMethod diningMethod, String note,
+            PaymentMethod paymentMethod, DiningMethod diningMethod, String note,
             BigDecimal totalPrice, int totalQuantity,
             LocalDateTime paymentExpiredAt, List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
@@ -74,8 +75,8 @@ public class Order {
                 .idempotencyKey(idempotencyKey)
                 .customerId(customerId)
                 .storeId(storeId)
-                .paymentStatus(TradeStatusEnum.TRADE_WAIT_PAY.getCode())
-                .makingStatus(MakingStatusEnum.MAKING_WAIT.getCode())
+                .paymentStatus(PaymentStatus.PENDING)
+                .makingStatus(MakingStatus.PENDING)
                 .version(0)
                 .paymentMethod(paymentMethod)
                 .diningMethod(diningMethod)
@@ -88,7 +89,7 @@ public class Order {
     }
 
     public static Order createFromPreBuild(OrderNumber orderNo, String idempotencyKey, Long customerId, Long storeId,
-            int paymentMethod, int diningMethod, String note,
+            PaymentMethod paymentMethod, int diningMethod, String note,
             Duration payTimeout, PreBuildResult preBuild) {
         DiningMethod method;
         try {
@@ -99,13 +100,13 @@ public class Order {
         List<OrderItem> items = preBuild.getProducts().stream()
                 .map(p -> OrderItem.builder()
                         .productId(p.getProductId())
-                        .skuId(p.getSkuId())
                         .productName(p.getProductName())
+                        .skuId(p.getSkuId())
+                        .customization(p.getCustomizationText())
                         .coverId(p.getCoverId())
-                        .customizationText(p.getCustomizationText())
-                        .quantity(p.getQuantity())
-                        .unitPrice(p.getUnitPrice())
-                        .subtotal(p.getSubtotal())
+                        .quantity(Quantity.of(p.getQuantity()))
+                        .unitPrice(Money.of(p.getUnitPrice()))
+                        .subtotal(Money.of(p.getSubtotal()))
                         .build())
                 .toList();
         LocalDateTime paymentExpiredAt = LocalDateTime.now().plus(payTimeout);
@@ -122,12 +123,12 @@ public class Order {
         this.tradeNo = tradeNo;
     }
 
-    public TradeStatusEnum paymentStatusEnum() {
-        return TradeStatusEnum.of(this.paymentStatus);
+    public PaymentStatus paymentStatus() {
+        return paymentStatus;
     }
 
-    public TradeStatusEnum markPaid(String tradeNo, LocalDateTime paymentPaidAt) {
-        TradeStatusEnum target = transitionTo(TradeStatusEnum.TRADE_PAID, TradeStatusEnum.TRADE_WAIT_PAY);
+    public PaymentStatus markPaid(String tradeNo, LocalDateTime paymentPaidAt) {
+        PaymentStatus target = transitionTo(PaymentStatus.PAID, PaymentStatus.PENDING);
         if (this.tradeNo == null) {
             this.tradeNo = tradeNo;
         }
@@ -135,21 +136,21 @@ public class Order {
         return target;
     }
 
-    public TradeStatusEnum markPayTimeout() {
-        return transitionTo(TradeStatusEnum.TRADE_PAY_TIMEOUT, TradeStatusEnum.TRADE_WAIT_PAY);
+    public PaymentStatus markPayTimeout() {
+        return transitionTo(PaymentStatus.PAY_TIMEOUT, PaymentStatus.PENDING);
     }
 
-    public TradeStatusEnum markRefunded(LocalDateTime paymentRefundedAt) {
-        TradeStatusEnum target = transitionTo(TradeStatusEnum.TRADE_REFUNDED, TradeStatusEnum.TRADE_PAID);
+    public PaymentStatus markRefunded(LocalDateTime paymentRefundedAt) {
+        PaymentStatus target = transitionTo(PaymentStatus.REFUNDED, PaymentStatus.PAID, PaymentStatus.REFUNDING);
         this.paymentRefundedAt = paymentRefundedAt;
         return target;
     }
 
-    private TradeStatusEnum transitionTo(TradeStatusEnum target, TradeStatusEnum... allowedFrom) {
-        TradeStatusEnum current = paymentStatusEnum();
-        for (TradeStatusEnum from : allowedFrom) {
+    private PaymentStatus transitionTo(PaymentStatus target, PaymentStatus... allowedFrom) {
+        PaymentStatus current = paymentStatus;
+        for (PaymentStatus from : allowedFrom) {
             if (current == from) {
-                this.paymentStatus = target.getCode();
+                this.paymentStatus = target;
                 return target;
             }
         }

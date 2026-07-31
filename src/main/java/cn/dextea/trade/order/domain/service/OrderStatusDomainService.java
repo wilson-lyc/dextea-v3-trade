@@ -1,12 +1,12 @@
 package cn.dextea.trade.order.domain.service;
 import cn.dextea.trade.common.error.BizError;
 import cn.dextea.trade.order.domain.enums.OrderEventEnum;
-import cn.dextea.trade.order.domain.enums.TradeStatusEnum;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.gateway.OrderLockGateway;
 import cn.dextea.trade.order.domain.gateway.PickupCodeGeneratorGateway;
 import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class OrderStatusDomainService {
                 null, null, refundedAt, null);
     }
     private void transition(String orderNo, String operator, OrderEventEnum event,
-                            Function<Order, TradeStatusEnum> mutation,
+                            Function<Order, PaymentStatus> mutation,
                             String tradeNo, LocalDateTime paidAt, LocalDateTime refundedAt,
                             Function<Order, String> pickupCodeFn) {
         orderLockGateway.executeWithLock(orderNo, () -> {
@@ -43,8 +43,8 @@ public class OrderStatusDomainService {
             if (order == null) {
                 throw new BizError(OrderErrorCode.ORDER_NOT_FOUND, "订单不存在: " + orderNo);
             }
-            TradeStatusEnum currentStatus = order.tradeStatusEnum();
-            TradeStatusEnum targetStatus;
+            PaymentStatus currentStatus = order.paymentStatus();
+            PaymentStatus targetStatus;
             try {
                 targetStatus = mutation.apply(order);
             } catch (BizError e) {

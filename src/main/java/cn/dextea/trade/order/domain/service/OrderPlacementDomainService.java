@@ -10,6 +10,7 @@ import cn.dextea.trade.order.domain.gateway.ProductGateway;
 import cn.dextea.trade.order.domain.gateway.StoreGateway;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.valueobject.Customer;
+import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
 import cn.dextea.trade.order.domain.model.valueobject.Customization;
 import cn.dextea.trade.order.domain.model.valueobject.CustomizationOption;
 import cn.dextea.trade.order.domain.model.valueobject.CustomizationOptionStoreStatus;
@@ -118,11 +119,11 @@ public class OrderPlacementDomainService {
         }
         String tradeNo = paymentClientGateway.createPayment(
                 order.getOrderNo(), order.getTotalPrice(), customer.getAlipayOpenId(),
-                order.getTotalQuantity(), order.getPayMethod(), order.getPayExpireAt());
+                order.getTotalQuantity(), order.getPayMethod().getCode(), order.getPayExpireAt());
         order.markTradeNo(tradeNo);
     }
-    private boolean needsImmediatePayment(Integer payMethod) {
-        return ALIPAY_PLATFORM_CODE == payMethod;
+    private boolean needsImmediatePayment(PaymentMethod payMethod) {
+        return ALIPAY_PLATFORM_CODE == payMethod.getCode();
     }
     private boolean isPlatformSupported(int platformCode) {
         return ALIPAY_PLATFORM_CODE == platformCode;
