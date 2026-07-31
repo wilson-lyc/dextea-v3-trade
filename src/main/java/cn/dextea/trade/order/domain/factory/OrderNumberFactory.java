@@ -1,8 +1,5 @@
 package cn.dextea.trade.order.domain.factory;
 
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.exception.OrderNumberGeneratorException;
 import cn.dextea.trade.order.domain.model.valueobject.OrderNumber;
 import cn.dextea.trade.order.domain.port.OrderNumberGenerator;
 
@@ -17,10 +14,6 @@ public class OrderNumberFactory {
     }
 
     public OrderNumber create() {
-        try {
-            return OrderNumber.of(generator.next());
-        } catch (OrderNumberGeneratorException e) {
-            throw new BizError(OrderErrorCode.ORDER_NO_GENERATE_FAILED, e.getMessage(), e);
-        }
+        return OrderNumber.of(generator.next());
     }
 }

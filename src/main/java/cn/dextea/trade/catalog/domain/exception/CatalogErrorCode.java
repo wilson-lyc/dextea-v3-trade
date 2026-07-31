@@ -1,9 +1,10 @@
 package cn.dextea.trade.catalog.domain.exception;
 
+import cn.dextea.trade.shared.domain.error.BizErrorCode;
 import lombok.Getter;
 
 @Getter
-public enum CatalogErrorCode {
+public enum CatalogErrorCode implements BizErrorCode {
     PRODUCT_ID_INVALID(4001, "商品ID非法"),
     PRODUCT_UNAVAILABLE(4002, "商品不可用"),
     STORE_ID_INVALID(4003, "门店ID非法"),

@@ -1,7 +1,6 @@
 package cn.dextea.trade.catalog.application.service;
 
 import cn.dextea.trade.catalog.domain.exception.CatalogErrorCode;
-import cn.dextea.trade.catalog.domain.exception.CatalogException;
 import cn.dextea.trade.catalog.domain.model.aggregate.Customer;
 import cn.dextea.trade.catalog.domain.model.aggregate.Product;
 import cn.dextea.trade.catalog.domain.model.aggregate.Store;
@@ -13,6 +12,7 @@ import cn.dextea.trade.catalog.domain.model.valueobject.ProductStoreStatus;
 import cn.dextea.trade.catalog.domain.model.valueobject.UnavailableCustomization;
 import cn.dextea.trade.catalog.domain.model.valueobject.UnavailableProduct;
 import cn.dextea.trade.catalog.domain.repository.CatalogRepository;
+import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -81,10 +81,10 @@ public class CatalogService {
     public void assertStoreValid(Long storeId) {
         Store store = catalogRepository.findStore(storeId);
         if (store == null) {
-            throw new CatalogException(CatalogErrorCode.STORE_ID_INVALID, String.valueOf(storeId));
+            throw new BizError(CatalogErrorCode.STORE_ID_INVALID, String.valueOf(storeId));
         }
         if (!store.isOpen()) {
-            throw new CatalogException(CatalogErrorCode.STORE_UNAVAILABLE, String.valueOf(storeId));
+            throw new BizError(CatalogErrorCode.STORE_UNAVAILABLE, String.valueOf(storeId));
         }
     }
 
@@ -95,10 +95,10 @@ public class CatalogService {
     public void assertCustomerValid(Long customerId) {
         Customer customer = catalogRepository.findCustomer(customerId);
         if (customer == null) {
-            throw new CatalogException(CatalogErrorCode.CUSTOMER_ID_INVALID, String.valueOf(customerId));
+            throw new BizError(CatalogErrorCode.CUSTOMER_ID_INVALID, String.valueOf(customerId));
         }
         if (!customer.isActive()) {
-            throw new CatalogException(CatalogErrorCode.CUSTOMER_UNAVAILABLE, String.valueOf(customerId));
+            throw new BizError(CatalogErrorCode.CUSTOMER_UNAVAILABLE, String.valueOf(customerId));
         }
     }
 
@@ -162,7 +162,7 @@ public class CatalogService {
                 .filter(id -> !map.containsKey(id))
                 .toList();
         if (!notFound.isEmpty()) {
-            throw new CatalogException(errorCode, entityName + "ID非法: " + notFound.stream()
+            throw new BizError(errorCode, entityName + "ID非法: " + notFound.stream()
                     .map(String::valueOf).collect(Collectors.joining("、")));
         }
         return map;

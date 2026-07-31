@@ -1,7 +1,8 @@
 package cn.dextea.trade.order.infrastructure.generator;
 
-import cn.dextea.trade.order.domain.exception.PickupCodeGeneratorException;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.port.PickupCodeGenerator;
+import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -29,10 +30,10 @@ public class RedisPickupCodeGenerator implements PickupCodeGenerator {
         try {
             count = redisTemplate.opsForValue().increment(key);
         } catch (RuntimeException e) {
-            throw new PickupCodeGeneratorException("取餐码计数自增失败: key=" + key, e);
+            throw new BizError(OrderErrorCode.PICKUP_CODE_GENERATE_FAILED, "取餐码计数自增失败: key=" + key, e);
         }
         if (count == null) {
-            throw new PickupCodeGeneratorException("取餐码计数自增失败: key=" + key);
+            throw new BizError(OrderErrorCode.PICKUP_CODE_GENERATE_FAILED, "取餐码计数自增失败: key=" + key);
         }
         if (count == 1L) {
             redisTemplate.expire(key, KEY_TTL);

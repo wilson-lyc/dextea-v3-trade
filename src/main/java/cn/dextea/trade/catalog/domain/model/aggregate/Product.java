@@ -1,7 +1,6 @@
 package cn.dextea.trade.catalog.domain.model.aggregate;
 
 import cn.dextea.trade.catalog.domain.exception.CatalogErrorCode;
-import cn.dextea.trade.catalog.domain.exception.CatalogException;
 import cn.dextea.trade.catalog.domain.model.valueobject.Customization;
 import cn.dextea.trade.catalog.domain.model.valueobject.CustomizationOption;
 import cn.dextea.trade.catalog.domain.model.valueobject.CustomizationOptionStoreStatus;
@@ -19,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.Builder.Default;
 
 @Data
@@ -78,11 +78,11 @@ public class Product {
 
     public void assertCustomizationBinding(Long customizationId, Long optionId) {
         if (!isCustomizationBelongToProduct(customizationId)) {
-            throw new CatalogException(CatalogErrorCode.CUSTOMIZATION_BINDING_INVALID,
+            throw new BizError(CatalogErrorCode.CUSTOMIZATION_BINDING_INVALID,
                     "客制化项目不属于该商品: productId=" + id + ", customizationId=" + customizationId);
         }
         if (!isOptionBelongToCustomization(customizationId, optionId)) {
-            throw new CatalogException(CatalogErrorCode.CUSTOMIZATION_BINDING_INVALID,
+            throw new BizError(CatalogErrorCode.CUSTOMIZATION_BINDING_INVALID,
                     "客制化选项不属于该项目: productId=" + id
                             + ", customizationId=" + customizationId + ", optionId=" + optionId);
         }

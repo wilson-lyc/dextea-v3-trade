@@ -1,9 +1,6 @@
 package cn.dextea.trade.order.domain.factory;
 
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.valueobject.PickupCode;
-import cn.dextea.trade.order.domain.exception.PickupCodeGeneratorException;
 import cn.dextea.trade.order.domain.port.PickupCodeGenerator;
 
 import java.util.Objects;
@@ -17,10 +14,6 @@ public class PickupCodeFactory {
     }
 
     public PickupCode create(Long storeId) {
-        try {
-            return PickupCode.of(generator.next(storeId));
-        } catch (PickupCodeGeneratorException e) {
-            throw new BizError(OrderErrorCode.PICKUP_CODE_GENERATE_FAILED, e.getMessage(), e);
-        }
+        return PickupCode.of(generator.next(storeId));
     }
 }

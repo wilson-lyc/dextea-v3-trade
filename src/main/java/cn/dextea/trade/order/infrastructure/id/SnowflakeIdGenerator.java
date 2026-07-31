@@ -1,7 +1,8 @@
 package cn.dextea.trade.order.infrastructure.id;
 
-import cn.dextea.trade.order.domain.exception.OrderNumberGeneratorException;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.port.OrderNumberGenerator;
+import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import me.ahoo.cosid.provider.IdGeneratorProvider;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,7 @@ public class SnowflakeIdGenerator implements OrderNumberGenerator {
             String snowflake = String.valueOf(idGeneratorProvider.getRequired(ORDER_ID_GENERATOR).generate());
             return date + snowflake;
         } catch (RuntimeException e) {
-            throw new OrderNumberGeneratorException("订单号生成失败", e);
+            throw new BizError(OrderErrorCode.ORDER_NO_GENERATE_FAILED, "订单号生成失败", e);
         }
     }
 }
