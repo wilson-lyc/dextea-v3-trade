@@ -2,9 +2,12 @@ package cn.dextea.trade.order.infrastructure.persistence.translator;
 import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.entity.OrderItem;
 import cn.dextea.trade.order.domain.model.entity.OrderStatusLog;
+import cn.dextea.trade.order.domain.model.valueobject.DiningMethod;
 import cn.dextea.trade.order.domain.model.valueobject.MakingStatus;
+import cn.dextea.trade.order.domain.model.valueobject.OrderNumber;
 import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
 import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
+import cn.dextea.trade.order.domain.model.valueobject.PickupCode;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderStatusLogPO;
@@ -21,24 +24,24 @@ public final class OrderTranslator {
         }
         return OrderPO.builder()
                 .id(order.getId())
-                .orderNo(order.getOrderNo())
+                .orderNo(order.getOrderNo() == null ? null : order.getOrderNo().getValue())
                 .tradeNo(order.getTradeNo())
                 .idempotencyKey(order.getIdempotencyKey())
                 .customerId(order.getCustomerId())
                 .storeId(order.getStoreId())
-                .tradeStatus(order.getPaymentStatus().getCode())
-                .makingStatus(order.getMakingStatus().getCode())
+                .tradeStatus(order.getPaymentStatus() == null ? null : order.getPaymentStatus().getCode())
+                .makingStatus(order.getMakingStatus() == null ? null : order.getMakingStatus().getCode())
                 .version(order.getVersion())
-                .pickupCode(order.getPickupCode())
-                .totalPrice(order.getTotalPrice())
-                .totalQuantity(order.getTotalQuantity())
-                .payMethod(order.getPaymentMethod().getCode())
-                .diningMethod(order.getDiningMethod())
+                .pickupCode(order.getPickupCode() == null ? null : order.getPickupCode().getValue())
+                .totalPrice(order.getTotalPrice() == null ? null : order.getTotalPrice().getValue())
+                .totalQuantity(order.getTotalQuantity() == null ? null : order.getTotalQuantity().getValue())
+                .payMethod(order.getPaymentMethod() == null ? null : order.getPaymentMethod().getCode())
+                .diningMethod(order.getDiningMethod() == null ? null : order.getDiningMethod().getCode())
                 .note(order.getNote())
-                .payExpireAt(order.getPayExpireAt())
+                .payExpireAt(order.getPaymentExpiredAt())
                 .createdAt(order.getCreatedAt())
-                .paidAt(order.getPaidAt())
-                .refundedAt(order.getRefundedAt())
+                .paidAt(order.getPaymentPaidAt())
+                .refundedAt(order.getPaymentRefundedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();
     }
@@ -46,29 +49,28 @@ public final class OrderTranslator {
         if (po == null) {
             return null;
         }
-        Order order = Order.builder()
+        return Order.builder()
                 .id(po.getId())
-                .orderNo(po.getOrderNo())
+                .orderNo(po.getOrderNo() == null ? null : OrderNumber.of(po.getOrderNo()))
                 .tradeNo(po.getTradeNo())
                 .idempotencyKey(po.getIdempotencyKey())
                 .customerId(po.getCustomerId())
                 .storeId(po.getStoreId())
-                .tradeStatus(PaymentStatus.of(po.getTradeStatus()))
-                .makingStatus(MakingStatus.of(po.getMakingStatus()))
+                .paymentStatus(po.getTradeStatus() == null ? null : PaymentStatus.of(po.getTradeStatus()))
+                .makingStatus(po.getMakingStatus() == null ? null : MakingStatus.of(po.getMakingStatus()))
                 .version(po.getVersion())
-                .pickupCode(po.getPickupCode())
-                .totalPrice(po.getTotalPrice())
-                .totalQuantity(po.getTotalQuantity())
-                .payMethod(PaymentMethod.of(po.getPayMethod()))
-                .diningMethod(po.getDiningMethod())
+                .pickupCode(PickupCode.of(po.getPickupCode()))
+                .totalPrice(po.getTotalPrice() == null ? null : Money.of(po.getTotalPrice()))
+                .totalQuantity(po.getTotalQuantity() == null ? null : Quantity.of(po.getTotalQuantity()))
+                .paymentMethod(po.getPayMethod() == null ? null : PaymentMethod.of(po.getPayMethod()))
+                .diningMethod(po.getDiningMethod() == null ? null : DiningMethod.of(po.getDiningMethod()))
                 .note(po.getNote())
-                .payExpireAt(po.getPayExpireAt())
+                .paymentExpiredAt(po.getPayExpireAt())
                 .createdAt(po.getCreatedAt())
-                .paidAt(po.getPaidAt())
-                .refundedAt(po.getRefundedAt())
+                .paymentPaidAt(po.getPaidAt())
+                .paymentRefundedAt(po.getRefundedAt())
                 .updatedAt(po.getUpdatedAt())
                 .build();
-        return order;
     }
     public static List<Order> toOrders(List<OrderPO> pos) {
         return pos == null ? List.of() : pos.stream().map(OrderTranslator::toOrder).collect(Collectors.toList());

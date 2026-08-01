@@ -1,0 +1,88 @@
+package cn.dextea.trade.order.infrastructure.persistence.mapper;
+
+import cn.dextea.trade.order.infrastructure.persistence.po.CustomerPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationOptionPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationOptionStoreStatusPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.GalleryPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.ProductImagePO;
+import cn.dextea.trade.order.infrastructure.persistence.po.ProductPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.ProductStoreStatusPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.StorePO;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import java.util.List;
+
+@Mapper
+public interface ProductMapper {
+    @Select("<script>" +
+            "SELECT id, name, status, price " +
+            "FROM products " +
+            "WHERE id IN " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<ProductPO> selectProductsByIds(@Param("ids") List<Long> ids);
+
+    @Select("<script>" +
+            "SELECT product_id AS productId, image_id AS imageId, type, sort, created_at AS createdAt " +
+            "FROM product_images " +
+            "WHERE type = 1 " +
+            "AND product_id IN " +
+            "<foreach collection='productIds' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "ORDER BY product_id, sort ASC, created_at ASC, image_id ASC" +
+            "</script>")
+    List<ProductImagePO> selectCoverImagesByProductIds(@Param("productIds") List<Long> productIds);
+
+    @Select("<script>" +
+            "SELECT id, url, object_key AS objectKey, created_at AS createdAt, name " +
+            "FROM gallery " +
+            "WHERE id IN " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<GalleryPO> selectGalleriesByIds(@Param("ids") List<Long> ids);
+
+    @Select("<script>" +
+            "SELECT product_id AS productId, store_id AS storeId, status " +
+            "FROM product_store_status " +
+            "WHERE store_id = #{storeId} " +
+            "AND product_id IN " +
+            "<foreach collection='productIds' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<ProductStoreStatusPO> selectProductStoreStatusByProductIdsAndStoreId(@Param("productIds") List<Long> productIds,
+                                                                              @Param("storeId") Long storeId);
+
+    @Select("<script>" +
+            "SELECT id, product_id AS productId, name, status " +
+            "FROM customizations " +
+            "WHERE id IN " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<CustomizationPO> selectCustomizationsByIds(@Param("ids") List<Long> ids);
+
+    @Select("<script>" +
+            "SELECT id, customization_id AS customizationId, name, price, status " +
+            "FROM customization_options " +
+            "WHERE id IN " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<CustomizationOptionPO> selectCustomizationOptionsByIds(@Param("ids") List<Long> ids);
+
+    @Select("<script>" +
+            "SELECT customization_option_id AS customizationOptionId, store_id AS storeId, status " +
+            "FROM customization_option_store_status " +
+            "WHERE store_id = #{storeId} " +
+            "AND customization_option_id IN " +
+            "<foreach collection='optionIds' item='id' open='(' separator=',' close=')'>(#{id})</foreach>" +
+            "</script>")
+    List<CustomizationOptionStoreStatusPO> selectOptionStoreStatusByOptionIdsAndStoreId(
+            @Param("optionIds") List<Long> optionIds, @Param("storeId") Long storeId);
+
+    @Select("SELECT id, name, status, address, phone, business_hours AS businessHours " +
+            "FROM stores WHERE id = #{id}")
+    StorePO selectStoreById(@Param("id") Long id);
+
+    @Select("SELECT id, name, status, alipay_open_id AS alipayOpenId, weixin_open_id AS weixinOpenId " +
+            "FROM customers WHERE id = #{id}")
+    CustomerPO selectCustomerById(@Param("id") Long id);
+}
