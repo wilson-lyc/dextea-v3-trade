@@ -1,4 +1,5 @@
-package cn.dextea.trade.order.domain.model.entity;
+package cn.dextea.trade.order.domain.model;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

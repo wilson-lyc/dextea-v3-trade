@@ -18,4 +18,8 @@ public class CustomizationItem {
     private String name;
     private CustomizationItemStatus status;
     private List<CustomizationOption> options;
+
+    public boolean isActive() {
+        return status == CustomizationItemStatus.ACTIVE;
+    }
 }

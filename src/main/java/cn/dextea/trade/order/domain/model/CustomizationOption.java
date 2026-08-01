@@ -19,4 +19,9 @@ public class CustomizationOption {
     private Money price;
     private CustomizationOptionGlobalStatus globalStatus;
     private CustomizationOptionStoreStatus storeStatus;
+
+    public boolean isActive() {
+        return globalStatus == CustomizationOptionGlobalStatus.ACTIVE
+                && storeStatus == CustomizationOptionStoreStatus.ACTIVE;
+    }
 }

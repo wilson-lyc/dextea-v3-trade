@@ -1,23 +1,18 @@
-package cn.dextea.trade.order.domain.model.aggregate;
+package cn.dextea.trade.order.domain.model;
 
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.model.entity.OrderItem;
-import cn.dextea.trade.order.domain.model.valueobject.DiningMethod;
-import cn.dextea.trade.order.domain.model.valueobject.MakingStatus;
-import cn.dextea.trade.order.domain.model.valueobject.OrderNumber;
-import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
-import cn.dextea.trade.order.domain.model.valueobject.PaymentStatus;
-import cn.dextea.trade.order.domain.model.valueobject.PickupCode;
-import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
+import cn.dextea.trade.order.domain.model.enums.DiningMethod;
+import cn.dextea.trade.order.domain.model.enums.MakingStatus;
+import cn.dextea.trade.order.domain.model.enums.OrderSource;
+import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
+import cn.dextea.trade.order.domain.model.enums.PaymentStatus;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.math.BigDecimal;
-import java.time.Duration;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,6 +31,7 @@ public class Order {
     private Quantity totalQuantity;
     private DiningMethod diningMethod;
     private String note;
+    private OrderSource source;
     private String pickupCode;
     private MakingStatus makingStatus;
     private PaymentMethod paymentMethod;
