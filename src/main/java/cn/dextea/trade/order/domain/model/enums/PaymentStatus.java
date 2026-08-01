@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum PaymentStatus {
+public enum PaymentStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
     PENDING(0, "支付中"),
     TIMEOUT(1, "支付超时")
     PAID(2, "已支付"),
@@ -15,6 +15,7 @@ public enum PaymentStatus {
         this.description = description;
     }
 
+    @Override
     public int getCode() {
         return code;
     }

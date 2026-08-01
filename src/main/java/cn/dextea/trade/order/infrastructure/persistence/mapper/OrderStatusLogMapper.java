@@ -11,6 +11,4 @@ public interface OrderStatusLogMapper {
             "VALUES (#{orderId}, #{fromStatus}, #{toStatus}, #{event}, #{operator}, #{version})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OrderStatusLogPO log);
-    @Select("SELECT COUNT(*) FROM order_status_log WHERE order_id = #{orderId}")
-    int countByOrderId(@Param("orderId") Long orderId);
 }

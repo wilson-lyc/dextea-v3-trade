@@ -12,6 +12,7 @@ public enum ProductGlobalStatus {
         this.description = description;
     }
 
+    @Override
     public int getCode() {
         return code;
     }

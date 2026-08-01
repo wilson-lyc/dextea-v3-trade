@@ -21,7 +21,7 @@ public class Product {
     private ProductGlobalStatus globalStatus;
     private ProductStoreStatus storeStatus;
     private Money price;
-    private Long coverId;
+    private ProductCover cover;
     private List<CustomizationItem> customization;
 
     public boolean isActive() {

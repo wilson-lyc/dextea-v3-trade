@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum StoreStatus {
+public enum StoreStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
     CLOSED(0, "休息中"),
     OPEN(1, "营业中"),
     PENDING(2, "筹备中"),
@@ -14,6 +14,7 @@ public enum StoreStatus {
         this.description = description;
     }
 
+    @Override
     public int getCode() {
         return code;
     }

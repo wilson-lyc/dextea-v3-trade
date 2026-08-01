@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum DiningMethod {
+public enum DiningMethod implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
     DINE_IN(1, "堂食"),
     TAKEOUT(2, "外带");
 
@@ -12,6 +12,7 @@ public enum DiningMethod {
         this.description = description;
     }
 
+    @Override
     public int getCode() {
         return code;
     }

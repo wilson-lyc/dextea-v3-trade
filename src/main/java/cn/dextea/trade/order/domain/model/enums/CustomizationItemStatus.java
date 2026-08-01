@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum CustomizationItemStatus {
+public enum CustomizationItemStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
     DISABLED(0, "禁用"),
     ACTIVE(1, "激活");
 
@@ -12,6 +12,7 @@ public enum CustomizationItemStatus {
         this.description = description;
     }
 
+    @Override
     public int getCode() {
         return code;
     }
