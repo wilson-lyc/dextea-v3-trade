@@ -6,6 +6,8 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import cn.dextea.trade.shared.domain.quantity.Quantity;
+
 @Getter
 @EqualsAndHashCode
 public final class Money {
@@ -40,6 +42,10 @@ public final class Money {
 
     public Money multiply(int factor) {
         return new Money(this.value.multiply(BigDecimal.valueOf(factor)));
+    }
+
+    public Money multiply(Quantity quantity) {
+        return multiply(quantity.getValue());
     }
 
     public boolean isGreaterThan(Money other) {
