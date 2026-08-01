@@ -1,10 +1,13 @@
 package cn.dextea.trade.order.infrastructure.persistence.po;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,18 +19,18 @@ public class OrderPO {
     private String idempotencyKey;
     private Long customerId;
     private Long storeId;
-    private Integer tradeStatus;
-    private Integer makingStatus;
-    private String pickupCode;
-    private Integer version;
     private BigDecimal totalPrice;
     private Integer totalQuantity;
-    private Integer payMethod;
     private Integer diningMethod;
     private String note;
-    private LocalDateTime payExpireAt;
+    private String pickupCode;
+    private Integer makingStatus;
+    private Integer paymentMethod;
+    private Integer paymentStatus;
+    private LocalDateTime paymentExpiredAt;
+    private LocalDateTime paymentPaidAt;
+    private LocalDateTime paymentRefundedAt;
     private LocalDateTime createdAt;
-    private LocalDateTime paidAt;
-    private LocalDateTime refundedAt;
     private LocalDateTime updatedAt;
+    private Integer version;
 }

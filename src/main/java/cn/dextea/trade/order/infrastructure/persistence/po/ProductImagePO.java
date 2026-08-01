@@ -17,4 +17,5 @@ public class ProductImagePO {
     private Integer type;
     private Integer sort;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

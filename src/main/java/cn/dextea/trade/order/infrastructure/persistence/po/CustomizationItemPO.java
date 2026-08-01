@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderStatusLogPO {
+public class CustomizationItemPO {
     private Long id;
-    private String orderId;
-    private Integer fromStatus;
-    private Integer toStatus;
-    private String event;
-    private Integer version;
+    private Long productId;
+    private String name;
+    private Integer sort;
+    private Integer status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
