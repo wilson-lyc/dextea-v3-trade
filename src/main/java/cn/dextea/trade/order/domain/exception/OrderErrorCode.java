@@ -33,7 +33,10 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_NO_GENERATE_FAILED(101034, "订单号生成失败"),
     ORDER_TRADE_NO_ALREADY_SET(101023, "trade_no 已存在，不可重复设置"),
     ORDER_DUPLICATE_REQUEST(101024, "重复请求，请勿重复下单"),
-    ORDER_QUERY_MONTH_INVALID(101025, "查询年月非法");
+    ORDER_QUERY_MONTH_INVALID(101025, "查询年月非法"),
+    PRODUCT_NOT_ACTIVE(101040, "商品已停用，无法下单"),
+    CUSTOMIZATION_ITEM_NOT_ACTIVE(101041, "客制化项目已停用，无法下单"),
+    CUSTOMIZATION_OPTION_NOT_ACTIVE(101042, "客制化选项已停用，无法下单");
     private final int code;
     private final String message;
     OrderErrorCode(int code, String message) {
