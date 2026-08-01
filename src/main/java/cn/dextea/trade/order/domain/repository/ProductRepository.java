@@ -6,5 +6,5 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProductRepository {
-    Map<Long, Product> getProductByIds(List<Long> ids);
+    Map<Long, Product> getProductByIdsWithStoreId(List<Long> ids, Long storeId);
 }
