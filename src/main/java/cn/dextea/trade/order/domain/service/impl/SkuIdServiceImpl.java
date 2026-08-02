@@ -10,8 +10,10 @@ import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SkuIdServiceImpl implements SkuIdService {
@@ -49,6 +51,19 @@ public class SkuIdServiceImpl implements SkuIdService {
                     product.getId(), product.getName(), skuId, customization);
         }
         return orderItem;
+    }
+
+    @Override
+    public Set<Long> extractProductIds(Set<String> skuIds) {
+        Set<Long> productIds = new HashSet<>();
+        for (String skuId : skuIds) {
+            if (skuId == null || skuId.isEmpty()) {
+                continue;
+            }
+            String prefix = skuId.contains("#") ? skuId.substring(0, skuId.indexOf('#')) : skuId;
+            productIds.add(Long.parseLong(prefix));
+        }
+        return productIds;
     }
 
     private String resolveCustomization(Product product, String skuId, List<String> inactiveReasons) {
