@@ -6,6 +6,9 @@ import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
+import cn.dextea.trade.order.application.usecase.PreBuildOrderUseCase;
+import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
+import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class OrderController {
 
+    private final PreBuildOrderUseCase preBuildOrderUseCase;
+
     @Value("${order.customer-id-header}")
     private String customerIdHeader;
 
@@ -34,8 +39,9 @@ public class OrderController {
     public APIResponse<PreBuildOrderResponse> preBuildOrder(
             @RequestHeader(customerIdHeader) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody PreBuildOrderRequest request) {
-        OrderHttpAssembler.toPreBuildCommand(request, customerId);
-        throw new UnsupportedOperationException("待实现");
+        PreBuildOrderCommand command = OrderHttpAssembler.toPreBuildCommand(request, customerId);
+        PreBuildOrderResult result = preBuildOrderUseCase.execute(command);
+        return APIResponse.success(OrderHttpAssembler.toPreBuildResponse(result));
     }
 
     @PostMapping

@@ -5,6 +5,7 @@ import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Customer;
+import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.Store;
@@ -50,10 +51,9 @@ public class PreBuildOrderUseCase {
         Set<Long> productIds = skuIdService.extractProductIds(skuIds);
         Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, store.getId());
 
-        Money totalPrice = Money.ZERO;
-        Quantity totalQuantity = null;
         List<PreBuildOrderItem> availableItems = new ArrayList<>();
         List<PreBuildOrderItem> unavailableItems = new ArrayList<>();
+        List<OrderItem> orderItems = new ArrayList<>();
 
         for (PreBuildOrderItem commandItem : command.getItems()) {
             Product product = products.get(commandItem.getProductId());
@@ -61,22 +61,21 @@ public class PreBuildOrderUseCase {
                     product, commandItem.getSkuId(), commandItem.getQuantity());
 
             PreBuildOrderItem item = toResultItem(orderItem);
+            orderItems.add(orderItem);
             if (orderItem.getAvailable()) {
                 availableItems.add(item);
-                totalPrice = totalPrice.add(orderItem.getTotalPrice());
-                totalQuantity = totalQuantity == null
-                        ? orderItem.getQuantity()
-                        : totalQuantity.add(orderItem.getQuantity());
             } else {
                 unavailableItems.add(item);
             }
         }
 
+        Order order = Order.builder().items(orderItems).build();
+
         return PreBuildOrderResult.builder()
                 .available(availableItems)
                 .unavailable(unavailableItems)
-                .totalQuantity(totalQuantity)
-                .totalPrice(totalPrice)
+                .totalQuantity(order.getTotalQuantity())
+                .totalPrice(order.getTotalPrice())
                 .build();
     }
 
