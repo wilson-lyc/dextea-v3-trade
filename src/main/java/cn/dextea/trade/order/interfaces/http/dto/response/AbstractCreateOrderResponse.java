@@ -1,6 +1,6 @@
-package cn.dextea.trade.order.api.dto.response;
+package cn.dextea.trade.order.interfaces.http.dto.response;
 
-import cn.dextea.trade.order.api.dto.request.CreateOrderProductItem;
+import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderProductItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

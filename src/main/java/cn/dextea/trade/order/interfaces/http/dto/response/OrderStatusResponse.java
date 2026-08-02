@@ -1,4 +1,4 @@
-package cn.dextea.trade.order.api.dto.response;
+package cn.dextea.trade.order.interfaces.http.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

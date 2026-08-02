@@ -1,4 +1,4 @@
-package cn.dextea.trade.order.api.dto.request;
+package cn.dextea.trade.order.interfaces.http.dto.shared;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
