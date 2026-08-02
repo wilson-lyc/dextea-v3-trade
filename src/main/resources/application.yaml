@@ -38,6 +38,7 @@ cosid:
 
 order:
   pay-timeout-minutes: ${ORDER_PAY_TIMEOUT_MINUTES:15}
+  customer-id-header: ${ORDER_CUSTOMER_ID_HEADER:X-Customer-Id}
 
 alipay:
   server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
