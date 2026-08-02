@@ -4,6 +4,7 @@ import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
-public interface SKUService {
-    OrderItem createOrderItem(Product product, String skuId, Quantity quantity);
+public interface SkuIdService {
+    OrderItem idToOrderItem(Product product, String skuId, Quantity quantity);
+    Set<Long> getProductIdsFromSkuIds(Set<String> skuIds);
 }

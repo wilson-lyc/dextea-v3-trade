@@ -5,7 +5,7 @@ import cn.dextea.trade.order.domain.model.CustomizationItem;
 import cn.dextea.trade.order.domain.model.CustomizationOption;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.Product;
-import cn.dextea.trade.order.domain.service.SKUService;
+import cn.dextea.trade.order.domain.service.SkuIdService;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SKUServiceImpl implements SKUService {
+public class SkuIdServiceImpl implements SkuIdService {
 
     @Override
-    public OrderItem createOrderItem(Product product, String skuId, Quantity quantity) {
+    public OrderItem idToOrderItem(Product product, String skuId, Quantity quantity) {
         List<String> inactiveReasons = new ArrayList<>();
         boolean hasInactive = false;
 
