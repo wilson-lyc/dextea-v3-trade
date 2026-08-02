@@ -4,7 +4,8 @@ import cn.dextea.trade.order.application.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.command.OrderProductCommand;
 import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.config.OrderPaymentProperties;
-import cn.dextea.trade.order.application.dto.OrderCreateResult;
+import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
+import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.loader.CatalogSnapshotLoader;
 import cn.dextea.trade.order.application.service.OrderApplicationService;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
@@ -13,7 +14,6 @@ import cn.dextea.trade.order.domain.model.aggregate.Order;
 import cn.dextea.trade.order.domain.model.valueobject.CatalogSnapshot;
 import cn.dextea.trade.order.domain.model.valueobject.PaymentMethod;
 import cn.dextea.trade.order.domain.model.valueobject.PreBuildProductInput;
-import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
 import cn.dextea.trade.order.domain.model.valueobject.SkuSelection;
 import cn.dextea.trade.order.domain.port.PaymentClient;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
@@ -45,7 +45,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
     private final OrderPaymentProperties orderPaymentProperties;
 
     @Override
-    public PreBuildResult preBuildOrder(PreBuildOrderCommand command) {
+    public PreBuildOrderResult preBuildOrder(PreBuildOrderCommand command) {
         return preBuild(command.getStoreId(), command.getCustomerId(), command.getProducts()).result();
     }
 

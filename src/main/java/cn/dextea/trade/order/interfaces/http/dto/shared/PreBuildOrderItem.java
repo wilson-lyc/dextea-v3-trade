@@ -6,5 +6,5 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class CreateOrderItem extends AbstractOrderItem {
+public class PreBuildOrderItem extends AbstractOrderItem {
 }

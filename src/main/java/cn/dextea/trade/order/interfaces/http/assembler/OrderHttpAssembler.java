@@ -1,38 +1,36 @@
 package cn.dextea.trade.order.interfaces.http.assembler;
-import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderProductItem;
 import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
-import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderUnavailable;
-import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderUnavailableCustomization;
-import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderUnavailableProduct;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderDetailItem;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderDetailResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderStatusResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderSummary;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
+import cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem;
+import cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem;
 import cn.dextea.trade.order.application.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.command.OrderProductCommand;
 import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
-import cn.dextea.trade.order.application.dto.OrderCreateResult;
+import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
-import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
-import cn.dextea.trade.order.domain.model.valueobject.PricedOrderItem;
+import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 
 import java.util.List;
-public final class OrderApiAssembler {
-    private OrderApiAssembler() {
+public final class OrderHttpAssembler {
+    private OrderHttpAssembler() {
     }
     public static PreBuildOrderCommand toPreBuildCommand(PreBuildOrderRequest request, Long customerId) {
         return PreBuildOrderCommand.builder()
                 .storeId(request.getStoreId())
                 .customerId(customerId)
-                .platform(request.getPlatform())
                 .diningMethod(request.getDiningMethod())
+                .source(request.getSource())
+                .paymentMethod(request.getPaymentMethod())
                 .note(request.getNote())
-                .products(toProductCommands(request.getProducts()))
+                .products(toProductCommands(request.getItems()))
                 .build();
     }
     public static CreateOrderCommand toCreateCommand(CreateOrderRequest request, Long customerId) {
@@ -42,11 +40,11 @@ public final class OrderApiAssembler {
                 .platform(request.getPlatform())
                 .diningMethod(request.getDiningMethod())
                 .note(request.getNote())
-                .products(toProductCommands(request.getProducts()))
+                .products(toProductCommands(request.getItems()))
                 .idempotencyKey(request.getIdempotencyKey())
                 .build();
     }
-    private static List<OrderProductCommand> toProductCommands(List<CreateOrderProductItem> items) {
+    private static List<OrderProductCommand> toProductCommands(List<? extends AbstractOrderItem> items) {
         if (items == null) {
             return List.of();
         }
@@ -54,56 +52,42 @@ public final class OrderApiAssembler {
                 .map(i -> OrderProductCommand.builder().skuId(i.getSkuId()).quantity(i.getQuantity()).build())
                 .toList();
     }
-    public static PreBuildOrderResponse toPreBuildResponse(PreBuildResult result) {
+    public static PreBuildOrderResponse toPreBuildResponse(PreBuildOrderResult result) {
         return PreBuildOrderResponse.builder()
-                .unavailable(toUnavailable(result))
-                .products(toProductItems(result.getProducts()))
+                .unavailable(toResponseItems(result.getUnavailable()))
+                .available(toResponseItems(result.getAvailable()))
                 .totalQuantity(result.getTotalQuantity())
                 .totalPrice(result.getTotalPrice())
                 .build();
     }
     public static CreateOrderResponse toCreateResponse(OrderCreateResult result) {
-        PreBuildResult pre = result.getPreBuild();
-        return CreateOrderResponse.builder()
+        PreBuildOrderResult pre = result.getPreBuild();
+        CreateOrderResponse.CreateOrderResponseBuilder builder = CreateOrderResponse.builder()
                 .id(result.getId())
                 .orderNo(result.getOrderNo())
                 .tradeNo(result.getTradeNo())
-                .payExpireAt(result.getPayExpireAt())
-                .unavailable(toUnavailable(pre))
-                .products(toProductItems(pre.getProducts()))
-                .totalQuantity(pre.getTotalQuantity())
-                .totalPrice(pre.getTotalPrice())
-                .build();
+                .payExpireAt(result.getPayExpireAt());
+        if (pre != null) {
+            builder.unavailable(toResponseItems(pre.getUnavailable()))
+                    .available(toResponseItems(pre.getAvailable()))
+                    .totalQuantity(pre.getTotalQuantity())
+                    .totalPrice(pre.getTotalPrice());
+        }
+        return builder.build();
     }
-    private static CreateOrderUnavailable toUnavailable(PreBuildResult result) {
-        return CreateOrderUnavailable.builder()
-                .products(result.getUnavailableProducts() == null ? null
-                        : result.getUnavailableProducts().stream()
-                        .map(p -> CreateOrderUnavailableProduct.builder().id(p.getId()).name(p.getName()).build())
-                        .toList())
-                .customization(result.getUnavailableCustomizations() == null ? null
-                        : result.getUnavailableCustomizations().stream()
-                        .map(c -> CreateOrderUnavailableCustomization.builder()
-                                .optionId(c.getOptionId()).optionName(c.getOptionName())
-                                .productId(c.getProductId()).productName(c.getProductName())
-                                .itemId(c.getItemId()).itemName(c.getItemName()).build())
-                        .toList())
-                .build();
-    }
-    private static List<CreateOrderProductItem> toProductItems(List<PricedOrderItem> items) {
+    private static List<CreateOrderItem> toResponseItems(List<cn.dextea.trade.order.application.dto.CreateOrderItem> items) {
         if (items == null) {
             return List.of();
         }
-        return items.stream().map(p -> CreateOrderProductItem.builder()
-                .skuId(p.getSkuId())
-                .quantity(p.getQuantity())
-                .productId(p.getProductId())
-                .productName(p.getProductName())
-                .coverId(p.getCoverId())
-                .coverUrl(p.getCoverUrl())
-                .customizationText(p.getCustomizationText())
-                .unitPrice(p.getUnitPrice())
-                .subtotal(p.getSubtotal())
+        return items.stream().map(i -> CreateOrderItem.builder()
+                .skuId(i.getSkuId())
+                .quantity(i.getQuantity())
+                .productId(i.getProductId())
+                .productName(i.getProductName())
+                .cover(i.getCover())
+                .customization(i.getCustomization())
+                .unitPrice(i.getUnitPrice())
+                .totalPrice(i.getTotalPrice())
                 .build()).toList();
     }
     public static OrderSummary toSummary(OrderSummaryDTO v) {

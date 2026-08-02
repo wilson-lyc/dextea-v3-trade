@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.interfaces.http.dto.request;
-import cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem;
+import cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem;
 import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -11,11 +11,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import java.util.List;
+
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-public abstract class AbstractCreateOrderRequest {
+public abstract class AbstractCreateOrderRequest<T extends AbstractOrderItem> {
     @NotNull(message = "storeId 不能为空")
     @Schema(description = "门店 ID", example = "1")
     private Long storeId;
@@ -39,5 +40,5 @@ public abstract class AbstractCreateOrderRequest {
     @Valid
     @NotEmpty(message = "items 不能为空")
     @Schema(description = "订单明细列表")
-    private List<CreateOrderItem> items;
+    private List<T> items;
 }

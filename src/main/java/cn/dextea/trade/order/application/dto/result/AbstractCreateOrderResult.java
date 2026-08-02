@@ -1,4 +1,4 @@
-package cn.dextea.trade.order.application.dto;
+package cn.dextea.trade.order.application.dto.result;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

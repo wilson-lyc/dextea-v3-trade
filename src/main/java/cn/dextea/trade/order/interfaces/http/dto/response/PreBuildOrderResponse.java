@@ -1,4 +1,5 @@
 package cn.dextea.trade.order.interfaces.http.dto.response;
+import cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @Schema(description = "预构建订单响应")
-public class PreBuildOrderResponse extends AbstractCreateOrderResponse {
+public class PreBuildOrderResponse extends AbstractCreateOrderResponse<PreBuildOrderItem> {
 }

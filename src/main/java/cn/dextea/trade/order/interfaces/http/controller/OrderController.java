@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.interfaces.http.controller;
 import cn.dextea.trade.shared.api.APIResponse;
-import cn.dextea.trade.order.interfaces.http.assembler.OrderApiAssembler;
+import cn.dextea.trade.order.interfaces.http.assembler.OrderHttpAssembler;
 import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
@@ -45,8 +45,8 @@ public class OrderController {
     public APIResponse<PreBuildOrderResponse> preBuildOrder(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody PreBuildOrderRequest request) {
-        PreBuildOrderResponse result = OrderApiAssembler.toPreBuildResponse(
-                orderApplicationService.preBuildOrder(OrderApiAssembler.toPreBuildCommand(request, customerId)));
+        PreBuildOrderResponse result = OrderHttpAssembler.toPreBuildResponse(
+                orderApplicationService.preBuildOrder(OrderHttpAssembler.toPreBuildCommand(request, customerId)));
         return APIResponse.success(result);
     }
     
@@ -55,8 +55,8 @@ public class OrderController {
     public APIResponse<CreateOrderResponse> create(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody CreateOrderRequest request) {
-        CreateOrderResponse result = OrderApiAssembler.toCreateResponse(
-                orderApplicationService.createOrder(OrderApiAssembler.toCreateCommand(request, customerId)));
+        CreateOrderResponse result = OrderHttpAssembler.toCreateResponse(
+                orderApplicationService.createOrder(OrderHttpAssembler.toCreateCommand(request, customerId)));
         return APIResponse.success(result);
     }
     @GetMapping
@@ -66,7 +66,7 @@ public class OrderController {
             @RequestParam @NotNull(message = "year 不能为空") @Min(2000) @Max(9999) Integer year,
             @RequestParam @NotNull(message = "month 不能为空") @Min(1) @Max(12) Integer month) {
         List<OrderSummary> result = orderQueryService.getOrdersByCustomer(customerId, year, month).stream()
-                .map(OrderApiAssembler::toSummary)
+                .map(OrderHttpAssembler::toSummary)
                 .toList();
         return APIResponse.success(result);
     }
@@ -75,7 +75,7 @@ public class OrderController {
     public APIResponse<OrderDetailResponse> getOrderDetail(
             @PathVariable Long orderId,
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId) {
-        OrderDetailResponse result = OrderApiAssembler.toDetail(orderQueryService.getOrderDetail(orderId, customerId));
+        OrderDetailResponse result = OrderHttpAssembler.toDetail(orderQueryService.getOrderDetail(orderId, customerId));
         return APIResponse.success(result);
     }
     @GetMapping("/{orderId}/status")
@@ -83,7 +83,7 @@ public class OrderController {
     public APIResponse<OrderStatusResponse> getOrderStatus(
             @PathVariable Long orderId,
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId) {
-        OrderStatusResponse result = OrderApiAssembler.toStatus(orderQueryService.getOrderStatus(orderId, customerId));
+        OrderStatusResponse result = OrderHttpAssembler.toStatus(orderQueryService.getOrderStatus(orderId, customerId));
         return APIResponse.success(result);
     }
 }

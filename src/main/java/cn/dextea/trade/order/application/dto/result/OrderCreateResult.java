@@ -1,10 +1,10 @@
-package cn.dextea.trade.order.application.dto;
+package cn.dextea.trade.order.application.dto.result;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 import java.time.LocalDateTime;
 
-import cn.dextea.trade.order.domain.model.valueobject.PreBuildResult;
+import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 @Getter
 @Builder
 @Jacksonized
@@ -13,5 +13,5 @@ public class OrderCreateResult {
     private String orderNo;
     private String tradeNo;
     private LocalDateTime payExpireAt;
-    private PreBuildResult preBuild;
+    private PreBuildOrderResult preBuild;
 }

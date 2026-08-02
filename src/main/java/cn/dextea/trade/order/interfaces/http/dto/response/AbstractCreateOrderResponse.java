@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.interfaces.http.dto.response;
 
-import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderProductItem;
+import cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,12 +13,12 @@ import java.util.List;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-public abstract class AbstractCreateOrderResponse {
+public abstract class AbstractCreateOrderResponse<T extends AbstractOrderItem> {
     @Schema(description = "不可用项")
-    private List<CreateOrderItem> unavailable;
+    private List<T> unavailable;
 
     @Schema(description = "可用项")
-    private List<CreateOrderItem> available;
+    private List<T> available;
 
     @Schema(description = "订单商品总数量", example = "2")
     private Integer totalQuantity;
