@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum PaymentStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+
+public enum PaymentStatus implements CodeEnum {
     PENDING(0, "支付中"),
     TIMEOUT(1, "支付超时")
     PAID(2, "已支付"),

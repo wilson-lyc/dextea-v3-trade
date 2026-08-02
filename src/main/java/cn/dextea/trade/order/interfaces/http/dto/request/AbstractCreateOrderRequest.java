@@ -1,6 +1,5 @@
 package cn.dextea.trade.order.interfaces.http.dto.request;
 import cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem;
-import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

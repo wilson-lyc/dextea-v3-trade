@@ -1,5 +1,6 @@
 package cn.dextea.trade.order.application.dto.result;
 
+import cn.dextea.trade.order.application.dto.shared.AbstractOrderItem;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,10 +12,10 @@ import java.util.List;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-public abstract class AbstractCreateOrderResult {
-    private List<CreateOrderItem> unavailable;
+public abstract class AbstractCreateOrderResult<T extends AbstractOrderItem> {
+    private List<T> unavailable;
 
-    private List<CreateOrderItem> available;
+    private List<T> available;
 
     private Integer totalQuantity;
 

@@ -1,6 +1,9 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum OrderSource implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
+
+public enum OrderSource implements CodeEnum {
     OFFLINE(0, "线下"),
     ALIPAY(1, "支付宝"),
     WEIXIN(2, "微信"),
@@ -21,5 +24,9 @@ public enum OrderSource implements cn.dextea.trade.shared.domain.enumeration.Cod
 
     public String getDescription() {
         return description;
+    }
+
+    public static OrderSource of(Integer code) {
+        return EnumUtils.of(OrderSource.class, code);
     }
 }

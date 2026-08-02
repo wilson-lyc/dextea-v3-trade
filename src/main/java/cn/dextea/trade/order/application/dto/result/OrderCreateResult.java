@@ -12,6 +12,6 @@ public class OrderCreateResult {
     private Long id;
     private String orderNo;
     private String tradeNo;
-    private LocalDateTime payExpireAt;
+    private LocalDateTime paymentExpiredAt;
     private PreBuildOrderResult preBuild;
 }

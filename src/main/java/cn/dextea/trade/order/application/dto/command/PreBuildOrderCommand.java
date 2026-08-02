@@ -1,14 +1,11 @@
-package cn.dextea.trade.order.application.dto.result;
-
+package cn.dextea.trade.order.application.dto.command;
 import cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Getter
-@Setter
 @SuperBuilder
 @NoArgsConstructor
-public class PreBuildOrderResult extends AbstractCreateOrderResult<PreBuildOrderItem> {
+public class PreBuildOrderCommand extends AbstractOrderCommand<PreBuildOrderItem> {
 }

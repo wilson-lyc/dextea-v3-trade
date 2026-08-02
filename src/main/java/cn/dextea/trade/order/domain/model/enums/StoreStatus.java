@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum StoreStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+
+public enum StoreStatus implements CodeEnum {
     CLOSED(0, "休息中"),
     OPEN(1, "营业中"),
     PENDING(2, "筹备中"),

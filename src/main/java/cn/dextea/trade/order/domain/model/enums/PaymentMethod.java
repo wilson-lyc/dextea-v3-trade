@@ -1,6 +1,9 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum PaymentMethod implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
+
+public enum PaymentMethod implements CodeEnum {
     CASH(0, "现金"),
     ALIPAY(1, "支付宝"),
     WEIXIN(2, "微信");
@@ -20,5 +23,9 @@ public enum PaymentMethod implements cn.dextea.trade.shared.domain.enumeration.C
 
     public String getDescription() {
         return description;
+    }
+
+    public static PaymentMethod of(Integer code) {
+        return EnumUtils.of(PaymentMethod.class, code);
     }
 }

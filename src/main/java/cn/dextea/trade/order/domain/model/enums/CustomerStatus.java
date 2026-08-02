@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum CustomerStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+
+public enum CustomerStatus implements CodeEnum {
     DISABLED(0, "禁用"),
     ACTIVE(1, "激活");
 

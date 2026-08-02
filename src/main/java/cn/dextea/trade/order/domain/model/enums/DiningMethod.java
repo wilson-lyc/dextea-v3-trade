@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum DiningMethod implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+
+public enum DiningMethod implements CodeEnum {
     DINE_IN(1, "堂食"),
     TAKEOUT(2, "外带");
 

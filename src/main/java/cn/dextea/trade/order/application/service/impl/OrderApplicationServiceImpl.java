@@ -1,8 +1,7 @@
 package cn.dextea.trade.order.application.service.impl;
 
-import cn.dextea.trade.order.application.command.CreateOrderCommand;
-import cn.dextea.trade.order.application.command.OrderProductCommand;
-import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
+import cn.dextea.trade.order.application.dto.command.CreateOrderCommand;
+import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.config.OrderPaymentProperties;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
@@ -46,7 +45,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
 
     @Override
     public PreBuildOrderResult preBuildOrder(PreBuildOrderCommand command) {
-        return preBuild(command.getStoreId(), command.getCustomerId(), command.getProducts()).result();
+        return preBuild(command.getStoreId(), command.getCustomerId(), command.getItems()).result();
     }
 
     @Override
@@ -59,7 +58,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
         int platformCode = command.getPlatform().getCode();
         placementDomainService.validatePlacement(platformCode, command.getDiningMethod());
 
-        PreBuild preBuild = preBuild(command.getStoreId(), command.getCustomerId(), command.getProducts());
+        PreBuild preBuild = preBuild(command.getStoreId(), command.getCustomerId(), command.getItems());
         PreBuildResult summary = preBuild.result();
         if (summary.hasUnavailable()) {
             return OrderCreateResult.builder().preBuild(summary).build();
@@ -109,7 +108,7 @@ public class OrderApplicationServiceImpl implements OrderApplicationService {
         order.markTradeNo(tradeNo);
     }
 
-    private PreBuild preBuild(Long storeId, Long customerId, List<OrderProductCommand> products) {
+    private PreBuild preBuild(Long storeId, Long customerId, List<? extends cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> products) {
         List<PreBuildProductInput> inputs = products.stream()
                 .map(p -> PreBuildProductInput.builder()
                         .skuId(p.getSkuId())

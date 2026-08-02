@@ -7,16 +7,18 @@ import cn.dextea.trade.order.interfaces.http.dto.response.OrderDetailResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderStatusResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderSummary;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
-import cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem;
 import cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem;
-import cn.dextea.trade.order.application.command.CreateOrderCommand;
-import cn.dextea.trade.order.application.command.OrderProductCommand;
-import cn.dextea.trade.order.application.command.PreBuildOrderCommand;
+import cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem;
+import cn.dextea.trade.order.application.dto.command.CreateOrderCommand;
+import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.OrderDetailDTO;
 import cn.dextea.trade.order.application.dto.OrderStatusDTO;
 import cn.dextea.trade.order.application.dto.OrderSummaryDTO;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
+import cn.dextea.trade.order.domain.enums.DiningMethodEnum;
+import cn.dextea.trade.order.domain.model.enums.OrderSource;
+import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
 
 import java.util.List;
 public final class OrderHttpAssembler {
@@ -26,30 +28,39 @@ public final class OrderHttpAssembler {
         return PreBuildOrderCommand.builder()
                 .storeId(request.getStoreId())
                 .customerId(customerId)
-                .diningMethod(request.getDiningMethod())
-                .source(request.getSource())
-                .paymentMethod(request.getPaymentMethod())
+                .diningMethod(DiningMethodEnum.of(request.getDiningMethod()))
+                .source(OrderSource.of(request.getSource()))
+                .paymentMethod(PaymentMethod.of(request.getPaymentMethod()))
                 .note(request.getNote())
-                .products(toProductCommands(request.getItems()))
+                .items(toPreBuildItems(request.getItems()))
                 .build();
     }
     public static CreateOrderCommand toCreateCommand(CreateOrderRequest request, Long customerId) {
         return CreateOrderCommand.builder()
                 .storeId(request.getStoreId())
                 .customerId(customerId)
-                .platform(request.getPlatform())
-                .diningMethod(request.getDiningMethod())
+                .source(OrderSource.of(request.getSource()))
+                .paymentMethod(PaymentMethod.of(request.getPaymentMethod()))
+                .diningMethod(DiningMethodEnum.of(request.getDiningMethod()))
                 .note(request.getNote())
-                .products(toProductCommands(request.getItems()))
+                .items(toCreateItems(request.getItems()))
                 .idempotencyKey(request.getIdempotencyKey())
                 .build();
     }
-    private static List<OrderProductCommand> toProductCommands(List<? extends AbstractOrderItem> items) {
+    private static List<PreBuildOrderItem> toPreBuildItems(List<PreBuildOrderItem> items) {
         if (items == null) {
             return List.of();
         }
         return items.stream()
-                .map(i -> OrderProductCommand.builder().skuId(i.getSkuId()).quantity(i.getQuantity()).build())
+                .map(i -> PreBuildOrderItem.builder().skuId(i.getSkuId()).quantity(i.getQuantity()).build())
+                .toList();
+    }
+    private static List<CreateOrderItem> toCreateItems(List<CreateOrderItem> items) {
+        if (items == null) {
+            return List.of();
+        }
+        return items.stream()
+                .map(i -> CreateOrderItem.builder().skuId(i.getSkuId()).quantity(i.getQuantity()).build())
                 .toList();
     }
     public static PreBuildOrderResponse toPreBuildResponse(PreBuildOrderResult result) {
@@ -66,7 +77,7 @@ public final class OrderHttpAssembler {
                 .id(result.getId())
                 .orderNo(result.getOrderNo())
                 .tradeNo(result.getTradeNo())
-                .payExpireAt(result.getPayExpireAt());
+                .paymentExpiredAt(result.getPaymentExpiredAt());
         if (pre != null) {
             builder.unavailable(toResponseItems(pre.getUnavailable()))
                     .available(toResponseItems(pre.getAvailable()))

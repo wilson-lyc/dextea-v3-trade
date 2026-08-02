@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum MakingStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+
+public enum MakingStatus implements CodeEnum {
     PENDING(0, "待制作"),
     PREPARING(1, "制作中"),
     READY(2, "制作完成"),

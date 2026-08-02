@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.model.enums;
 
-public enum ProductGlobalStatus implements cn.dextea.trade.shared.domain.enumeration.CodeEnum {
+import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+
+public enum ProductGlobalStatus implements CodeEnum {
     DISABLED(0, "下架"),
     ACTIVE(1, "上架");
 
