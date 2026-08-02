@@ -1,13 +1,13 @@
 package cn.dextea.trade.order.infrastructure.persistence.mapper;
 
-import cn.dextea.trade.order.infrastructure.persistence.po.CustomerPO;
+import cn.dextea.trade.order.infrastructure.persistence.po.GalleryPO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
-public interface CustomerMapper {
+public interface GalleryMapper {
 
-    @Select("SELECT * FROM customer WHERE id = #{id}")
-    CustomerPO selectById(@Param("id") Long id);
+    @Select("SELECT * FROM gallery WHERE id = #{id}")
+    GalleryPO selectById(@Param("id") Long id);
 }
