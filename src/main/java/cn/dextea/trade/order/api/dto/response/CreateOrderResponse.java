@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @NoArgsConstructor
 @Schema(description = "创建订单响应")
-public class CreateOrderResponse extends AbstractOrderResponse {
+public class CreateOrderResponse extends AbstractCreateOrderResponse {
     @Schema(description = "订单ID", example = "1")
     private Long id;
     @Schema(description = "订单号", example = "20150320010101001")

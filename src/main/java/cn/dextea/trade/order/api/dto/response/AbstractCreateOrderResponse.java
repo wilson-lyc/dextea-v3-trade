@@ -13,7 +13,7 @@ import java.util.List;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-public abstract class AbstractOrderResponse {
+public abstract class AbstractCreateOrderResponse {
     @Schema(description = "不可用项")
     private List<CreateOrderItem> unavailable;
 

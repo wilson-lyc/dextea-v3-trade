@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-public abstract class AbstractOrderRequest {
+public abstract class AbstractCreateOrderRequest {
     @NotNull(message = "storeId 不能为空")
     @Schema(description = "门店 ID", example = "1")
     private Long storeId;

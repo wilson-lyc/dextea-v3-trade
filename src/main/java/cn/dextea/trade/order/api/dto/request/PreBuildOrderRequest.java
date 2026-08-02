@@ -13,5 +13,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Schema(description = "预构建订单请求")
-public class PreBuildOrderRequest extends AbstractOrderRequest {
+public class PreBuildOrderRequest extends AbstractCreateOrderRequest {
 }

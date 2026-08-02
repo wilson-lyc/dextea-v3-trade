@@ -10,5 +10,5 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @Schema(description = "预构建订单响应")
-public class PreBuildOrderResponse extends AbstractOrderResponse {
+public class PreBuildOrderResponse extends AbstractCreateOrderResponse {
 }
