@@ -12,6 +12,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@Schema(description = "订单预构建请求（只读计价，无需幂等键）")
+@Schema(description = "预构建订单请求")
 public class PreBuildOrderRequest extends AbstractOrderRequest {
 }

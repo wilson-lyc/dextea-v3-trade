@@ -39,58 +39,9 @@ public class OrderController {
     private static final String CUSTOMER_ID_HEADER = "X-Customer-Id";
     private final OrderApplicationService orderApplicationService;
     private final OrderQueryService orderQueryService;
+
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "订单预构建请求示例",
-            content = @Content(
-                    mediaType = "application/json",
-                    examples = @ExampleObject(value = """
-                            {
-                                "storeId": 1,
-                                "platform": "alipay",
-                                "diningMethod": 0,
-                                "note": "",
-                                "products": [
-                                    {
-                                        "skuId": "1#1_1-2_5-3_9-4_11",
-                                        "quantity": 1
-                                    }
-                                ]
-                            }
-                            """)))
-    @ApiResponse(
-            responseCode = "200",
-            description = "预构建订单正常响应示例",
-            content = @Content(
-                    mediaType = "application/json",
-                    examples = @ExampleObject(value = """
-                            {
-                                "code": 0,
-                                "message": "成功",
-                                "data": {
-                                    "unavailable": {
-                                        "products": [],
-                                        "customization": []
-                                    },
-                                    "products": [
-                                        {
-                                            "skuId": "1#1_1-2_5-3_9-4_11",
-                                            "quantity": 1,
-                                            "productId": 1,
-                                            "productName": "青芒酸",
-                                            "coverId": 1,
-                                            "coverUrl": "https:
-                                            "customizationText": "推荐 / 少甜(推荐) / 标准酸 / 标准(含柠檬叶)",
-                                            "unitPrice": 22.00,
-                                            "subtotal": 22.00
-                                        }
-                                    ],
-                                    "totalQuantity": 1,
-                                    "totalPrice": 22.00
-                                }
-                            }
-                            """)))
     public APIResponse<PreBuildOrderResponse> preBuildOrder(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody PreBuildOrderRequest request) {
@@ -98,6 +49,7 @@ public class OrderController {
                 orderApplicationService.preBuildOrder(OrderApiAssembler.toPreBuildCommand(request, customerId)));
         return APIResponse.success(result);
     }
+    
     @PostMapping
     @Operation(summary = "创建订单")
     public APIResponse<CreateOrderResponse> create(
