@@ -1,11 +1,12 @@
 package cn.dextea.trade.order.domain.service.impl;
 
-import cn.dextea.trade.order.domain.exception.SKUDisabledException;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.CustomizationItem;
 import cn.dextea.trade.order.domain.model.CustomizationOption;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.service.SkuIdService;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
@@ -19,42 +20,32 @@ import java.util.stream.Collectors;
 public class SkuIdServiceImpl implements SkuIdService {
 
     @Override
-    public OrderItem idToOrderItem(Product product, String skuId, Quantity quantity) {
-        List<String> inactiveReasons = new ArrayList<>();
-        boolean hasInactive = false;
+    public OrderItem buildOrderItem(Product product, String skuId, Quantity quantity) {
+        List<String> unavailableReasons = new ArrayList<>();
 
         if (!product.isActive()) {
-            hasInactive = true;
-            inactiveReasons.add("商品 " + product.getId() + " 已停用");
+            unavailableReasons.add("商品已售罄");
         }
 
-        String customization = resolveCustomization(product, skuId, inactiveReasons);
-        if (!inactiveReasons.isEmpty()) {
-            hasInactive = true;
-        }
+        String customization = resolveCustomization(product, skuId, unavailableReasons);
 
+        boolean available = unavailableReasons.isEmpty();
         Money unitPrice = product.getPrice();
-        Money totalPrice = unitPrice.multiply(quantity);
-        OrderItem orderItem = OrderItem.builder()
+        return OrderItem.builder()
                 .productId(product.getId())
                 .productName(product.getName())
                 .skuId(skuId)
                 .customization(customization)
-                .coverId(product.getCoverId())
+                .cover(product.getCover() != null ? product.getCover().getUrl() : null)
                 .quantity(quantity)
                 .unitPrice(unitPrice)
-                .totalPrice(totalPrice)
+                .available(available)
+                .unavailableReason(available ? null : unavailableReasons)
                 .build();
-
-        if (hasInactive) {
-            throw new SKUDisabledException(String.join("; ", inactiveReasons),
-                    product.getId(), product.getName(), skuId, customization);
-        }
-        return orderItem;
     }
 
     @Override
-    public Set<Long> extractProductIds(Set<String> skuIds) {
+    public Set<Long> extractProductIds(List<String> skuIds) {
         Set<Long> productIds = new HashSet<>();
         for (String skuId : skuIds) {
             if (skuId == null || skuId.isEmpty()) {
@@ -66,7 +57,7 @@ public class SkuIdServiceImpl implements SkuIdService {
         return productIds;
     }
 
-    private String resolveCustomization(Product product, String skuId, List<String> inactiveReasons) {
+    private String resolveCustomization(Product product, String skuId, List<String> unavailableReasons) {
         if (skuId == null || !skuId.contains("#")) {
             return "";
         }
@@ -82,7 +73,7 @@ public class SkuIdServiceImpl implements SkuIdService {
         for (String pair : specPart.split("-")) {
             String[] ids = pair.split("_");
             if (ids.length != 2) {
-                throw new IllegalArgumentException("非法的SKU片段: " + pair);
+                throw new BizError(OrderErrorCode.INVALID_SKU, "非法的SKU片段: " + pair);
             }
             pairs.add(ids);
         }
@@ -96,17 +87,17 @@ public class SkuIdServiceImpl implements SkuIdService {
 
             CustomizationItem item = itemMap.get(itemId);
             if (item == null) {
-                throw new IllegalArgumentException("SKU中不存在的客制化项目: " + itemId);
+                throw new BizError(OrderErrorCode.INVALID_BINDING, "客制化项目未绑定到该商品: " + itemId);
             }
             if (!item.isActive()) {
-                inactiveReasons.add("客制化项目 " + itemId + " 已停用");
+                unavailableReasons.add("客制化项目 " + item.getName() + " 已下架");
             }
             CustomizationOption option = item.getOptions().stream()
                     .filter(o -> o.getId().equals(optionId))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("SKU中不存在的客制化选项: " + optionId));
+                    .orElseThrow(() -> new BizError(OrderErrorCode.INVALID_BINDING, "客制化选项未绑定到该项目: " + optionId));
             if (!option.isActive()) {
-                inactiveReasons.add("客制化选项 " + optionId + " 已停用");
+                unavailableReasons.add("客制化选项 " + option.getName() + " 已下架");
             }
 
             segments.add(item.getName() + "_" + option.getName());

@@ -1,11 +1,12 @@
 package cn.dextea.trade.order.application.dto.result;
 
 import cn.dextea.trade.order.application.dto.shared.AbstractOrderItem;
+import cn.dextea.trade.shared.domain.money.Money;
+import cn.dextea.trade.shared.domain.quantity.Quantity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -17,7 +18,7 @@ public abstract class AbstractCreateOrderResult<T extends AbstractOrderItem> {
 
     private List<T> available;
 
-    private Integer totalQuantity;
+    private Quantity totalQuantity;
 
-    private BigDecimal totalPrice;
+    private Money totalPrice;
 }

@@ -24,17 +24,14 @@ public class AbstractOrderItem {
     @Schema(description = "购买数量", example = "1")
     private Integer quantity;
 
-    @Schema(description = "商品 ID（响应填充，请求无需传）", example = "1")
-    private Long productId;
-
     @Schema(description = "商品名称（响应填充，请求无需传）", example = "招牌奶茶")
-    private String productName;
-
-    @Schema(description = "商品封面图 URL（响应填充，请求无需传）", example = "https://example.com/example.jpg")
-    private String cover;
+    private String product;
 
     @Schema(description = "商品客制化（响应填充，请求无需传）", example = "少冰 / 少甜 / 茉莉花茶")
     private String customization;
+
+    @Schema(description = "商品封面图 URL（响应填充，请求无需传）", example = "https://example.com/example.jpg")
+    private String cover;
 
     @Schema(description = "单价（响应填充，请求无需传）", example = "12.50")
     private BigDecimal unitPrice;

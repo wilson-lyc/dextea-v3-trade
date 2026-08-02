@@ -10,7 +10,10 @@ import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
+import cn.dextea.trade.shared.domain.money.Money;
+import cn.dextea.trade.shared.domain.quantity.Quantity;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,8 +51,8 @@ public final class OrderHttpAssembler {
         return PreBuildOrderResponse.builder()
                 .unavailable(toWebItems(result.getUnavailable(), cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem::new))
                 .available(toWebItems(result.getAvailable(), cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem::new))
-                .totalQuantity(result.getTotalQuantity())
-                .totalPrice(result.getTotalPrice())
+                .totalQuantity(result.getTotalQuantity() == null ? null : result.getTotalQuantity().getValue())
+                .totalPrice(result.getTotalPrice() == null ? null : result.getTotalPrice().getValue())
                 .build();
     }
 
@@ -63,8 +66,8 @@ public final class OrderHttpAssembler {
         if (preBuild != null) {
             builder.unavailable(toWebItems(preBuild.getUnavailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
                     .available(toWebItems(preBuild.getAvailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
-                    .totalQuantity(preBuild.getTotalQuantity())
-                    .totalPrice(preBuild.getTotalPrice());
+                    .totalQuantity(preBuild.getTotalQuantity() == null ? null : preBuild.getTotalQuantity().getValue())
+                    .totalPrice(preBuild.getTotalPrice() == null ? null : preBuild.getTotalPrice().getValue());
         }
         return builder.build();
     }
@@ -111,25 +114,27 @@ public final class OrderHttpAssembler {
             cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem source,
             cn.dextea.trade.order.application.dto.shared.AbstractOrderItem target) {
         target.setSkuId(source.getSkuId());
-        target.setQuantity(source.getQuantity());
-        target.setProductId(source.getProductId());
-        target.setProductName(source.getProductName());
-        target.setCover(source.getCover());
+        target.setQuantity(source.getQuantity() == null ? null : Quantity.of(source.getQuantity()));
+        target.setProduct(source.getProduct());
         target.setCustomization(source.getCustomization());
-        target.setUnitPrice(source.getUnitPrice());
-        target.setTotalPrice(source.getTotalPrice());
+        target.setCover(source.getCover());
+        target.setUnitPrice(toMoney(source.getUnitPrice()));
+        target.setTotalPrice(toMoney(source.getTotalPrice()));
     }
 
     private static void copyToWeb(
             cn.dextea.trade.order.application.dto.shared.AbstractOrderItem source,
             cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem target) {
         target.setSkuId(source.getSkuId());
-        target.setQuantity(source.getQuantity());
-        target.setProductId(source.getProductId());
-        target.setProductName(source.getProductName());
-        target.setCover(source.getCover());
+        target.setQuantity(source.getQuantity() == null ? null : source.getQuantity().getValue());
+        target.setProduct(source.getProduct());
         target.setCustomization(source.getCustomization());
-        target.setUnitPrice(source.getUnitPrice());
-        target.setTotalPrice(source.getTotalPrice());
+        target.setCover(source.getCover());
+        target.setUnitPrice(source.getUnitPrice() == null ? null : source.getUnitPrice().getValue());
+        target.setTotalPrice(source.getTotalPrice() == null ? null : source.getTotalPrice().getValue());
+    }
+
+    private static Money toMoney(BigDecimal value) {
+        return value == null ? null : Money.of(value);
     }
 }

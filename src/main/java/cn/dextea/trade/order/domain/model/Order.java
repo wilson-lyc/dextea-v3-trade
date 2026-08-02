@@ -27,8 +27,6 @@ public class Order {
     private String idempotencyKey;
     private Long customerId;
     private Long storeId;
-    private Money totalPrice;
-    private Quantity totalQuantity;
     private DiningMethod diningMethod;
     private String note;
     private OrderSource source;
@@ -43,4 +41,29 @@ public class Order {
     private LocalDateTime updatedAt;
     private Integer version;
     private List<OrderItem> items;
+
+    public Money getTotalPrice() {
+        if (items == null || items.isEmpty()) {
+            return Money.ZERO;
+        }
+        Money total = Money.ZERO;
+        for (OrderItem item : items) {
+            total = total.add(item.getTotalPrice());
+        }
+        return total;
+    }
+
+    public Quantity getTotalQuantity() {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        Quantity total = null;
+        for (OrderItem item : items) {
+            if (item.getQuantity() == null) {
+                continue;
+            }
+            total = total == null ? item.getQuantity() : total.add(item.getQuantity());
+        }
+        return total;
+    }
 }
