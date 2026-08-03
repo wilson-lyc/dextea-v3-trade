@@ -10,6 +10,7 @@ import cn.dextea.trade.shared.domain.model.Money;
 import cn.dextea.trade.shared.domain.model.Quantity;
 
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
+import cn.dextea.trade.order.domain.repository.OrderRepository;
 
 import lombok.Getter;
 
@@ -40,13 +41,15 @@ public class Order {
     private LocalDateTime updatedAt;
     private Integer version;
     private List<OrderItem> items;
+    private OrderRepository orderRepository;
 
-    private Order() {
+    private Order(OrderRepository orderRepository) {
         this.items = new ArrayList<>();
+        this.orderRepository = orderRepository;
     }
 
-    public static Order create(Long customerId, Long storeId) {
-        Order order = new Order();
+    public static Order create(Long customerId, Long storeId, OrderRepository orderRepository) {
+        Order order = new Order(orderRepository);
         order.customerId = customerId;
         order.storeId = storeId;
         return order;
@@ -54,8 +57,8 @@ public class Order {
 
     public static Order create(Long customerId, Long storeId, OrderNoGenerator orderNoGenerator,
                                 OrderSource source, PaymentMethod paymentMethod, DiningMethod diningMethod,
-                                String note, String idempotencyKey) {
-        Order order = new Order();
+                                String note, String idempotencyKey, OrderRepository orderRepository) {
+        Order order = new Order(orderRepository);
         order.customerId = customerId;
         order.storeId = storeId;
         order.orderNo = orderNoGenerator.next();
@@ -65,6 +68,10 @@ public class Order {
         order.note = note;
         order.idempotencyKey = idempotencyKey;
         return order;
+    }
+
+    public Order save() {
+        return orderRepository.save(this);
     }
 
     public void assignId(Long id) {

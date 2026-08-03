@@ -36,19 +36,6 @@ cosid:
       order:
         namespace: ${COSID_SNOWFLAKE_PROVIDER_ORDER_NAMESPACE:${spring.application.name}}
 
-order:
-  pay-timeout-minutes: ${ORDER_PAY_TIMEOUT_MINUTES:15}
-  customer-id-header: ${ORDER_CUSTOMER_ID_HEADER:X-Customer-Id}
-
-alipay:
-  server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
-  app-id: ${ALIPAY_APP_ID}
-  private-key: ${ALIPAY_PRIVATE_KEY}
-  alipay-public-key: ${ALIPAY_PUBLIC_KEY}
-  subject: ${ALIPAY_SUBJECT:dextea-order}
-  force-amount: ${ALIPAY_FORCE_AMOUNT:}
-  notify-url: ${ALIPAY_NOTIFY_URL}
-
 mybatis:
   mapper-locations: classpath*:mapper/*.xml
   type-aliases-package: cn.dextea.trade.order.domain.model,cn.dextea.trade.order.infrastructure.gateway.po,cn.dextea.trade.order.infrastructure.persistence.po
@@ -75,3 +62,18 @@ springdoc:
     disable-swagger-default-url: true
   packages-to-scan: cn.dextea.trade.health,cn.dextea.trade.order.api.controller
   paths-to-match: /api/**
+
+order:
+  customer-id-header: ${ORDER_CUSTOMER_ID_HEADER:X-Customer-Id}
+  payment_ttl: ${ORDER_PAYMENT_TTL:15}
+  create_order_idem_ttl: ${ORDER_CREATE_ORDER_IDEM_TTL:1440}
+  create_order_lock_ttl: ${ORDER_CREATE_ORDER_LOCK_TTL:1}
+
+alipay:
+  server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}
+  app-id: ${ALIPAY_APP_ID}
+  private-key: ${ALIPAY_PRIVATE_KEY}
+  alipay-public-key: ${ALIPAY_PUBLIC_KEY}
+  subject: ${ALIPAY_SUBJECT:dextea-order}
+  force-amount: ${ALIPAY_FORCE_AMOUNT:}
+  notify-url: ${ALIPAY_NOTIFY_URL}

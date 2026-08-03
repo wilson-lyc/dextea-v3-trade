@@ -20,6 +20,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(description = "创建订单请求")
 public class CreateOrderRequest extends AbstractCreateOrderRequest<CreateOrderItem> {
     @NotBlank(message = "idempotencyKey 不能为空")
+    @Size(max = 64, message = "idempotencyKey 长度不能超过 64")
     @Schema(description = "由客户端生成", example = "f47ac10b58cc4372a5670e02b2c3d479")
     private String idempotencyKey;
 

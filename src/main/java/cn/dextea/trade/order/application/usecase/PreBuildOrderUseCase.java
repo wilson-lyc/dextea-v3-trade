@@ -12,6 +12,7 @@ import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.Store;
 import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.repository.CustomerRepository;
+import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.order.domain.service.SkuIdService;
@@ -31,6 +32,7 @@ public class PreBuildOrderUseCase {
     private final StoreRepository storeRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
     private final SkuIdService skuIdService;
 
     public PreBuildOrderResult execute(PreBuildOrderCommand command) {
@@ -46,7 +48,7 @@ public class PreBuildOrderUseCase {
         Set<Long> productIds = skuIdService.extractProductIds(skuIds);
         Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, store.getId());
 
-        Order order = Order.create(command.getCustomerId(), command.getStoreId());
+        Order order = Order.create(command.getCustomerId(), command.getStoreId(), orderRepository);
 
         List<PreBuildOrderItem> availableItems = new ArrayList<>();
         List<PreBuildOrderItem> unavailableItems = new ArrayList<>();

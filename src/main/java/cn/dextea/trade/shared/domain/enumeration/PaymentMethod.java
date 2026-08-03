@@ -1,23 +1,14 @@
 package cn.dextea.trade.shared.domain.enumeration;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+public enum PaymentMethod implements CodeEnum {
+    CASH(0, "现金"),
+    ALIPAY(1, "支付宝"),
+    WEIXIN(2, "微信");
 
-@Getter
-public enum PaymentMethod implements StringCodeEnum, CodeEnum {
-    @JsonProperty("cash")
-    CASH("cash", 0, "现金"),
-    @JsonProperty("alipay")
-    ALIPAY("alipay", 1, "支付宝"),
-    @JsonProperty("weixin")
-    WEIXIN("weixin", 2, "微信");
-
-    private final String key;
     private final int code;
     private final String description;
 
-    PaymentMethod(String key, int code, String description) {
-        this.key = key;
+    PaymentMethod(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -27,13 +18,8 @@ public enum PaymentMethod implements StringCodeEnum, CodeEnum {
         return code;
     }
 
-    @Override
-    public String getValue() {
-        return key;
-    }
-
-    public static PaymentMethod of(String value) {
-        return EnumUtils.of(PaymentMethod.class, value);
+    public String getDescription() {
+        return description;
     }
 
     public static PaymentMethod of(Integer code) {
