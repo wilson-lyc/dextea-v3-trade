@@ -55,19 +55,16 @@ public final class OrderHttpAssembler {
     }
 
     public static CreateOrderResponse toCreateResponse(OrderCreateResult result) {
-        PreBuildOrderResult preBuild = result.getPreBuild();
-        CreateOrderResponse.CreateOrderResponseBuilder<?, ?> builder = CreateOrderResponse.builder()
+        return CreateOrderResponse.builder()
                 .id(result.getId())
                 .orderNo(result.getOrderNo())
                 .tradeNo(result.getTradeNo())
-                .paymentExpiredAt(result.getPaymentExpiredAt());
-        if (preBuild != null) {
-            builder.unavailable(toWebItems(preBuild.getUnavailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
-                    .available(toWebItems(preBuild.getAvailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
-                    .totalQuantity(preBuild.getTotalQuantity() == null ? null : preBuild.getTotalQuantity().getValue())
-                    .totalPrice(preBuild.getTotalPrice() == null ? null : preBuild.getTotalPrice().getValue());
-        }
-        return builder.build();
+                .paymentExpiredAt(result.getPaymentExpiredAt())
+                .unavailable(toWebItems(result.getUnavailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
+                .available(toWebItems(result.getAvailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
+                .totalQuantity(result.getTotalQuantity() == null ? null : result.getTotalQuantity().getValue())
+                .totalPrice(result.getTotalPrice() == null ? null : result.getTotalPrice().getValue())
+                .build();
     }
 
     private static List<cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> toAppItems(

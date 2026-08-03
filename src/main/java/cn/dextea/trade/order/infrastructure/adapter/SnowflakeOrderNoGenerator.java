@@ -1,4 +1,4 @@
-package cn.dextea.trade.order.infrastructure;
+package cn.dextea.trade.order.infrastructure.adapter;
 
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 import lombok.RequiredArgsConstructor;

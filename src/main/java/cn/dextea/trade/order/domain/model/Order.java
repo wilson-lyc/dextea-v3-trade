@@ -45,19 +45,33 @@ public class Order {
         this.items = new ArrayList<>();
     }
 
-    public static Order prebuild(Long customerId, Long storeId) {
+    public static Order create(Long customerId, Long storeId) {
         Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
         return order;
     }
 
-    public static Order create(OrderNoGenerator orderNoGenerator, Long customerId, Long storeId) {
+    public static Order create(Long customerId, Long storeId, OrderNoGenerator orderNoGenerator,
+                                OrderSource source, PaymentMethod paymentMethod, DiningMethod diningMethod,
+                                String note, String idempotencyKey) {
         Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
         order.orderNo = orderNoGenerator.next();
+        order.source = source;
+        order.paymentMethod = paymentMethod;
+        order.diningMethod = diningMethod;
+        order.note = note;
+        order.idempotencyKey = idempotencyKey;
         return order;
+    }
+
+    public void markCreated(String tradeNo, LocalDateTime paymentExpiredAt) {
+        this.tradeNo = tradeNo;
+        this.paymentExpiredAt = paymentExpiredAt;
+        this.paymentStatus = PaymentStatus.PENDING;
+        this.makingStatus = MakingStatus.PENDING;
     }
 
     public OrderItem addItem(Product product, String skuId, Quantity quantity) {

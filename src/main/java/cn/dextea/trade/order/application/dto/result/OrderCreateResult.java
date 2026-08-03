@@ -1,17 +1,22 @@
 package cn.dextea.trade.order.application.dto.result;
-import lombok.Builder;
+
+import cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem;
 import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import java.time.LocalDateTime;
 
-import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 @Getter
-@Builder
-@Jacksonized
-public class OrderCreateResult {
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+public class OrderCreateResult extends AbstractCreateOrderResult<PreBuildOrderItem> {
     private Long id;
+
     private String orderNo;
+
     private String tradeNo;
+
     private LocalDateTime paymentExpiredAt;
-    private PreBuildOrderResult preBuild;
 }

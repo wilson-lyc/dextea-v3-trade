@@ -1,13 +1,15 @@
-package cn.dextea.trade.order.domain.service.impl;
+package cn.dextea.trade.order.infrastructure.adapter;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.service.SkuIdService;
 import cn.dextea.trade.shared.domain.error.BizError;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Component
 public class SkuIdServiceImpl implements SkuIdService {
 
     @Override

@@ -1,21 +1,20 @@
 package cn.dextea.trade.order.application.usecase;
 
+import cn.dextea.trade.order.application.assembler.OrderItemAssembler;
 import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem;
 import cn.dextea.trade.order.domain.model.Customer;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.Store;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.order.domain.repository.CustomerRepository;
 import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.order.domain.service.SkuIdService;
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.shared.domain.money.Money;
-import cn.dextea.trade.shared.domain.quantity.Quantity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +46,7 @@ public class PreBuildOrderUseCase {
         Set<Long> productIds = skuIdService.extractProductIds(skuIds);
         Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, store.getId());
 
-        Order order = Order.prebuild(command.getCustomerId(), command.getStoreId());
+        Order order = Order.create(command.getCustomerId(), command.getStoreId());
 
         List<PreBuildOrderItem> availableItems = new ArrayList<>();
         List<PreBuildOrderItem> unavailableItems = new ArrayList<>();
@@ -55,9 +54,13 @@ public class PreBuildOrderUseCase {
         for (PreBuildOrderItem commandItem : command.getItems()) {
             Long productId = skuIdService.extractProductId(commandItem.getSkuId());
             Product product = products.get(productId);
+            if (product == null) {
+                throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品不存在: productId=" + productId);
+            }
+            
             OrderItem orderItem = order.addItem(product, commandItem.getSkuId(), commandItem.getQuantity());
 
-            PreBuildOrderItem item = toResultItem(orderItem);
+            PreBuildOrderItem item = OrderItemAssembler.toPreBuildItem(orderItem);
             if (orderItem.getAvailable()) {
                 availableItems.add(item);
             } else {
@@ -71,30 +74,5 @@ public class PreBuildOrderUseCase {
                 .totalQuantity(order.getTotalQuantity())
                 .totalPrice(order.getTotalPrice())
                 .build();
-    }
-
-    private PreBuildOrderItem toResultItem(OrderItem orderItem) {
-        return PreBuildOrderItem.builder()
-                .skuId(orderItem.getSkuId())
-                .quantity(orderItem.getQuantity())
-                .product(orderItem.getProductName())
-                .customization(toOptionLabels(orderItem.getCustomization()))
-                .cover(orderItem.getCover())
-                .unitPrice(orderItem.getUnitPrice())
-                .totalPrice(orderItem.getTotalPrice())
-                .available(orderItem.getAvailable())
-                .build();
-    }
-
-    private String toOptionLabels(String customization) {
-        if (customization == null || customization.isEmpty()) {
-            return customization;
-        }
-        return java.util.Arrays.stream(customization.split("-"))
-                .map(segment -> {
-                    String[] parts = segment.split("_");
-                    return parts[parts.length - 1];
-                })
-                .collect(Collectors.joining(" / "));
     }
 }
