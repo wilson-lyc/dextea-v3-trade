@@ -42,16 +42,6 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
-rocketmq:
-  enabled: ${ROCKETMQ_ENABLED:true}
-  endpoints: ${ROCKETMQ_ENDPOINTS}
-  topic: ${ROCKETMQ_TOPIC}
-  consumer-group: ${ROCKETMQ_CONSUMER_GROUP}
-  tag: ${ROCKETMQ_TAG:*}
-  namespace: ${ROCKETMQ_NAMESPACE:}
-  access-key: ${ROCKETMQ_ACCESS_KEY:}
-  secret-key: ${ROCKETMQ_SECRET_KEY:}
-
 springdoc:
   api-docs:
     enabled: true
@@ -77,3 +67,23 @@ alipay:
   subject: ${ALIPAY_SUBJECT:dextea-order}
   force-amount: ${ALIPAY_FORCE_AMOUNT:}
   notify-url: ${ALIPAY_NOTIFY_URL}
+
+payment-callback-mq:
+  enabled: ${PAYMENT_CALLBACK_MQ_ENABLED:true}
+  endpoints: ${PAYMENT_CALLBACK_MQ_ENDPOINTS}
+  namespace: ${PAYMENT_CALLBACK_MQ_NAMESPACE:}
+  access-key: ${PAYMENT_CALLBACK_MQ_ACCESS_KEY:}
+  secret-key: ${PAYMENT_CALLBACK_MQ_SECRET_KEY:}
+  topic: ${PAYMENT_CALLBACK_MQ_TOPIC}
+  consumer-group: ${PAYMENT_CALLBACK_MQ_CONSUMER_GROUP}
+  tag: ${PAYMENT_CALLBACK_MQ_TAG:*}
+
+order-making-mq:
+  enabled: ${ORDER_MAKING_MQ_ENABLED:true}
+  endpoints: ${ORDER_MAKING_MQ_ENDPOINTS}
+  namespace: ${ORDER_MAKING_MQ_NAMESPACE:}
+  access-key: ${ORDER_MAKING_MQ_ACCESS_KEY:}
+  secret-key: ${ORDER_MAKING_MQ_SECRET_KEY:}
+  topic: ${ORDER_MAKING_MQ_TOPIC}
+  consumer-group: ${ORDER_MAKING_MQ_CONSUMER_GROUP}
+  tag: ${ORDER_MAKING_MQ_TAG:*}
