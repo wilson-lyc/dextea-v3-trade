@@ -59,9 +59,9 @@ public class PreBuildOrderUseCase {
             Product product = products.get(commandItem.getProductId());
             OrderItem orderItem = skuIdService.buildOrderItem(
                     product, commandItem.getSkuId(), commandItem.getQuantity());
+            orderItems.add(orderItem);
 
             PreBuildOrderItem item = toResultItem(orderItem);
-            orderItems.add(orderItem);
             if (orderItem.getAvailable()) {
                 availableItems.add(item);
             } else {
@@ -69,7 +69,7 @@ public class PreBuildOrderUseCase {
             }
         }
 
-        Order order = Order.builder().items(orderItems).build();
+        Order order = Order.prebuild(command.getCustomerId(), command.getStoreId(), orderItems);
 
         return PreBuildOrderResult.builder()
                 .available(availableItems)
