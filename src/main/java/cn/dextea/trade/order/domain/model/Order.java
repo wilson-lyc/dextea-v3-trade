@@ -1,6 +1,5 @@
 package cn.dextea.trade.order.domain.model;
 
-import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
@@ -41,15 +40,13 @@ public class Order {
     private LocalDateTime updatedAt;
     private Integer version;
     private List<OrderItem> items;
-    private OrderRepository orderRepository;
 
-    private Order(OrderRepository orderRepository) {
+    private Order() {
         this.items = new ArrayList<>();
-        this.orderRepository = orderRepository;
     }
 
-    public static Order create(Long customerId, Long storeId, OrderRepository orderRepository) {
-        Order order = new Order(orderRepository);
+    public static Order create(Long customerId, Long storeId) {
+        Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
         return order;
@@ -57,8 +54,8 @@ public class Order {
 
     public static Order create(Long customerId, Long storeId, OrderNoGenerator orderNoGenerator,
                                 OrderSource source, PaymentMethod paymentMethod, DiningMethod diningMethod,
-                                String note, String idempotencyKey, OrderRepository orderRepository) {
-        Order order = new Order(orderRepository);
+                                String note, String idempotencyKey) {
+        Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
         order.orderNo = orderNoGenerator.next();
@@ -70,8 +67,18 @@ public class Order {
         return order;
     }
 
-    public Order save() {
+    public Order save(OrderRepository orderRepository) {
         return orderRepository.save(this);
+    }
+
+    public void initialize(String orderNo, OrderSource source, PaymentMethod paymentMethod,
+                           DiningMethod diningMethod, String note, String idempotencyKey) {
+        this.orderNo = orderNo;
+        this.source = source;
+        this.paymentMethod = paymentMethod;
+        this.diningMethod = diningMethod;
+        this.note = note;
+        this.idempotencyKey = idempotencyKey;
     }
 
     public void assignId(Long id) {

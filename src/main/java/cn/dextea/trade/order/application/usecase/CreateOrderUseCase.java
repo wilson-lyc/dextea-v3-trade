@@ -4,23 +4,13 @@ import cn.dextea.trade.order.application.assembler.OrderItemAssembler;
 import cn.dextea.trade.order.application.dto.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
-import cn.dextea.trade.order.domain.dto.CreateTradeRequest;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.model.Customer;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
-import cn.dextea.trade.order.domain.model.Product;
-import cn.dextea.trade.order.domain.model.Store;
+import cn.dextea.trade.order.domain.model.SkuItem;
 import cn.dextea.trade.order.domain.port.IdempotencyStore;
 import cn.dextea.trade.order.domain.port.OrderCreateLock;
-import cn.dextea.trade.order.domain.port.OrderNoGenerator;
-import cn.dextea.trade.order.domain.port.PaymentPort;
-import cn.dextea.trade.order.domain.repository.CustomerRepository;
-import cn.dextea.trade.order.domain.repository.OrderRepository;
-import cn.dextea.trade.order.domain.repository.ProductRepository;
-import cn.dextea.trade.order.domain.repository.StoreRepository;
-import cn.dextea.trade.order.domain.service.SkuIdService;
-import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
+import cn.dextea.trade.order.domain.service.OrderCreationService;
 import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,28 +20,16 @@ import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreateOrderUseCase {
 
-    private static final int PAY_EXPIRE_MINUTES = 15;
-
-    private final StoreRepository storeRepository;
-    private final CustomerRepository customerRepository;
-    private final ProductRepository productRepository;
-    private final OrderRepository orderRepository;
-    private final SkuIdService skuIdService;
-    private final OrderNoGenerator orderNoGenerator;
-    private final PaymentPort paymentPort;
+    private final OrderCreationService orderCreationService;
     private final IdempotencyStore idempotencyStore;
     private final OrderCreateLock orderCreateLock;
 
@@ -102,38 +80,37 @@ public class CreateOrderUseCase {
     }
 
     private OrderCreateResult doCreate(CreateOrderCommand command, String idempotencyKey) {
-        Store store = storeRepository.getStoreById(command.getStoreId());
-        store.ensureActive();
+        List<SkuItem> skuItems = OrderItemAssembler.toSkuItems(command.getItems());
 
-        Customer customer = customerRepository.getCustomerById(command.getCustomerId());
-        customer.ensureActive();
+        Order order;
+        try {
+            order = orderCreationService.createOrder(
+                    command.getCustomerId(), command.getStoreId(), skuItems,
+                    command.getSource(), command.getPaymentMethod(), command.getDiningMethod(),
+                    command.getNote(), idempotencyKey);
+        } catch (DuplicateKeyException e) {
+            // MySQL 唯一索引兜底保证幂等键唯一
+            if (isIdempotencyKeyConflict(e)) {
+                log.warn("创建订单落库触发幂等键唯一约束冲突, 拒绝重复请求, customerId={}, idempotencyKey={}",
+                        command.getCustomerId(), idempotencyKey);
+                throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
+            }
+            throw e;
+        }
 
-        List<String> skuIds = command.getItems().stream()
-                .map(item -> item.getSkuId())
-                .collect(Collectors.toList());
-        Set<Long> productIds = skuIdService.extractProductIds(skuIds);
-        Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, store.getId());
+        // 幂等键写入 Redis
+        try {
+            idempotencyStore.record(idempotencyKey, order.getOrderNo());
+            log.debug("幂等键写入Redis成功, idempotencyKey={}, orderNo={}", idempotencyKey, order.getOrderNo());
+        } catch (Exception e) {
+            log.error("幂等键写入Redis失败，依赖MySQL唯一索引兜底, idempotencyKey={}, orderNo={}",
+                    idempotencyKey, order.getOrderNo(), e);
+        }
 
-        Order order = Order.create(command.getCustomerId(), command.getStoreId(), orderNoGenerator,
-                command.getSource(), command.getPaymentMethod(), command.getDiningMethod(),
-                command.getNote(), idempotencyKey, orderRepository);
-        log.debug("创建订单领域对象完成, customerId={}, storeId={}, orderNo={}, idempotencyKey={}",
-                command.getCustomerId(), command.getStoreId(), order.getOrderNo(), idempotencyKey);
-
+        // 按可售状态分组
         List<CreateOrderItem> availableItems = new ArrayList<>();
         List<CreateOrderItem> unavailableItems = new ArrayList<>();
-
-        for (CreateOrderItem commandItem : command.getItems()) {
-            Long productId = skuIdService.extractProductId(commandItem.getSkuId());
-            Product product = products.get(productId);
-            if (product == null) {
-                log.warn("创建订单失败, 商品不存在, customerId={}, storeId={}, skuId={}, productId={}",
-                        command.getCustomerId(), command.getStoreId(), commandItem.getSkuId(), productId);
-                throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品不存在: productId=" + productId);
-            }
-
-            OrderItem orderItem = order.addItem(product, commandItem.getSkuId(), commandItem.getQuantity());
-
+        for (OrderItem orderItem : order.getItems()) {
             CreateOrderItem item = OrderItemAssembler.toCreateItem(orderItem);
             if (orderItem.getAvailable()) {
                 availableItems.add(item);
@@ -146,43 +123,6 @@ public class CreateOrderUseCase {
                     command.getCustomerId(), command.getStoreId(), unavailableItems.size(), command.getItems().size());
         }
 
-        LocalDateTime paymentExpiredAt = LocalDateTime.now().plusMinutes(PAY_EXPIRE_MINUTES);
-        String tradeNo = paymentPort.createTradeNo(CreateTradeRequest.builder()
-                .orderNo(order.getOrderNo())
-                .buyerOpenId(resolveBuyerOpenId(customer, command.getPaymentMethod()))
-                .totalPrice(order.getTotalPrice())
-                .totalQuantity(order.getTotalQuantity())
-                .paymentMethod(command.getPaymentMethod())
-                .payExpireAt(paymentExpiredAt)
-                .build());
-        order.markCreated(tradeNo, paymentExpiredAt);
-        log.debug("调用支付网关创建交易单成功, customerId={}, orderNo={}, tradeNo={}, payExpiredAt={}",
-                command.getCustomerId(), order.getOrderNo(), tradeNo, paymentExpiredAt);
-
-        // 数据落库
-        try {
-            order.save();
-            log.debug("订单落库成功, orderNo={}, orderId={}, idempotencyKey={}",
-                    order.getOrderNo(), order.getId(), idempotencyKey);
-        } catch (DuplicateKeyException e) {
-            // MySQL 唯一索引兜底保证幂等键唯一
-            if (isIdempotencyKeyConflict(e)) {
-                log.warn("创建订单落库触发幂等键唯一约束冲突, 拒绝重复请求, customerId={}, idempotencyKey={}",
-                        command.getCustomerId(), idempotencyKey);
-                throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
-            }
-            throw e;
-        }
-
-        // 幂等键落库redis
-        try {
-            idempotencyStore.record(idempotencyKey, order.getOrderNo());
-            log.debug("幂等键写入Redis成功, idempotencyKey={}, orderNo={}", idempotencyKey, order.getOrderNo());
-        } catch (Exception e) {
-            log.error("幂等键写入Redis失败，依赖MySQL唯一索引兜底, idempotencyKey={}, orderNo={}",
-                    idempotencyKey, order.getOrderNo(), e);
-        }
-        
         log.info("创建订单成功, customerId={}, storeId={}, orderNo={}, tradeNo={}, totalPrice={}, totalQuantity={}, availableCount={}, unavailableCount={}",
                 command.getCustomerId(), command.getStoreId(), order.getOrderNo(), order.getTradeNo(),
                 order.getTotalPrice(), order.getTotalQuantity(), availableItems.size(), unavailableItems.size());
@@ -209,15 +149,5 @@ public class CreateOrderUseCase {
             return sqlException.getErrorCode() == 1062;
         }
         return true;
-    }
-
-    private String resolveBuyerOpenId(Customer customer, PaymentMethod method) {
-        if (method == PaymentMethod.WEIXIN) {
-            return customer.getWeixinOpenId();
-        }
-        if (method == PaymentMethod.ALIPAY) {
-            return customer.getAlipayOpenId();
-        }
-        return null;
     }
 }

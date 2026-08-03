@@ -1,13 +1,21 @@
 package cn.dextea.trade.order.application.assembler;
 
+import cn.dextea.trade.order.application.dto.shared.AbstractOrderItem;
 import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
 import cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem;
 import cn.dextea.trade.order.domain.model.OrderItem;
+import cn.dextea.trade.order.domain.model.SkuItem;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class OrderItemAssembler {
+
+    public static List<SkuItem> toSkuItems(List<? extends AbstractOrderItem> items) {
+        return items.stream()
+                .map(item -> new SkuItem(item.getSkuId(), item.getQuantity()))
+                .collect(Collectors.toList());
+    }
 
     public static CreateOrderItem toCreateItem(OrderItem orderItem) {
         return CreateOrderItem.builder()

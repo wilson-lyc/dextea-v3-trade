@@ -8,7 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 @Builder
 @NoArgsConstructor
@@ -23,6 +25,7 @@ public class Store {
 
     public void ensureActive() {
         if (!isActive()) {
+            log.warn("门店不可下单, storeId={}, status={}", id, status);
             throw new BizError(OrderErrorCode.STORE_INACTIVE);
         }
     }

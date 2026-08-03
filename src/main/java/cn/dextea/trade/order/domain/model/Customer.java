@@ -7,7 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 @Builder
 @NoArgsConstructor
@@ -24,6 +26,7 @@ public class Customer {
 
     public void ensureActive() {
         if (!isActive()) {
+            log.warn("顾客状态校验失败, customerId={}, status={}", id, status);
             throw new BizError(OrderErrorCode.CUSTOMER_INACTIVE);
         }
     }
