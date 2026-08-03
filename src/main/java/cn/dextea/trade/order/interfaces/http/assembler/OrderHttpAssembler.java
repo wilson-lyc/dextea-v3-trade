@@ -8,7 +8,7 @@ import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enums.DiningMethod;
 import cn.dextea.trade.order.domain.model.enums.OrderSource;
-import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
+import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;

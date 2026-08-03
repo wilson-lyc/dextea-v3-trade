@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.api.dto;
+package cn.dextea.trade.pay.interface_.mq.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 @Data

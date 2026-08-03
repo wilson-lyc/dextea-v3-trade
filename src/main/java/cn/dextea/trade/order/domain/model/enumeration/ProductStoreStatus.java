@@ -1,18 +1,16 @@
-package cn.dextea.trade.order.domain.model.enums;
+package cn.dextea.trade.order.domain.model.enumeration;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
-public enum MakingStatus implements CodeEnum {
-    PENDING(0, "待制作"),
-    PREPARING(1, "制作中"),
-    READY(2, "制作完成"),
-    COLLECTED(3, "已取餐");
+public enum ProductStoreStatus implements CodeEnum {
+    SOLD_OUT(0, "售罄"),
+    ACTIVE(1, "可售");
 
     private final int code;
     private final String description;
 
-    MakingStatus(int code, String description) {
+    ProductStoreStatus(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -26,7 +24,7 @@ public enum MakingStatus implements CodeEnum {
         return description;
     }
 
-    public static MakingStatus of(Integer code) {
-        return EnumUtils.of(MakingStatus.class, code);
+    public static ProductStoreStatus of(Integer code) {
+        return EnumUtils.of(ProductStoreStatus.class, code);
     }
 }

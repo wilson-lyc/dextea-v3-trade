@@ -1,6 +1,6 @@
 package cn.dextea.trade.pay.application.service.impl;
-import cn.dextea.trade.pay.api.dto.PaymentCallbackData;
-import cn.dextea.trade.pay.api.dto.PaymentCallbackMessage;
+import cn.dextea.trade.pay.interface_.mq.dto.PaymentCallbackData;
+import cn.dextea.trade.pay.interface_.mq.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.application.service.PaymentCallbackService;
 import cn.dextea.trade.pay.domain.model.PaymentResult;
 import cn.dextea.trade.pay.domain.service.PaymentDomainService;

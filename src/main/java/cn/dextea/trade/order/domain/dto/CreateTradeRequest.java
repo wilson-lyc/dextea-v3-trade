@@ -1,20 +1,28 @@
-package cn.dextea.trade.pay.application.command;
+package cn.dextea.trade.order.domain.dto;
+
 import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreatePaymentCommand {
+public class CreateTradeRequest {
+
     private String orderNo;
+
+    private String buyerOpenId;
+
     private BigDecimal totalPrice;
-    private String customerOpenId;
+
     private Integer totalQuantity;
-    private PaymentMethod platform;
-    private LocalDateTime payExpireAt;
+
+    private PaymentMethod paymentMethod;
+
+    private java.time.LocalDateTime payExpireAt;
 }

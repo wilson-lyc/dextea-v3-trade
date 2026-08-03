@@ -15,6 +15,8 @@ public class CustomerConverter {
         }
         return Customer.builder()
                 .id(po.getId())
+                .weixinOpenId(po.getWeixinOpenId())
+                .alipayOpenId(po.getAlipayOpenId())
                 .status(EnumUtils.of(CustomerStatus.class, po.getStatus()))
                 .build();
     }

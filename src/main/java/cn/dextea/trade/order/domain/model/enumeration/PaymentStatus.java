@@ -1,17 +1,19 @@
-package cn.dextea.trade.order.domain.model.enums;
+package cn.dextea.trade.order.domain.model.enumeration;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
-public enum PaymentMethod implements CodeEnum {
-    CASH(0, "现金"),
-    ALIPAY(1, "支付宝"),
-    WEIXIN(2, "微信");
+public enum PaymentStatus implements CodeEnum {
+    PENDING(0, "支付中"),
+    TIMEOUT(1, "支付超时"),
+    PAID(2, "已支付"),
+    REFUNDING(3, "退款中"),
+    REFUNDED(4, "已退款");
 
     private final int code;
     private final String description;
 
-    PaymentMethod(int code, String description) {
+    PaymentStatus(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -25,7 +27,7 @@ public enum PaymentMethod implements CodeEnum {
         return description;
     }
 
-    public static PaymentMethod of(Integer code) {
-        return EnumUtils.of(PaymentMethod.class, code);
+    public static PaymentStatus of(Integer code) {
+        return EnumUtils.of(PaymentStatus.class, code);
     }
 }

@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Customer {
     private Long id;
+    private String weixinOpenId;
+    private String alipayOpenId;
     private CustomerStatus status;
 
     public boolean isActive() {

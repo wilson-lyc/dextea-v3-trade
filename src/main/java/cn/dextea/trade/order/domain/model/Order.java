@@ -4,7 +4,7 @@ import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.enums.DiningMethod;
 import cn.dextea.trade.order.domain.model.enums.MakingStatus;
 import cn.dextea.trade.order.domain.model.enums.OrderSource;
-import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
+import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import cn.dextea.trade.order.domain.model.enums.PaymentStatus;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;

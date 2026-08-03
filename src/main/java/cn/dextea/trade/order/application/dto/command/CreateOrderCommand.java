@@ -1,9 +1,8 @@
 package cn.dextea.trade.order.application.dto.command;
-import cn.dextea.trade.pay.domain.enums.PlatformEnum;
 import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
 import cn.dextea.trade.order.domain.model.enums.DiningMethod;
 import cn.dextea.trade.order.domain.model.enums.OrderSource;
-import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
+import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;

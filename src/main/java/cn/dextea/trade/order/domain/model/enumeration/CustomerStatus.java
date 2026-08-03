@@ -1,16 +1,16 @@
-package cn.dextea.trade.order.domain.model.enums;
+package cn.dextea.trade.order.domain.model.enumeration;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
-public enum ProductGlobalStatus implements CodeEnum {
-    DISABLED(0, "下架"),
-    ACTIVE(1, "上架");
+public enum CustomerStatus implements CodeEnum {
+    DISABLED(0, "禁用"),
+    ACTIVE(1, "激活");
 
     private final int code;
     private final String description;
 
-    ProductGlobalStatus(int code, String description) {
+    CustomerStatus(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -24,7 +24,7 @@ public enum ProductGlobalStatus implements CodeEnum {
         return description;
     }
 
-    public static ProductGlobalStatus of(Integer code) {
-        return EnumUtils.of(ProductGlobalStatus.class, code);
+    public static CustomerStatus of(Integer code) {
+        return EnumUtils.of(CustomerStatus.class, code);
     }
 }

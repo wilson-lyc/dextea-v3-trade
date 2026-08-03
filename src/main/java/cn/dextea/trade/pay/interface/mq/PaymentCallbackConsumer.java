@@ -1,5 +1,5 @@
-package cn.dextea.trade.pay.api.mq;
-import cn.dextea.trade.pay.api.dto.PaymentCallbackMessage;
+package cn.dextea.trade.pay.interface_.mq;
+import cn.dextea.trade.pay.interface_.mq.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.application.service.PaymentCallbackService;
 import cn.dextea.trade.pay.infrastructure.config.RocketMqConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
