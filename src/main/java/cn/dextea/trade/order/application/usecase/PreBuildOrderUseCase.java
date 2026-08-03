@@ -3,7 +3,6 @@ package cn.dextea.trade.order.application.usecase;
 import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem;
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Customer;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
@@ -36,14 +35,10 @@ public class PreBuildOrderUseCase {
 
     public PreBuildOrderResult execute(PreBuildOrderCommand command) {
         Store store = storeRepository.getStoreById(command.getStoreId());
-        if (!store.isActive()) {
-            throw new BizError(OrderErrorCode.STORE_INACTIVE);
-        }
+        store.ensureActive();
 
         Customer customer = customerRepository.getCustomerById(command.getCustomerId());
-        if (!customer.isActive()) {
-            throw new BizError(OrderErrorCode.CUSTOMER_INACTIVE);
-        }
+        customer.ensureActive();
 
         List<String> skuIds = command.getItems().stream()
                 .map(item -> item.getSkuId())

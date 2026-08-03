@@ -85,12 +85,12 @@ public class Order {
     }
 
     public Quantity getTotalQuantity() {
-        Quantity total = null;
+        Quantity total = Quantity.ZERO;
         for (OrderItem item : items) {
             if (item.getQuantity() == null) {
                 continue;
             }
-            total = total == null ? item.getQuantity() : total.add(item.getQuantity());
+            total = total.add(item.getQuantity());
         }
         return total;
     }
