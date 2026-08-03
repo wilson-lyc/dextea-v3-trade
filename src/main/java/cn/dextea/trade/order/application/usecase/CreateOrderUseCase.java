@@ -98,6 +98,14 @@ public class CreateOrderUseCase {
             throw e;
         }
 
+        // 存在不可售商品时已降级为预构建结果：未生成订单号、未创建交易、未落库，也不记录幂等键，
+        // 直接返回订单数据供前端识别不可下单的商品
+        if (!order.isInitialized()) {
+            log.warn("创建订单降级为预构建结果, 不记录幂等键, customerId={}, storeId={}, idempotencyKey={}",
+                    command.getCustomerId(), command.getStoreId(), idempotencyKey);
+            return toResult(order);
+        }
+
         // 幂等键写入 Redis
         try {
             idempotencyStore.record(idempotencyKey, order.getOrderNo());
@@ -107,6 +115,17 @@ public class CreateOrderUseCase {
                     idempotencyKey, order.getOrderNo(), e);
         }
 
+        OrderCreateResult result = toResult(order);
+
+        log.info("创建订单成功, customerId={}, storeId={}, orderNo={}, tradeNo={}, totalPrice={}, totalQuantity={}, availableCount={}, unavailableCount={}",
+                command.getCustomerId(), command.getStoreId(), order.getOrderNo(), order.getTradeNo(),
+                order.getTotalPrice(), order.getTotalQuantity(),
+                result.getAvailable().size(), result.getUnavailable().size());
+
+        return result;
+    }
+
+    private OrderCreateResult toResult(Order order) {
         // 按可售状态分组
         List<CreateOrderItem> availableItems = new ArrayList<>();
         List<CreateOrderItem> unavailableItems = new ArrayList<>();
@@ -118,14 +137,6 @@ public class CreateOrderUseCase {
                 unavailableItems.add(item);
             }
         }
-        if (!unavailableItems.isEmpty()) {
-            log.debug("创建订单存在不可售商品, customerId={}, storeId={}, unavailableCount={}, totalCount={}",
-                    command.getCustomerId(), command.getStoreId(), unavailableItems.size(), command.getItems().size());
-        }
-
-        log.info("创建订单成功, customerId={}, storeId={}, orderNo={}, tradeNo={}, totalPrice={}, totalQuantity={}, availableCount={}, unavailableCount={}",
-                command.getCustomerId(), command.getStoreId(), order.getOrderNo(), order.getTradeNo(),
-                order.getTotalPrice(), order.getTotalQuantity(), availableItems.size(), unavailableItems.size());
 
         return OrderCreateResult.builder()
                 .available(OrderItemAssembler.toPreBuildItems(availableItems))

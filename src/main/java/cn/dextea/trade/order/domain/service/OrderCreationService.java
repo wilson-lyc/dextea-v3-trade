@@ -89,6 +89,15 @@ public class OrderCreationService {
         // 复用 preBuildOrder 完成门店/顾客校验、商品加载与订单明细初始化
         Order order = preBuildOrder(customerId, storeId, items);
 
+        // 存在不可售订单项：终止生成订单号与创建交易，降级为预构建结果，仅返回订单数据
+        boolean hasUnavailableItem = order.getItems().stream()
+                .anyMatch(orderItem -> !Boolean.TRUE.equals(orderItem.getAvailable()));
+        if (hasUnavailableItem) {
+            log.warn("创建订单存在不可售商品, 终止下单, customerId={}, storeId={}, itemCount={}",
+                    customerId, storeId, items.size());
+            return order;
+        }
+
         // 补充订单信息：订单号、来源、支付方式、取餐方式、备注、幂等键
         order.initialize(orderNoGenerator.next(), source, paymentMethod, diningMethod, note, idempotencyKey);
 
