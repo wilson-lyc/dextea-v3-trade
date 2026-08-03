@@ -106,6 +106,13 @@ public class Order {
         return !items.isEmpty();
     }
 
+    /**
+     * 订单是否已完成下单初始化（已生成订单号）。未初始化表示仍处于预构建状态。
+     */
+    public boolean isInitialized() {
+        return orderNo != null;
+    }
+
     public Money getTotalPrice() {
         Money total = Money.ZERO;
         for (OrderItem item : items) {
