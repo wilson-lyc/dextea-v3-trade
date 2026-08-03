@@ -2,8 +2,8 @@ package cn.dextea.trade.order.infrastructure.persistence.converter;
 
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.ProductCover;
-import cn.dextea.trade.order.domain.model.enums.ProductGlobalStatus;
-import cn.dextea.trade.order.domain.model.enums.ProductStoreStatus;
+import cn.dextea.trade.order.domain.model.enumeration.ProductGlobalStatus;
+import cn.dextea.trade.order.domain.model.enumeration.ProductStoreStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.ProductsPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.ProductStoreStatusPO;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;

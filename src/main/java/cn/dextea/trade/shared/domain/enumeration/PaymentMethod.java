@@ -2,10 +2,8 @@ package cn.dextea.trade.shared.domain.enumeration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
 public enum PaymentMethod implements StringCodeEnum, CodeEnum {
     @JsonProperty("cash")
     CASH("cash", 0, "现金"),
@@ -17,6 +15,17 @@ public enum PaymentMethod implements StringCodeEnum, CodeEnum {
     private final String key;
     private final int code;
     private final String description;
+
+    PaymentMethod(String key, int code, String description) {
+        this.key = key;
+        this.code = code;
+        this.description = description;
+    }
+
+    @Override
+    public int getCode() {
+        return code;
+    }
 
     @Override
     public String getValue() {

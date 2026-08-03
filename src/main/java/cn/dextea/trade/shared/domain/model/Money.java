@@ -1,12 +1,10 @@
-package cn.dextea.trade.shared.domain.money;
+package cn.dextea.trade.shared.domain.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
-import cn.dextea.trade.shared.domain.quantity.Quantity;
 
 @Getter
 @EqualsAndHashCode

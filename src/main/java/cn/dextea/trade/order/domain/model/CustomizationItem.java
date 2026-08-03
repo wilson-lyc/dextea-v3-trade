@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model;
 
-import cn.dextea.trade.order.domain.model.enums.CustomizationItemStatus;
+import cn.dextea.trade.order.domain.model.enumeration.CustomizationItemStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

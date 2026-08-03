@@ -1,7 +1,7 @@
 package cn.dextea.trade.order.infrastructure.persistence.converter;
 
 import cn.dextea.trade.order.domain.model.Customer;
-import cn.dextea.trade.order.domain.model.enums.CustomerStatus;
+import cn.dextea.trade.order.domain.model.enumeration.CustomerStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.CustomerPO;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 import org.springframework.stereotype.Component;

@@ -1,8 +1,8 @@
 package cn.dextea.trade.order.infrastructure.persistence.converter;
 
 import cn.dextea.trade.order.domain.model.CustomizationOption;
-import cn.dextea.trade.order.domain.model.enums.CustomizationOptionGlobalStatus;
-import cn.dextea.trade.order.domain.model.enums.CustomizationOptionStoreStatus;
+import cn.dextea.trade.order.domain.model.enumeration.CustomizationOptionGlobalStatus;
+import cn.dextea.trade.order.domain.model.enumeration.CustomizationOptionStoreStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationOptionPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationOptionStoreStatusPO;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;

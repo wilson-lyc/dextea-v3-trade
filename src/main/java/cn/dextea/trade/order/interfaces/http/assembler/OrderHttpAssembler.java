@@ -6,15 +6,15 @@ import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.model.enums.DiningMethod;
-import cn.dextea.trade.order.domain.model.enums.OrderSource;
+import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
+import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
 import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
-import cn.dextea.trade.shared.domain.quantity.Quantity;
+import cn.dextea.trade.shared.domain.model.Quantity;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,8 +1,8 @@
 package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.model.enums.ProductGlobalStatus;
-import cn.dextea.trade.order.domain.model.enums.ProductStoreStatus;
+import cn.dextea.trade.order.domain.model.enumeration.ProductGlobalStatus;
+import cn.dextea.trade.order.domain.model.enumeration.ProductStoreStatus;
 import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.shared.domain.model.Money;
 

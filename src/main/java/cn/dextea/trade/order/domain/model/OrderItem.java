@@ -2,8 +2,8 @@ package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.shared.domain.money.Money;
-import cn.dextea.trade.shared.domain.quantity.Quantity;
+import cn.dextea.trade.shared.domain.model.Money;
+import cn.dextea.trade.shared.domain.model.Quantity;
 
 import lombok.Getter;
 
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 @Getter
 public class OrderItem {
     private Long id;
+    private Long orderId;
     private Long productId;
     private String productName;
     private String skuId;
@@ -99,6 +100,14 @@ public class OrderItem {
         orderItem.unitPrice = product.getPrice().add(customizationPrice);
         orderItem.available = available;
         return orderItem;
+    }
+
+    public void assignId(Long id) {
+        this.id = id;
+    }
+
+    public void assignOrderId(Long orderId) {
+        this.orderId = orderId;
     }
 
     public Money getTotalPrice() {

@@ -2,7 +2,7 @@ package cn.dextea.trade.order.infrastructure.persistence.converter;
 
 import cn.dextea.trade.order.domain.model.CustomizationItem;
 import cn.dextea.trade.order.domain.model.CustomizationOption;
-import cn.dextea.trade.order.domain.model.enums.CustomizationItemStatus;
+import cn.dextea.trade.order.domain.model.enumeration.CustomizationItemStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationItemPO;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 import org.springframework.stereotype.Component;

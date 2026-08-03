@@ -1,13 +1,13 @@
 package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.model.Product;
-import cn.dextea.trade.order.domain.model.enums.DiningMethod;
-import cn.dextea.trade.order.domain.model.enums.MakingStatus;
-import cn.dextea.trade.order.domain.model.enums.OrderSource;
+import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
+import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
+import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
 import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
-import cn.dextea.trade.order.domain.model.enums.PaymentStatus;
-import cn.dextea.trade.shared.domain.money.Money;
-import cn.dextea.trade.shared.domain.quantity.Quantity;
+import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
+import cn.dextea.trade.shared.domain.model.Money;
+import cn.dextea.trade.shared.domain.model.Quantity;
 
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 
@@ -65,6 +65,10 @@ public class Order {
         order.note = note;
         order.idempotencyKey = idempotencyKey;
         return order;
+    }
+
+    public void assignId(Long id) {
+        this.id = id;
     }
 
     public void markCreated(String tradeNo, LocalDateTime paymentExpiredAt) {
