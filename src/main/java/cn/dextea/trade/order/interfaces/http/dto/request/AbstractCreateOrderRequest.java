@@ -20,22 +20,6 @@ public abstract class AbstractCreateOrderRequest<T extends AbstractOrderItem> {
     @Schema(description = "门店 ID", example = "1")
     private Long storeId;
 
-    @NotNull(message = "diningMethod 不能为空")
-    @Schema(description = "用餐方式", example = "0")
-    private Integer diningMethod;
-
-    @NotNull(message = "source 不能为空")
-    @Schema(description = "订单来源", example = "0")
-    private Integer source;
-
-    @NotNull(message = "paymentMethod 不能为空")
-    @Schema(description = "支付方式", example = "0")
-    private Integer paymentMethod;
-
-    @Size(max = 500, message = "备注不能超过 500 字")
-    @Schema(description = "订单备注（选填）", example = "少放辣椒，不要香菜")
-    private String note;
-
     @Valid
     @NotEmpty(message = "items 不能为空")
     @Schema(description = "订单明细列表")

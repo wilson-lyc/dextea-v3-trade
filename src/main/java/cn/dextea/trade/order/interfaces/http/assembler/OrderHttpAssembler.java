@@ -26,10 +26,6 @@ public final class OrderHttpAssembler {
         return PreBuildOrderCommand.builder()
                 .storeId(request.getStoreId())
                 .customerId(customerId)
-                .source(request.getSource())
-                .paymentMethod(request.getPaymentMethod())
-                .diningMethod(toDiningMethod(request.getDiningMethod()))
-                .note(request.getNote())
                 .items(toAppItems(request.getItems(), cn.dextea.trade.order.application.dto.shared.PreBuildOrderItem::new))
                 .build();
     }
