@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,16 +31,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class OrderController {
 
+    /**
+     * 获取顾客ID的请求头名称，直接写死，不再支持环境变量配置。
+     */
+    private static final String CUSTOMER_ID_HEADER = "X-Customer-Id";
+
     private final PreBuildOrderUseCase preBuildOrderUseCase;
     private final CreateOrderUseCase createOrderUseCase;
-
-    @Value("${order.customer-id-header}")
-    private String customerIdHeader;
 
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
     public APIResponse<PreBuildOrderResponse> preBuildOrder(
-            @RequestHeader(customerIdHeader) @NotNull(message = "customerId 不能为空") Long customerId,
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody PreBuildOrderRequest request) {
         PreBuildOrderCommand command = OrderHttpAssembler.toPreBuildCommand(request, customerId);
         PreBuildOrderResult result = preBuildOrderUseCase.execute(command);
@@ -51,7 +52,7 @@ public class OrderController {
     @PostMapping
     @Operation(summary = "创建订单")
     public APIResponse<CreateOrderResponse> create(
-            @RequestHeader(customerIdHeader) @NotNull(message = "customerId 不能为空") Long customerId,
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody CreateOrderRequest request) {
         CreateOrderCommand command = OrderHttpAssembler.toCreateCommand(request, customerId);
         OrderCreateResult result = createOrderUseCase.execute(command);

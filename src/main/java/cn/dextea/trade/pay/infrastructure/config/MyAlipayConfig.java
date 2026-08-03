@@ -1,6 +1,7 @@
 package cn.dextea.trade.pay.infrastructure.config;
 
 import com.alipay.v3.ApiClient;
+import com.alipay.v3.ApiException;
 import com.alipay.v3.util.model.AlipayConfig;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +19,11 @@ public class MyAlipayConfig {
         config.setAppId(properties.getAppId());
         config.setPrivateKey(properties.getPrivateKey());
         config.setAlipayPublicKey(properties.getAlipayPublicKey());
-        apiClient.setAlipayConfig(config);
+        try {
+            apiClient.setAlipayConfig(config);
+        } catch (ApiException e) {
+            throw new IllegalStateException("初始化支付宝 API 客户端失败", e);
+        }
         return apiClient;
     }
 }

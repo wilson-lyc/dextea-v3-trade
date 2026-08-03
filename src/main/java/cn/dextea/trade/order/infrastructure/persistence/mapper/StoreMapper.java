@@ -8,6 +8,6 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface StoreMapper {
 
-    @Select("SELECT * FROM store WHERE id = #{id}")
+    @Select("SELECT * FROM stores WHERE id = #{id}")
     StorePO selectById(@Param("id") Long id);
 }

@@ -13,10 +13,12 @@ import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
+import cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 import cn.dextea.trade.shared.domain.model.Quantity;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class OrderHttpAssembler {
@@ -46,48 +48,53 @@ public final class OrderHttpAssembler {
     }
 
     public static PreBuildOrderResponse toPreBuildResponse(PreBuildOrderResult result) {
+        Supplier<PreBuildOrderItem> factory = PreBuildOrderItem::new;
         return PreBuildOrderResponse.builder()
-                .unavailable(toWebItems(result.getUnavailable(), cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem::new))
-                .available(toWebItems(result.getAvailable(), cn.dextea.trade.order.interfaces.http.dto.shared.PreBuildOrderItem::new))
+                .unavailable(toWebItems(result.getUnavailable(), factory))
+                .available(toWebItems(result.getAvailable(), factory))
                 .totalQuantity(result.getTotalQuantity() == null ? null : result.getTotalQuantity().getValue())
                 .totalPrice(result.getTotalPrice() == null ? null : result.getTotalPrice().getValue())
                 .build();
     }
 
     public static CreateOrderResponse toCreateResponse(OrderCreateResult result) {
+        Supplier<cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem> factory =
+                cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new;
         return CreateOrderResponse.builder()
                 .id(result.getId())
                 .orderNo(result.getOrderNo())
                 .tradeNo(result.getTradeNo())
                 .paymentExpiredAt(result.getPaymentExpiredAt())
-                .unavailable(toWebItems(result.getUnavailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
-                .available(toWebItems(result.getAvailable(), cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem::new))
+                .unavailable(toWebItems(result.getUnavailable(), factory))
+                .available(toWebItems(result.getAvailable(), factory))
                 .totalQuantity(result.getTotalQuantity() == null ? null : result.getTotalQuantity().getValue())
                 .totalPrice(result.getTotalPrice() == null ? null : result.getTotalPrice().getValue())
                 .build();
     }
 
-    private static List<cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> toAppItems(
-            List<cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem> sources,
-            java.util.function.Supplier<cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> factory) {
+    private static <S extends cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem,
+            T extends cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> List<T> toAppItems(
+            List<S> sources,
+            java.util.function.Supplier<T> factory) {
         if (sources == null) {
             return null;
         }
         return sources.stream().map(source -> {
-            cn.dextea.trade.order.application.dto.shared.AbstractOrderItem item = factory.get();
+            T item = factory.get();
             copyToApp(source, item);
             return item;
         }).collect(Collectors.toList());
     }
 
-    private static List<cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem> toWebItems(
-            List<cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> sources,
-            java.util.function.Supplier<cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem> factory) {
+    private static <S extends cn.dextea.trade.order.application.dto.shared.AbstractOrderItem,
+            T extends cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem> List<T> toWebItems(
+            List<S> sources,
+            java.util.function.Supplier<T> factory) {
         if (sources == null) {
             return null;
         }
         return sources.stream().map(source -> {
-            cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem item = factory.get();
+            T item = factory.get();
             copyToWeb(source, item);
             return item;
         }).collect(Collectors.toList());

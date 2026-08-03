@@ -54,7 +54,6 @@ springdoc:
   paths-to-match: /api/**
 
 order:
-  customer-id-header: ${ORDER_CUSTOMER_ID_HEADER:X-Customer-Id}
   payment_ttl: ${ORDER_PAYMENT_TTL:15}
   create_order_idem_ttl: ${ORDER_CREATE_ORDER_IDEM_TTL:1440}
   create_order_lock_ttl: ${ORDER_CREATE_ORDER_LOCK_TTL:1}

@@ -2,7 +2,8 @@ package cn.dextea.trade.order.infrastructure.adapter;
 
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 import lombok.RequiredArgsConstructor;
-import me.ahoo.cosid.snowflake.SnowflakeId;
+import me.ahoo.cosid.IdGenerator;
+import me.ahoo.cosid.provider.IdGeneratorProvider;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -14,11 +15,17 @@ public class SnowflakeOrderNoGenerator implements OrderNoGenerator {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    private final SnowflakeId snowflakeId;
+    /**
+     * 与 application.yaml 中 cosid.snowflake.provider.order.namespace 对应的 provider 名称。
+     */
+    private static final String PROVIDER_NAME = "order";
+
+    private final IdGeneratorProvider idGeneratorProvider;
 
     @Override
     public String next() {
+        IdGenerator idGenerator = idGeneratorProvider.getRequired(PROVIDER_NAME);
         String datePrefix = LocalDate.now().format(DATE_FORMAT);
-        return datePrefix + snowflakeId.generateAsString();
+        return datePrefix + idGenerator.generateAsString();
     }
 }

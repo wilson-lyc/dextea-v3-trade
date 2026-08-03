@@ -116,6 +116,9 @@ public class Order {
     public Money getTotalPrice() {
         Money total = Money.ZERO;
         for (OrderItem item : items) {
+            if (item.getAvailable() == null || !item.getAvailable()) {
+                continue;
+            }
             total = total.add(item.getTotalPrice());
         }
         return total;
@@ -124,6 +127,9 @@ public class Order {
     public Quantity getTotalQuantity() {
         Quantity total = Quantity.ZERO;
         for (OrderItem item : items) {
+            if (item.getAvailable() == null || !item.getAvailable()) {
+                continue;
+            }
             if (item.getQuantity() == null) {
                 continue;
             }

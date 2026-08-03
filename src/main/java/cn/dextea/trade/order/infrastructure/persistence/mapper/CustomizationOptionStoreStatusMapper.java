@@ -10,9 +10,9 @@ import java.util.List;
 @Mapper
 public interface CustomizationOptionStoreStatusMapper {
 
-    @Select("SELECT * FROM customization_option_store_status WHERE option_id IN "
+    @Select("<script>SELECT * FROM customization_option_store_status WHERE option_id IN "
             + "<foreach collection='optionIds' item='oid' open='(' separator=',' close=')'>#{oid}</foreach> "
-            + "AND store_id = #{storeId}")
+            + "AND store_id = #{storeId}</script>")
     List<CustomizationOptionStoreStatusPO> selectByOptionIdsAndStoreId(@Param("optionIds") java.util.Set<Long> optionIds,
                                                                        @Param("storeId") Long storeId);
 }

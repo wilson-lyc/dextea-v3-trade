@@ -11,7 +11,7 @@ import java.util.Set;
 @Mapper
 public interface CustomizationItemMapper {
 
-    @Select("<script>SELECT * FROM customization_item WHERE product_id IN "
+    @Select("<script>SELECT * FROM customization_items WHERE product_id IN "
             + "<foreach collection='productIds' item='pid' open='(' separator=',' close=')'>#{pid}</foreach></script>")
     List<CustomizationItemPO> selectByProductIds(@Param("productIds") Set<Long> productIds);
 }
