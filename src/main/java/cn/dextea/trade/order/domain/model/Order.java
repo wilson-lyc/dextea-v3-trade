@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.model.Product;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enums.DiningMethod;
 import cn.dextea.trade.order.domain.model.enums.MakingStatus;
 import cn.dextea.trade.order.domain.model.enums.OrderSource;
@@ -8,6 +9,7 @@ import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
 import cn.dextea.trade.order.domain.model.enums.PaymentStatus;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
+import cn.dextea.trade.shared.domain.error.BizError;
 
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 
@@ -68,13 +70,13 @@ public class Order {
 
     public OrderItem addItem(Product product, String skuId, Quantity quantity) {
         if (product == null) {
-            throw new IllegalArgumentException("product must not be null when adding an order item");
+            throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND);
         }
         if (skuId == null || skuId.isEmpty()) {
-            throw new IllegalArgumentException("skuId must not be null or empty when adding an order item");
+            throw new BizError(OrderErrorCode.INVALID_SKU);
         }
         if (quantity == null || quantity.equals(Quantity.ZERO)) {
-            throw new IllegalArgumentException("quantity must not be null or zero when adding an order item");
+            throw new BizError(OrderErrorCode.INVALID_ORDER_ITEM_QUANTITY);
         }
 
         AtomicBoolean available = new AtomicBoolean(product.isActive());

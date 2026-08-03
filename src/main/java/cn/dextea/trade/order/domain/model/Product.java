@@ -51,7 +51,7 @@ public class Product {
         for (String pair : specPart.split("-")) {
             String[] ids = pair.split("_");
             if (ids.length != 2) {
-                throw new BizError(OrderErrorCode.INVALID_SKU, "非法的SKU片段: " + pair);
+                throw new BizError(OrderErrorCode.INVALID_SKU);
             }
             pairs.add(ids);
         }
@@ -65,12 +65,12 @@ public class Product {
 
             CustomizationItem item = itemMap.get(itemId);
             if (item == null) {
-                throw new BizError(OrderErrorCode.INVALID_BINDING, "客制化项目未绑定到该商品: " + itemId);
+                throw new BizError(OrderErrorCode.INVALID_BINDING, "客制化项目未绑定到该商品: productId=" + id + ", itemId=" + itemId);
             }
             CustomizationOption option = item.getOptions().stream()
                     .filter(o -> o.getId().equals(optionId))
                     .findFirst()
-                    .orElseThrow(() -> new BizError(OrderErrorCode.INVALID_BINDING, "客制化选项未绑定到该项目: " + optionId));
+                    .orElseThrow(() -> new BizError(OrderErrorCode.INVALID_BINDING, "客制化选项未绑定到该项目: productId=" + id + ", itemId=" + itemId + ", optionId=" + optionId));
 
             if (!item.isActive() || !option.isActive()) {
                 available.set(false);

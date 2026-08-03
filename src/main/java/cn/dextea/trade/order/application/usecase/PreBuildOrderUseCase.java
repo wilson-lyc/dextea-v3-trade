@@ -55,9 +55,6 @@ public class PreBuildOrderUseCase {
         for (PreBuildOrderItem commandItem : command.getItems()) {
             Long productId = skuIdService.extractProductId(commandItem.getSkuId());
             Product product = products.get(productId);
-            if (product == null) {
-                throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品不存在: " + productId);
-            }
             OrderItem orderItem = order.addItem(product, commandItem.getSkuId(), commandItem.getQuantity());
 
             PreBuildOrderItem item = toResultItem(orderItem);
@@ -81,11 +78,23 @@ public class PreBuildOrderUseCase {
                 .skuId(orderItem.getSkuId())
                 .quantity(orderItem.getQuantity())
                 .product(orderItem.getProductName())
-                .customization(orderItem.getCustomization())
+                .customization(toOptionLabels(orderItem.getCustomization()))
                 .cover(orderItem.getCover())
                 .unitPrice(orderItem.getUnitPrice())
                 .totalPrice(orderItem.getTotalPrice())
                 .available(orderItem.getAvailable())
                 .build();
+    }
+
+    private String toOptionLabels(String customization) {
+        if (customization == null || customization.isEmpty()) {
+            return customization;
+        }
+        return java.util.Arrays.stream(customization.split("-"))
+                .map(segment -> {
+                    String[] parts = segment.split("_");
+                    return parts[parts.length - 1];
+                })
+                .collect(Collectors.joining(" / "));
     }
 }

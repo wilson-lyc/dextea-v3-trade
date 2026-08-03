@@ -14,10 +14,8 @@ import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
 import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
-import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -102,27 +100,18 @@ public final class OrderHttpAssembler {
             cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem source,
             cn.dextea.trade.order.application.dto.shared.AbstractOrderItem target) {
         target.setSkuId(source.getSkuId());
-        target.setQuantity(source.getQuantity() == null ? null : Quantity.of(source.getQuantity()));
-        target.setProduct(source.getProduct());
-        target.setCustomization(source.getCustomization());
-        target.setCover(source.getCover());
-        target.setUnitPrice(toMoney(source.getUnitPrice()));
-        target.setTotalPrice(toMoney(source.getTotalPrice()));
+        target.setQuantity(Quantity.of(source.getQuantity() == null ? 0 : source.getQuantity()));
     }
 
     private static void copyToWeb(
             cn.dextea.trade.order.application.dto.shared.AbstractOrderItem source,
             cn.dextea.trade.order.interfaces.http.dto.shared.AbstractOrderItem target) {
         target.setSkuId(source.getSkuId());
-        target.setQuantity(source.getQuantity() == null ? null : source.getQuantity().getValue());
+        target.setQuantity(source.getQuantity() == null ? 0 : source.getQuantity().getValue());
         target.setProduct(source.getProduct());
         target.setCustomization(source.getCustomization());
         target.setCover(source.getCover());
         target.setUnitPrice(source.getUnitPrice() == null ? null : source.getUnitPrice().getValue());
         target.setTotalPrice(source.getTotalPrice() == null ? null : source.getTotalPrice().getValue());
-    }
-
-    private static Money toMoney(BigDecimal value) {
-        return value == null ? null : Money.of(value);
     }
 }
