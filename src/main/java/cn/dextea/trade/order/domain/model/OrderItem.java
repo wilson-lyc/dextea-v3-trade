@@ -4,7 +4,6 @@ import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
 import lombok.AllArgsConstructor;
-import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,7 +22,6 @@ public class OrderItem {
     private Quantity quantity;
     private Money unitPrice;
     private Boolean available;
-    private List<String> unavailableReason;
 
     public Money getTotalPrice() {
         if (quantity == null || unitPrice == null) {

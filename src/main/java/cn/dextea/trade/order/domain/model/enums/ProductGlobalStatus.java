@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model.enums;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
 public enum ProductGlobalStatus implements CodeEnum {
     DISABLED(0, "下架"),
@@ -21,5 +22,9 @@ public enum ProductGlobalStatus implements CodeEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public static ProductGlobalStatus of(Integer code) {
+        return EnumUtils.of(ProductGlobalStatus.class, code);
     }
 }

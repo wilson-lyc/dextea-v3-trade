@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import java.util.List;
 
 @Data
 @SuperBuilder
@@ -21,5 +20,4 @@ public class AbstractOrderItem {
     private Money unitPrice;
     private Money totalPrice;
     private Boolean available;
-    private List<String> unavailableReason;
 }

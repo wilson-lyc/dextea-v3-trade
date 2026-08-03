@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model.enums;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
 public enum CustomizationOptionGlobalStatus implements CodeEnum {
     DISABLED(0, "禁用"),
@@ -21,5 +22,9 @@ public enum CustomizationOptionGlobalStatus implements CodeEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public static CustomizationOptionGlobalStatus of(Integer code) {
+        return EnumUtils.of(CustomizationOptionGlobalStatus.class, code);
     }
 }

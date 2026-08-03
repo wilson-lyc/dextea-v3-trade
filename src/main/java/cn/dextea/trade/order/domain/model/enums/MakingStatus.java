@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model.enums;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
 public enum MakingStatus implements CodeEnum {
     PENDING(0, "待制作"),
@@ -23,5 +24,9 @@ public enum MakingStatus implements CodeEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public static MakingStatus of(Integer code) {
+        return EnumUtils.of(MakingStatus.class, code);
     }
 }

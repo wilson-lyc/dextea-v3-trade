@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model.enums;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
 public enum StoreStatus implements CodeEnum {
     CLOSED(0, "休息中"),
@@ -23,5 +24,9 @@ public enum StoreStatus implements CodeEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public static StoreStatus of(Integer code) {
+        return EnumUtils.of(StoreStatus.class, code);
     }
 }

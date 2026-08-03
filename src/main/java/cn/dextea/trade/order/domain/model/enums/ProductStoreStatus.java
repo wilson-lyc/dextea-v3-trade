@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model.enums;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
 public enum ProductStoreStatus implements CodeEnum {
     SOLD_OUT(0, "售罄"),
@@ -21,5 +22,9 @@ public enum ProductStoreStatus implements CodeEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public static ProductStoreStatus of(Integer code) {
+        return EnumUtils.of(ProductStoreStatus.class, code);
     }
 }

@@ -1,6 +1,7 @@
 package cn.dextea.trade.order.domain.model.enums;
 
 import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 
 public enum DiningMethod implements CodeEnum {
     DINE_IN(1, "堂食"),
@@ -21,5 +22,9 @@ public enum DiningMethod implements CodeEnum {
 
     public String getDescription() {
         return description;
+    }
+
+    public static DiningMethod of(Integer code) {
+        return EnumUtils.of(DiningMethod.class, code);
     }
 }

@@ -5,11 +5,15 @@ import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enums.DiningMethod;
+import cn.dextea.trade.order.domain.model.enums.OrderSource;
+import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
 import cn.dextea.trade.order.interfaces.http.dto.request.CreateOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.request.PreBuildOrderRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.CreateOrderResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.PreBuildOrderResponse;
+import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
 
@@ -34,9 +38,9 @@ public final class OrderHttpAssembler {
         return CreateOrderCommand.builder()
                 .storeId(request.getStoreId())
                 .customerId(customerId)
-                .source(request.getSource())
-                .paymentMethod(request.getPaymentMethod())
-                .diningMethod(toDiningMethod(request.getDiningMethod()))
+                .source(EnumUtils.toEnum(OrderSource::of, request.getSource(), OrderErrorCode.INVALID_ORDER_SOURCE))
+                .paymentMethod(EnumUtils.toEnum(PaymentMethod::of, request.getPaymentMethod(), OrderErrorCode.INVALID_PAYMENT_METHOD))
+                .diningMethod(EnumUtils.toEnum(DiningMethod::of, request.getDiningMethod(), OrderErrorCode.INVALID_DINING_METHOD))
                 .note(request.getNote())
                 .idempotencyKey(request.getIdempotencyKey())
                 .items(toAppItems(request.getItems(), CreateOrderItem::new))
@@ -66,18 +70,6 @@ public final class OrderHttpAssembler {
                     .totalPrice(preBuild.getTotalPrice() == null ? null : preBuild.getTotalPrice().getValue());
         }
         return builder.build();
-    }
-
-    private static DiningMethod toDiningMethod(Integer code) {
-        if (code == null) {
-            return null;
-        }
-        for (DiningMethod value : DiningMethod.values()) {
-            if (value.getCode() == code) {
-                return value;
-            }
-        }
-        throw new IllegalArgumentException("非法的 diningMethod: " + code);
     }
 
     private static List<cn.dextea.trade.order.application.dto.shared.AbstractOrderItem> toAppItems(

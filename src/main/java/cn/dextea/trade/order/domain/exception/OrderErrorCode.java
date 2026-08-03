@@ -9,7 +9,10 @@ public enum OrderErrorCode implements BizErrorCode {
     STORE_INACTIVE(101006, "门店未营业"),
     CUSTOMER_INACTIVE(101007, "顾客不可用"),
     INVALID_SKU(101008, "非法的SKU"),
-    INVALID_BINDING(101009, "非法的绑定关系");
+    INVALID_BINDING(101009, "非法的绑定关系"),
+    INVALID_DINING_METHOD(101010, "非法的用餐方式"),
+    INVALID_ORDER_SOURCE(101011, "非法的订单来源"),
+    INVALID_PAYMENT_METHOD(101012, "非法的支付方式");
     
     private final int code;
     private final String message;

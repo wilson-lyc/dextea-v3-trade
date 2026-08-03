@@ -12,6 +12,7 @@ import cn.dextea.trade.order.domain.repository.CustomerRepository;
 import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.order.domain.service.SkuIdService;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
@@ -46,15 +47,18 @@ public class PreBuildOrderUseCase {
         Set<Long> productIds = skuIdService.extractProductIds(skuIds);
         Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, store.getId());
 
+        Order order = Order.prebuild(command.getCustomerId(), command.getStoreId());
+
         List<PreBuildOrderItem> availableItems = new ArrayList<>();
         List<PreBuildOrderItem> unavailableItems = new ArrayList<>();
-        List<OrderItem> orderItems = new ArrayList<>();
 
         for (PreBuildOrderItem commandItem : command.getItems()) {
-            Product product = products.get(commandItem.getProductId());
-            OrderItem orderItem = skuIdService.buildOrderItem(
-                    product, commandItem.getSkuId(), commandItem.getQuantity());
-            orderItems.add(orderItem);
+            Long productId = skuIdService.extractProductId(commandItem.getSkuId());
+            Product product = products.get(productId);
+            if (product == null) {
+                throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品不存在: " + productId);
+            }
+            OrderItem orderItem = order.addItem(product, commandItem.getSkuId(), commandItem.getQuantity());
 
             PreBuildOrderItem item = toResultItem(orderItem);
             if (orderItem.getAvailable()) {
@@ -63,8 +67,6 @@ public class PreBuildOrderUseCase {
                 unavailableItems.add(item);
             }
         }
-
-        Order order = Order.prebuild(command.getCustomerId(), command.getStoreId(), orderItems);
 
         return PreBuildOrderResult.builder()
                 .available(availableItems)
@@ -84,7 +86,6 @@ public class PreBuildOrderUseCase {
                 .unitPrice(orderItem.getUnitPrice())
                 .totalPrice(orderItem.getTotalPrice())
                 .available(orderItem.getAvailable())
-                .unavailableReason(orderItem.getUnavailableReason())
                 .build();
     }
 }
