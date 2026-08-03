@@ -1,7 +1,6 @@
 package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.model.Product;
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enums.DiningMethod;
 import cn.dextea.trade.order.domain.model.enums.MakingStatus;
 import cn.dextea.trade.order.domain.model.enums.OrderSource;
@@ -9,7 +8,6 @@ import cn.dextea.trade.order.domain.model.enums.PaymentMethod;
 import cn.dextea.trade.order.domain.model.enums.PaymentStatus;
 import cn.dextea.trade.shared.domain.money.Money;
 import cn.dextea.trade.shared.domain.quantity.Quantity;
-import cn.dextea.trade.shared.domain.error.BizError;
 
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 
@@ -17,7 +15,6 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,7 +46,6 @@ public class Order {
     }
 
     public static Order prebuild(Long customerId, Long storeId) {
-        requireValid(customerId, storeId);
         Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
@@ -57,10 +53,6 @@ public class Order {
     }
 
     public static Order create(OrderNoGenerator orderNoGenerator, Long customerId, Long storeId) {
-        if (orderNoGenerator == null) {
-            throw new IllegalArgumentException("orderNoGenerator must not be null when creating an order");
-        }
-        requireValid(customerId, storeId);
         Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
@@ -69,41 +61,9 @@ public class Order {
     }
 
     public OrderItem addItem(Product product, String skuId, Quantity quantity) {
-        if (product == null) {
-            throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND);
-        }
-        if (skuId == null || skuId.isEmpty()) {
-            throw new BizError(OrderErrorCode.INVALID_SKU);
-        }
-        if (quantity == null || quantity.equals(Quantity.ZERO)) {
-            throw new BizError(OrderErrorCode.INVALID_ORDER_ITEM_QUANTITY);
-        }
-
-        AtomicBoolean available = new AtomicBoolean(product.isActive());
-        String customization = product.resolveCustomization(skuId, available);
-
-        OrderItem orderItem = OrderItem.builder()
-                .productId(product.getId())
-                .productName(product.getName())
-                .skuId(skuId)
-                .customization(customization)
-                .cover(product.getCover() != null ? product.getCover().getUrl() : null)
-                .quantity(quantity)
-                .unitPrice(product.getPrice())
-                .available(available.get())
-                .build();
-
+        OrderItem orderItem = OrderItem.create(product, skuId, quantity);
         items.add(orderItem);
         return orderItem;
-    }
-
-    private static void requireValid(Long customerId, Long storeId) {
-        if (storeId == null) {
-            throw new IllegalArgumentException("storeId must not be null when creating an order");
-        }
-        if (customerId == null) {
-            throw new IllegalArgumentException("customerId must not be null when creating an order");
-        }
     }
 
     public List<OrderItem> getItems() {
