@@ -50,6 +50,9 @@ public class AlipayPaymentAdapter implements PaymentPort {
         if (alipayProperties.getNotifyUrl() != null && !alipayProperties.getNotifyUrl().isBlank()) {
             model.setNotifyUrl(alipayProperties.getNotifyUrl());
         }
+        if (request.getPayExpireAt() != null) {
+            model.setTimeExpire(request.getPayExpireAt().format(ALIPAY_DATE_TIME_FORMAT));
+        }
 
         AlipayTradeApi api = new AlipayTradeApi(alipayApiClient);
         log.info("调用支付宝创建交易, outTradeNo={}, subject={}, totalAmount={}, buyerOpenId={}, notifyUrl={}",
