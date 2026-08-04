@@ -4,9 +4,8 @@ import cn.dextea.trade.order.application.assembler.MonthOrderAssembler;
 import cn.dextea.trade.order.application.dto.command.GetMonthOrdersCommand;
 import cn.dextea.trade.order.application.dto.result.GetMonthOrdersResult;
 import cn.dextea.trade.order.application.dto.result.MonthOrderItem;
-import cn.dextea.trade.order.domain.model.MonthOrderView;
 import cn.dextea.trade.order.domain.model.Order;
-import cn.dextea.trade.order.domain.repository.MonthOrderViewRepository;
+import cn.dextea.trade.order.domain.port.MonthOrderViewRepository;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.shared.domain.model.Money;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +25,10 @@ public class GetMonthOrdersUseCase {
         List<Order> orders = orderRepository.getMonthOrders(
                 command.getCustomerId(), command.getYear(), command.getMonth());
 
-        Map<Long, MonthOrderView> views = monthOrderViewRepository.findViews(
+        Map<Long, String> storeNames = monthOrderViewRepository.findStoreNames(
                 orders.stream().map(Order::getId).toList());
 
-        List<MonthOrderItem> items = MonthOrderAssembler.toItems(orders, views);
+        List<MonthOrderItem> items = MonthOrderAssembler.toItems(orders, storeNames);
 
         Money totalAmount = Money.ZERO;
         for (MonthOrderItem order : items) {

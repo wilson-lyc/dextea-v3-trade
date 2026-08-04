@@ -55,9 +55,7 @@ public class Order {
     public static Order create(Long customerId, Long storeId, OrderNoGenerator orderNoGenerator,
                                 OrderSource source, PaymentMethod paymentMethod, DiningMethod diningMethod,
                                 String note, String idempotencyKey) {
-        Order order = new Order();
-        order.customerId = customerId;
-        order.storeId = storeId;
+        Order order = create(customerId, storeId);
         order.orderNo = orderNoGenerator.next();
         order.source = source;
         order.paymentMethod = paymentMethod;
@@ -67,8 +65,8 @@ public class Order {
         return order;
     }
 
-    public Order save(OrderRepository orderRepository) {
-        return orderRepository.save(this);
+    public void save(OrderRepository orderRepository) {
+        orderRepository.save(this);
     }
 
     public void initialize(String orderNo, OrderSource source, PaymentMethod paymentMethod,
@@ -92,10 +90,9 @@ public class Order {
         this.makingStatus = MakingStatus.PENDING;
     }
 
-    public OrderItem addItem(Product product, String skuId, Quantity quantity) {
+    public void addItem(Product product, String skuId, Quantity quantity) {
         OrderItem orderItem = OrderItem.create(product, skuId, quantity);
         items.add(orderItem);
-        return orderItem;
     }
 
     public List<OrderItem> getItems() {
@@ -106,9 +103,6 @@ public class Order {
         return !items.isEmpty();
     }
 
-    /**
-     * 订单是否已完成下单初始化（已生成订单号）。未初始化表示仍处于预构建状态。
-     */
     public boolean isInitialized() {
         return orderNo != null;
     }

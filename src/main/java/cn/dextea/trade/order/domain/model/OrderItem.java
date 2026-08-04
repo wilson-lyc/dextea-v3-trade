@@ -43,7 +43,7 @@ public class OrderItem {
         String customization = "";
         Money customizationPrice = Money.ZERO;
 
-        if (skuId != null && skuId.contains("#")) {
+        if (skuId.contains("#")) {
             String specPart = skuId.substring(skuId.indexOf('#') + 1);
             if (!specPart.isEmpty()) {
                 Map<Long, CustomizationItem> itemMap = product.getCustomization().stream()
@@ -124,7 +124,7 @@ public class OrderItem {
     }
 
     public static OrderItem reconstruct(Long id, Long orderId, Long productId, String productName,
-                                        String skuId, String customization, Long coverId, String coverUrl,
+                                        String skuId, String customization, String coverUrl,
                                         Quantity quantity, Money unitPrice, Boolean available) {
         OrderItem orderItem = new OrderItem();
         orderItem.id = id;
@@ -133,7 +133,6 @@ public class OrderItem {
         orderItem.productName = productName;
         orderItem.skuId = skuId;
         orderItem.customization = customization;
-        orderItem.coverId = coverId;
         orderItem.coverUrl = coverUrl;
         orderItem.quantity = quantity;
         orderItem.unitPrice = unitPrice;
