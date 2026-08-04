@@ -1,6 +1,5 @@
 package cn.dextea.trade.order.interfaces.http.dto.response;
 import cn.dextea.trade.order.interfaces.http.dto.shared.CreateOrderItem;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

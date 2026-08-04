@@ -14,7 +14,6 @@ import cn.dextea.trade.shared.domain.model.Money;
 import cn.dextea.trade.shared.domain.model.Quantity;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
 
 @Component

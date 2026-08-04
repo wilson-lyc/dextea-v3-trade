@@ -92,6 +92,15 @@ public class Order {
         this.makingStatus = MakingStatus.PENDING;
     }
 
+    public void markPaid(LocalDateTime paidAt) {
+        this.paymentStatus = PaymentStatus.PAID;
+        this.paymentPaidAt = paidAt;
+    }
+
+    public boolean isPaid() {
+        return paymentStatus == PaymentStatus.PAID;
+    }
+
     public void addItem(Product product, String skuId, Quantity quantity) {
         OrderItem orderItem = OrderItem.create(product, skuId, quantity);
         items.add(orderItem);

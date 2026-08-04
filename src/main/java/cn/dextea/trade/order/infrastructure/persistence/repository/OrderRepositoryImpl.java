@@ -2,12 +2,14 @@ package cn.dextea.trade.order.infrastructure.persistence.repository;
 
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.infrastructure.persistence.converter.OrderConverter;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderItemMapper;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderMapper;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
+import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,25 @@ public class OrderRepositoryImpl implements OrderRepository {
             return null;
         }
         return orderConverter.toOrder(orderPO, getOrderItems(orderPO.getId()));
+    }
+
+    @Override
+    public Order findByOrderNo(String orderNo) {
+        OrderPO orderPO = orderMapper.selectByOrderNo(orderNo);
+        if (orderPO == null) {
+            return null;
+        }
+        return orderConverter.toOrder(orderPO, Collections.emptyList());
+    }
+
+    @Override
+    @Transactional
+    public void updatePaymentStatus(Order order) {
+        OrderPO orderPO = orderConverter.toOrderPO(order);
+        int updated = orderMapper.updatePaymentStatus(orderPO);
+        if (updated == 0) {
+            throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
+        }
     }
 
     @Override

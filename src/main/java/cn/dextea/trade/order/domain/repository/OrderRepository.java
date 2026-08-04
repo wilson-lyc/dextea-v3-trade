@@ -7,7 +7,11 @@ import java.util.List;
 public interface OrderRepository {
     Order save(Order order);
 
+    Order getById(Long orderId);
+
+    Order findByOrderNo(String orderNo);
+
     List<Order> getMonthOrders(Long customerId, int year, int month);
 
-    Order getById(Long orderId);
+    void updatePaymentStatus(Order order);
 }

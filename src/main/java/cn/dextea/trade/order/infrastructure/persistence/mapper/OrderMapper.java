@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,4 +37,12 @@ public interface OrderMapper {
 
     @Select("SELECT * FROM orders WHERE id = #{orderId}")
     OrderPO selectById(@Param("orderId") Long orderId);
+
+    @Select("SELECT * FROM orders WHERE order_no = #{orderNo}")
+    OrderPO selectByOrderNo(@Param("orderNo") String orderNo);
+
+    @Update("UPDATE orders SET payment_status = #{paymentStatus}, payment_paid_at = #{paymentPaidAt}, "
+            + "updated_at = NOW(), version = version + 1 "
+            + "WHERE id = #{id} AND version = #{version}")
+    int updatePaymentStatus(OrderPO orderPO);
 }
