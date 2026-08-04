@@ -44,6 +44,15 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public Order getById(Long orderId) {
+        OrderPO orderPO = orderMapper.selectById(orderId);
+        if (orderPO == null) {
+            return null;
+        }
+        return orderConverter.toOrder(orderPO, getOrderItems(orderPO.getId()));
+    }
+
+    @Override
     public List<Order> getMonthOrders(Long customerId, int year, int month) {
         List<OrderPO> orderPOs = orderMapper.selectByCustomerAndMonth(customerId, year, month);
         if (orderPOs == null || orderPOs.isEmpty()) {

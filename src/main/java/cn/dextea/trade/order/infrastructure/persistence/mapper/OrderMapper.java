@@ -33,4 +33,7 @@ public interface OrderMapper {
             + "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>"
             + "</script>")
     List<OrderPO> selectByIds(@Param("ids") Collection<Long> ids);
+
+    @Select("SELECT * FROM orders WHERE id = #{orderId}")
+    OrderPO selectById(@Param("orderId") Long orderId);
 }

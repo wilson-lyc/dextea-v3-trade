@@ -1,10 +1,12 @@
 package cn.dextea.trade.order.domain.model;
 
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
 import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
+import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.shared.domain.model.Money;
 import cn.dextea.trade.shared.domain.model.Quantity;
 
@@ -101,6 +103,16 @@ public class Order {
 
     public boolean hasItems() {
         return !items.isEmpty();
+    }
+
+    public boolean belongsTo(Long customerId) {
+        return customerId != null && customerId.equals(this.customerId);
+    }
+
+    public void ensureBelongsTo(Long customerId) {
+        if (!belongsTo(customerId)) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_BELONG_TO_CUSTOMER);
+        }
     }
 
     public boolean isInitialized() {

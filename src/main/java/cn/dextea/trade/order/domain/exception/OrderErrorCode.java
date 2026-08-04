@@ -15,7 +15,9 @@ public enum OrderErrorCode implements BizErrorCode {
     INVALID_PAYMENT_METHOD(101012, "非法的支付方式"),
     INVALID_ORDER_ITEM_QUANTITY(101013, "订单项数量非法"),
     IDEMPOTENCY_KEY_CONFLICT(101014, "重复提交，请勿重复创建订单"),
-    ORDER_CREATE_IN_PROGRESS(101015, "订单正在创建中，请稍后重试");
+    ORDER_CREATE_IN_PROGRESS(101015, "订单正在创建中，请稍后重试"),
+    ORDER_NOT_FOUND(101016, "订单不存在"),
+    ORDER_NOT_BELONG_TO_CUSTOMER(101017, "该订单不属于当前顾客");
     
     private final int code;
     private final String message;

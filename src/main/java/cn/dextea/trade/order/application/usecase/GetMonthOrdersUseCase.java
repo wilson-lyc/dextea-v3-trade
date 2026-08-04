@@ -9,11 +9,13 @@ import cn.dextea.trade.order.domain.port.MonthOrderViewRepository;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.shared.domain.model.Money;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GetMonthOrdersUseCase {
@@ -22,6 +24,8 @@ public class GetMonthOrdersUseCase {
     private final MonthOrderViewRepository monthOrderViewRepository;
 
     public GetMonthOrdersResult execute(GetMonthOrdersCommand command) {
+        log.info("查询月订单, customerId={}, year={}, month={}",
+                command.getCustomerId(), command.getYear(), command.getMonth());
         List<Order> orders = orderRepository.getMonthOrders(
                 command.getCustomerId(), command.getYear(), command.getMonth());
 
@@ -37,10 +41,14 @@ public class GetMonthOrdersUseCase {
             }
         }
 
-        return GetMonthOrdersResult.builder()
+        GetMonthOrdersResult result = GetMonthOrdersResult.builder()
                 .orders(items)
                 .orderCount(items.size())
                 .totalAmount(totalAmount)
                 .build();
+        log.info("查询月订单完成, customerId={}, year={}, month={}, orderCount={}, totalAmount={}",
+                command.getCustomerId(), command.getYear(), command.getMonth(),
+                result.getOrderCount(), result.getTotalAmount());
+        return result;
     }
 }

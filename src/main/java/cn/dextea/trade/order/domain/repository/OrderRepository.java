@@ -8,4 +8,6 @@ public interface OrderRepository {
     Order save(Order order);
 
     List<Order> getMonthOrders(Long customerId, int year, int month);
+
+    Order getById(Long orderId);
 }

@@ -11,8 +11,10 @@ import com.alipay.v3.model.AlipayTradeCreateDefaultResponse;
 import com.alipay.v3.model.AlipayTradeCreateModel;
 import com.alipay.v3.model.AlipayTradeCreateResponseModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AlipayPaymentAdapter implements PaymentPort {
@@ -31,15 +33,19 @@ public class AlipayPaymentAdapter implements PaymentPort {
         model.setProductCode(PRODUCT_CODE);
 
         AlipayTradeApi api = new AlipayTradeApi();
+        log.info("调用支付宝创建交易, outTradeNo={}, subject={}, totalAmount={}, buyerOpenId={}",
+                request.getOrderNo(), alipayProperties.getSubject(), resolveAmount(request), request.getBuyerOpenId());
         try {
             AlipayTradeCreateResponseModel response = api.create(model, null);
             if (response == null || response.getTradeNo() == null) {
                 throw new BizError(PayErrorCode.ALIPAY_CREATE_TRADE_FAILED, "支付宝未返回交易号");
             }
+            log.info("支付宝创建交易成功, outTradeNo={}, tradeNo={}", request.getOrderNo(), response.getTradeNo());
             return response.getTradeNo();
         } catch (ApiException e) {
             AlipayTradeCreateDefaultResponse errorObject =
                     (AlipayTradeCreateDefaultResponse) e.getErrorObject();
+            log.error("支付宝创建交易失败, outTradeNo={}, error={}", request.getOrderNo(), errorObject, e);
             throw new BizError(PayErrorCode.ALIPAY_CREATE_TRADE_FAILED,
                     "支付宝创建交易失败: " + errorObject);
         }
