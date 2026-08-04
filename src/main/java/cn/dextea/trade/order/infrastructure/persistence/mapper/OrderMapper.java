@@ -4,6 +4,11 @@ import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.Collection;
+import java.util.List;
 
 @Mapper
 public interface OrderMapper {
@@ -16,4 +21,16 @@ public interface OrderMapper {
             + "#{paymentMethod}, #{paymentStatus}, #{paymentExpiredAt}, #{paymentPaidAt}, #{paymentRefundedAt}, #{version})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OrderPO orderPO);
+
+    @Select("SELECT * FROM orders WHERE customer_id = #{customerId} "
+            + "AND YEAR(created_at) = #{year} AND MONTH(created_at) = #{month} "
+            + "ORDER BY created_at DESC")
+    List<OrderPO> selectByCustomerAndMonth(@Param("customerId") Long customerId,
+                                           @Param("year") int year,
+                                           @Param("month") int month);
+
+    @Select("<script>SELECT * FROM orders WHERE id IN "
+            + "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>"
+            + "</script>")
+    List<OrderPO> selectByIds(@Param("ids") Collection<Long> ids);
 }

@@ -20,7 +20,6 @@ public class OrderItem {
     private String productName;
     private String skuId;
     private String customization;
-    private Long coverId;
     private String coverUrl;
     private Quantity quantity;
     private Money unitPrice;
@@ -94,7 +93,6 @@ public class OrderItem {
         orderItem.productName = product.getName();
         orderItem.skuId = skuId;
         orderItem.customization = customization;
-        orderItem.coverId = product.getCover() != null ? product.getCover().getId() : null;
         orderItem.coverUrl = product.getCover() != null ? product.getCover().getUrl() : null;
         orderItem.quantity = quantity;
         orderItem.unitPrice = product.getPrice().add(customizationPrice);
@@ -123,5 +121,23 @@ public class OrderItem {
         } catch (NumberFormatException e) {
             throw new BizError(OrderErrorCode.INVALID_SKU);
         }
+    }
+
+    public static OrderItem reconstruct(Long id, Long orderId, Long productId, String productName,
+                                        String skuId, String customization, Long coverId, String coverUrl,
+                                        Quantity quantity, Money unitPrice, Boolean available) {
+        OrderItem orderItem = new OrderItem();
+        orderItem.id = id;
+        orderItem.orderId = orderId;
+        orderItem.productId = productId;
+        orderItem.productName = productName;
+        orderItem.skuId = skuId;
+        orderItem.customization = customization;
+        orderItem.coverId = coverId;
+        orderItem.coverUrl = coverUrl;
+        orderItem.quantity = quantity;
+        orderItem.unitPrice = unitPrice;
+        orderItem.available = available;
+        return orderItem;
     }
 }

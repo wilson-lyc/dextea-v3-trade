@@ -13,7 +13,7 @@ public class OrderItemPO {
     private String productName;
     private String skuId;
     private String customization;
-    private Long coverId;
+    private String coverUrl;
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;

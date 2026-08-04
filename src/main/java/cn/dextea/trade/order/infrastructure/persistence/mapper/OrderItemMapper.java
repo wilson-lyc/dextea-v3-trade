@@ -4,6 +4,7 @@ import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -11,10 +12,13 @@ import java.util.List;
 public interface OrderItemMapper {
 
     @Insert("<script>INSERT INTO order_items (order_id, product_id, product_name, sku_id, customization, "
-            + "cover_id, quantity, unit_price, subtotal) VALUES "
+            + "cover_url, quantity, unit_price, subtotal) VALUES "
             + "<foreach collection='items' item='item' separator=','>"
             + "(#{item.orderId}, #{item.productId}, #{item.productName}, #{item.skuId}, #{item.customization}, "
-            + "#{item.coverId}, #{item.quantity}, #{item.unitPrice}, #{item.subtotal})"
+            + "#{item.coverUrl}, #{item.quantity}, #{item.unitPrice}, #{item.subtotal})"
             + "</foreach></script>")
     int batchInsert(@Param("items") List<OrderItemPO> items);
+
+    @Select("SELECT * FROM order_items WHERE order_id = #{orderId}")
+    List<OrderItemPO> selectByOrderId(@Param("orderId") Long orderId);
 }

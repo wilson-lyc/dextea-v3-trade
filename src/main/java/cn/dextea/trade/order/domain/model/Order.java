@@ -137,4 +137,35 @@ public class Order {
         }
         return total;
     }
+
+    public static Order reconstruct(Long id, String orderNo, String tradeNo, String idempotencyKey,
+                                    Long customerId, Long storeId, DiningMethod diningMethod, String note,
+                                    OrderSource source, String pickupCode, MakingStatus makingStatus,
+                                    PaymentMethod paymentMethod, PaymentStatus paymentStatus,
+                                    LocalDateTime paymentExpiredAt, LocalDateTime paymentPaidAt,
+                                    LocalDateTime paymentRefundedAt, LocalDateTime createdAt,
+                                    LocalDateTime updatedAt, Integer version, List<OrderItem> items) {
+        Order order = new Order();
+        order.id = id;
+        order.orderNo = orderNo;
+        order.tradeNo = tradeNo;
+        order.idempotencyKey = idempotencyKey;
+        order.customerId = customerId;
+        order.storeId = storeId;
+        order.diningMethod = diningMethod;
+        order.note = note;
+        order.source = source;
+        order.pickupCode = pickupCode;
+        order.makingStatus = makingStatus;
+        order.paymentMethod = paymentMethod;
+        order.paymentStatus = paymentStatus;
+        order.paymentExpiredAt = paymentExpiredAt;
+        order.paymentPaidAt = paymentPaidAt;
+        order.paymentRefundedAt = paymentRefundedAt;
+        order.createdAt = createdAt;
+        order.updatedAt = updatedAt;
+        order.version = version;
+        order.items = items == null ? new ArrayList<>() : items;
+        return order;
+    }
 }

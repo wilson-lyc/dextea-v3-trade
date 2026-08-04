@@ -13,7 +13,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,5 +41,27 @@ public class OrderRepositoryImpl implements OrderRepository {
             orderItemMapper.batchInsert(itemPOs);
         }
         return order;
+    }
+
+    @Override
+    public List<Order> getMonthOrders(Long customerId, int year, int month) {
+        List<OrderPO> orderPOs = orderMapper.selectByCustomerAndMonth(customerId, year, month);
+        if (orderPOs == null || orderPOs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return orderPOs.stream()
+                .map(po -> orderConverter.toOrder(po, getOrderItems(po.getId())))
+                .collect(Collectors.toList());
+    }
+
+    private List<OrderItem> getOrderItems(Long orderId) {
+        List<OrderItemPO> itemPOs = orderItemMapper.selectByOrderId(orderId);
+        if (itemPOs == null || itemPOs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return itemPOs.stream()
+                .map(orderConverter::toOrderItem)
+                .collect(Collectors.toList());
     }
 }
