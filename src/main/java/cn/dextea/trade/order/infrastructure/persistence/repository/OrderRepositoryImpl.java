@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Repository
@@ -89,9 +90,21 @@ public class OrderRepositoryImpl implements OrderRepository {
             return Collections.emptyList();
         }
 
+        Map<Long, List<OrderItem>> itemsByOrderId = getOrderItemsByOrderIds(
+                orderPOs.stream().map(OrderPO::getId).collect(Collectors.toList()));
         return orderPOs.stream()
-                .map(po -> orderConverter.toOrder(po, getOrderItems(po.getId())))
+                .map(po -> orderConverter.toOrder(po,
+                        itemsByOrderId.getOrDefault(po.getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
+    }
+
+    private Map<Long, List<OrderItem>> getOrderItemsByOrderIds(List<Long> orderIds) {
+        List<OrderItemPO> itemPOs = orderItemMapper.selectByOrderIds(orderIds);
+        if (itemPOs == null || itemPOs.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return itemPOs.stream().collect(Collectors.groupingBy(OrderItemPO::getOrderId,
+                Collectors.mapping(orderConverter::toOrderItem, Collectors.toList())));
     }
 
     private List<OrderItem> getOrderItems(Long orderId) {

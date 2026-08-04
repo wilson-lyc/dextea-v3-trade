@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Collection;
 import java.util.List;
 
 @Mapper
@@ -21,4 +22,9 @@ public interface OrderItemMapper {
 
     @Select("SELECT * FROM order_items WHERE order_id = #{orderId}")
     List<OrderItemPO> selectByOrderId(@Param("orderId") Long orderId);
+
+    @Select("<script>SELECT * FROM order_items WHERE order_id IN "
+            + "<foreach collection='orderIds' item='orderId' open='(' separator=',' close=')'>#{orderId}</foreach>"
+            + "</script>")
+    List<OrderItemPO> selectByOrderIds(@Param("orderIds") Collection<Long> orderIds);
 }
