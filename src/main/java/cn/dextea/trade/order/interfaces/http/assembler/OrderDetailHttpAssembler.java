@@ -38,6 +38,7 @@ public final class OrderDetailHttpAssembler {
                 .tradeNo(result.getTradeNo())
                 .customerId(result.getCustomerId())
                 .storeId(result.getStoreId())
+                .storeName(result.getStoreName())
                 .diningMethod(toCode(result.getDiningMethod()))
                 .note(result.getNote())
                 .source(toCode(result.getSource()))
