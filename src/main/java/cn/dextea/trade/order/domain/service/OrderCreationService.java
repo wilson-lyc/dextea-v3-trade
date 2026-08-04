@@ -40,6 +40,7 @@ public class OrderCreationService {
     private final SkuIdService skuIdService;
     private final OrderNoGenerator orderNoGenerator;
     private final PaymentPort paymentPort;
+    private final OrderAmountService orderAmountService;
 
     @Value("${order.payment_ttl:15}")
     private long paymentTtlMinutes;
@@ -74,6 +75,10 @@ public class OrderCreationService {
             }
             order.addItem(product, item.getSkuId(), item.getQuantity());
         }
+
+        order.assignAmounts(
+                orderAmountService.calculateTotalPrice(order),
+                orderAmountService.calculateTotalQuantity(order));
 
         log.info("预下单成功, customerId={}, storeId={}, itemCount={}, totalPrice={}, totalQuantity={}",
                 customerId, storeId, order.getItems().size(), order.getTotalPrice(), order.getTotalQuantity());

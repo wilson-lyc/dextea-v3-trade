@@ -87,6 +87,8 @@ public class OrderConverter {
                 po.getCreatedAt(),
                 po.getUpdatedAt(),
                 po.getVersion(),
+                po.getTotalPrice() == null ? null : Money.of(po.getTotalPrice()),
+                po.getTotalQuantity() == null ? null : Quantity.of(po.getTotalQuantity()),
                 items);
     }
 

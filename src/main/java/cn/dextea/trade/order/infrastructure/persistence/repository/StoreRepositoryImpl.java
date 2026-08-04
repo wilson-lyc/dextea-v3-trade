@@ -10,6 +10,14 @@ import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Repository
 @RequiredArgsConstructor
 public class StoreRepositoryImpl implements StoreRepository {
@@ -24,5 +32,20 @@ public class StoreRepositoryImpl implements StoreRepository {
             throw new BizError(OrderErrorCode.STORE_NOT_FOUND);
         }
         return storeConverter.toDomain(po);
+    }
+
+    @Override
+    public Map<Long, Store> getStoresByIds(Collection<Long> storeIds) {
+        if (storeIds == null || storeIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<StorePO> storePOs = storeMapper.selectByIds(storeIds);
+        if (storePOs == null || storePOs.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return storePOs.stream()
+                .map(storeConverter::toDomain)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Store::getId, Function.identity(), (a, b) -> a));
     }
 }

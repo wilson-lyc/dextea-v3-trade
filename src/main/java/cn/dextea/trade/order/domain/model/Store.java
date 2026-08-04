@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class Store {
     private Long id;
+    private String name;
     private StoreStatus status;
 
     public boolean isActive() {

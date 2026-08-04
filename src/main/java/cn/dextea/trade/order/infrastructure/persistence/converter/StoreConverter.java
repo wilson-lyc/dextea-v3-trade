@@ -15,6 +15,7 @@ public class StoreConverter {
         }
         return Store.builder()
                 .id(po.getId())
+                .name(po.getName())
                 .status(EnumUtils.of(StoreStatus.class, po.getStatus()))
                 .build();
     }
@@ -25,6 +26,7 @@ public class StoreConverter {
         }
         StorePO po = new StorePO();
         po.setId(store.getId());
+        po.setName(store.getName());
         po.setStatus(store.getStatus() == null ? null : store.getStatus().getCode());
         return po;
     }

@@ -14,6 +14,8 @@ import cn.dextea.trade.shared.domain.error.BizError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,9 +46,22 @@ public class OrderRepositoryImpl implements OrderRepository {
                 itemPOs.add(orderConverter.toOrderItemPO(item));
             }
             orderItemMapper.batchInsert(itemPOs);
-            orderItemCache.put(order.getId(), itemPOs);
+            putItemsToCacheAfterCommit(order.getId(), itemPOs);
         }
         return order;
+    }
+
+    private void putItemsToCacheAfterCommit(Long orderId, List<OrderItemPO> itemPOs) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    orderItemCache.put(orderId, itemPOs);
+                }
+            });
+        } else {
+            orderItemCache.put(orderId, itemPOs);
+        }
     }
 
     @Override

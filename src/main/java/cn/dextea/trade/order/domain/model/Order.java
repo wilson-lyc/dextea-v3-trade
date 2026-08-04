@@ -41,6 +41,8 @@ public class Order {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Integer version;
+    private Money totalPrice;
+    private Quantity totalQuantity;
     private List<OrderItem> items;
 
     private Order() {
@@ -137,28 +139,16 @@ public class Order {
     }
 
     public Money getTotalPrice() {
-        Money total = Money.ZERO;
-        for (OrderItem item : items) {
-            if (item.getAvailable() == null || !item.getAvailable()) {
-                continue;
-            }
-            total = total.add(item.getTotalPrice());
-        }
-        return total;
+        return totalPrice == null ? Money.ZERO : totalPrice;
     }
 
     public Quantity getTotalQuantity() {
-        Quantity total = Quantity.ZERO;
-        for (OrderItem item : items) {
-            if (item.getAvailable() == null || !item.getAvailable()) {
-                continue;
-            }
-            if (item.getQuantity() == null) {
-                continue;
-            }
-            total = total.add(item.getQuantity());
-        }
-        return total;
+        return totalQuantity == null ? Quantity.ZERO : totalQuantity;
+    }
+
+    public void assignAmounts(Money totalPrice, Quantity totalQuantity) {
+        this.totalPrice = totalPrice;
+        this.totalQuantity = totalQuantity;
     }
 
     public static Order reconstruct(Long id, String orderNo, String tradeNo, String idempotencyKey,
@@ -167,7 +157,8 @@ public class Order {
                                     PaymentMethod paymentMethod, PaymentStatus paymentStatus,
                                     LocalDateTime paymentExpiredAt, LocalDateTime paymentPaidAt,
                                     LocalDateTime paymentRefundedAt, LocalDateTime createdAt,
-                                    LocalDateTime updatedAt, Integer version, List<OrderItem> items) {
+                                    LocalDateTime updatedAt, Integer version,
+                                    Money totalPrice, Quantity totalQuantity, List<OrderItem> items) {
         Order order = new Order();
         order.id = id;
         order.orderNo = orderNo;
@@ -188,6 +179,8 @@ public class Order {
         order.createdAt = createdAt;
         order.updatedAt = updatedAt;
         order.version = version;
+        order.totalPrice = totalPrice;
+        order.totalQuantity = totalQuantity;
         order.items = items == null ? new ArrayList<>() : items;
         return order;
     }
