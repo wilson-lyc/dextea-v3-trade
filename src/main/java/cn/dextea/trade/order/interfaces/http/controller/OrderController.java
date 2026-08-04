@@ -13,16 +13,21 @@ import cn.dextea.trade.order.application.usecase.GetMonthOrdersUseCase;
 import cn.dextea.trade.order.application.usecase.PreBuildOrderUseCase;
 import cn.dextea.trade.order.application.usecase.CreateOrderUseCase;
 import cn.dextea.trade.order.application.usecase.GetOrderDetailUseCase;
+import cn.dextea.trade.order.application.usecase.GetOrderPaymentStatusUseCase;
 import cn.dextea.trade.order.application.dto.command.GetMonthOrdersCommand;
 import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.dto.command.GetOrderDetailCommand;
+import cn.dextea.trade.order.application.dto.command.GetOrderPaymentStatusCommand;
 import cn.dextea.trade.order.application.dto.result.GetMonthOrdersResult;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
 import cn.dextea.trade.order.application.dto.result.OrderDetailResult;
+import cn.dextea.trade.order.application.dto.result.OrderPaymentStatusResult;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderDetailResponse;
+import cn.dextea.trade.order.interfaces.http.dto.response.OrderPaymentStatusResponse;
 import cn.dextea.trade.order.interfaces.http.assembler.OrderDetailHttpAssembler;
+import cn.dextea.trade.order.interfaces.http.assembler.OrderPaymentStatusHttpAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -52,6 +57,7 @@ public class OrderController {
     private final CreateOrderUseCase createOrderUseCase;
     private final GetMonthOrdersUseCase getMonthOrdersUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
+    private final GetOrderPaymentStatusUseCase getOrderPaymentStatusUseCase;
 
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
@@ -105,5 +111,18 @@ public class OrderController {
         OrderDetailResult result = getOrderDetailUseCase.execute(command);
         log.info("查询订单详情成功, customerId={}, orderId={}", customerId, orderId);
         return APIResponse.success(OrderDetailHttpAssembler.toResponse(result));
+    }
+
+    @GetMapping("/{orderId}/payment-status")
+    @Operation(summary = "获取订单支付状态", description = "轻量接口，仅返回支付状态；本地为支付中时会主动向支付渠道查询一次并回写")
+    public APIResponse<OrderPaymentStatusResponse> getOrderPaymentStatus(
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
+            @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
+        log.info("查询订单支付状态请求, customerId={}, orderId={}", customerId, orderId);
+        GetOrderPaymentStatusCommand command = OrderPaymentStatusHttpAssembler.toCommand(customerId, orderId);
+        OrderPaymentStatusResult result = getOrderPaymentStatusUseCase.execute(command);
+        log.info("查询订单支付状态成功, customerId={}, orderId={}, paymentStatus={}",
+                customerId, orderId, result.getPaymentStatus());
+        return APIResponse.success(OrderPaymentStatusHttpAssembler.toResponse(result));
     }
 }

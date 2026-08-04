@@ -46,7 +46,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Order getById(Long orderId) {
+    public Order getOrderById(Long orderId) {
         OrderPO orderPO = orderMapper.selectById(orderId);
         if (orderPO == null) {
             return null;
@@ -55,7 +55,16 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Order findByOrderNo(String orderNo) {
+    public Order getSummaryById(Long orderId) {
+        OrderPO orderPO = orderMapper.selectById(orderId);
+        if (orderPO == null) {
+            return null;
+        }
+        return orderConverter.toOrder(orderPO, Collections.emptyList());
+    }
+
+    @Override
+    public Order getSummaryByOrderNo(String orderNo) {
         OrderPO orderPO = orderMapper.selectByOrderNo(orderNo);
         if (orderPO == null) {
             return null;

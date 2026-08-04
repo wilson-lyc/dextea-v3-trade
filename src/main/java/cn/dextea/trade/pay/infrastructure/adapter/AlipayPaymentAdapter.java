@@ -20,12 +20,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AlipayPaymentAdapter implements PaymentPort {
 
     private static final String PRODUCT_CODE = "JSAPI_PAY";
+
+    /**
+     * 支付宝时间字段格式，如 send_pay_date：yyyy-MM-dd HH:mm:ss
+     */
+    private static final DateTimeFormatter ALIPAY_DATE_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final AlipayProperties alipayProperties;
     private final ApiClient alipayApiClient;
@@ -91,6 +100,7 @@ public class AlipayPaymentAdapter implements PaymentPort {
                             ? null : Money.of(new java.math.BigDecimal(response.getTotalAmount())))
                     .buyerUserId(response.getBuyerUserId())
                     .buyerOpenId(response.getBuyerOpenId())
+                    .paidAt(parseAlipayDateTime(response.getSendPayDate()))
                     .build();
         } catch (ApiException e) {
             AlipayTradeQueryDefaultResponse errorObject =
@@ -98,6 +108,21 @@ public class AlipayPaymentAdapter implements PaymentPort {
             log.error("支付宝交易查询失败, outTradeNo={}, error={}", outTradeNo, errorObject, e);
             throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED,
                     "支付宝交易查询失败: " + errorObject);
+        }
+    }
+
+    /**
+     * 解析支付宝返回的时间字符串，解析失败不影响主流程，仅记录日志后返回 null。
+     */
+    private LocalDateTime parseAlipayDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value, ALIPAY_DATE_TIME_FORMAT);
+        } catch (Exception e) {
+            log.warn("支付宝时间字段解析失败, value={}", value);
+            return null;
         }
     }
 

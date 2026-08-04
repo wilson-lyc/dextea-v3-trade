@@ -19,7 +19,7 @@ public class MarkOrderPaidUseCase {
     public void execute(MarkOrderPaidCommand command) {
         String orderNo = command.getOrderNo();
         String tradeNo = command.getTradeNo();
-        Order order = orderRepository.findByOrderNo(orderNo);
+        Order order = orderRepository.getSummaryByOrderNo(orderNo);
         if (order == null) {
             log.error("订单已支付事件处理失败, 订单不存在, orderNo={}, tradeNo={}", orderNo, tradeNo);
             throw new BizError(OrderErrorCode.ORDER_NOT_FOUND);

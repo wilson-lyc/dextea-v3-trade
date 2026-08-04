@@ -101,6 +101,14 @@ public class Order {
         return paymentStatus == PaymentStatus.PAID;
     }
 
+    /**
+     * 是否处于「未支付」状态，即支付结果尚未确定、仍可能被支付渠道回填。
+     * 该状态下允许主动向支付渠道查询交易结果做对账补偿。
+     */
+    public boolean isPendingPayment() {
+        return paymentStatus == PaymentStatus.PENDING;
+    }
+
     public void addItem(Product product, String skuId, Quantity quantity) {
         OrderItem orderItem = OrderItem.create(product, skuId, quantity);
         items.add(orderItem);

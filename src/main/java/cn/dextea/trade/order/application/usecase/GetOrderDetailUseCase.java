@@ -21,7 +21,7 @@ public class GetOrderDetailUseCase {
     public OrderDetailResult execute(GetOrderDetailCommand command) {
         log.info("查询订单详情, customerId={}, orderId={}", command.getCustomerId(), command.getOrderId());
 
-        Order order = orderRepository.getById(command.getOrderId());
+        Order order = orderRepository.getOrderById(command.getOrderId());
         if (order == null) {
             throw new BizError(OrderErrorCode.ORDER_NOT_FOUND);
         }

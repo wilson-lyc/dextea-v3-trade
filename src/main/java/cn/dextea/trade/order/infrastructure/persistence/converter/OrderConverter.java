@@ -24,6 +24,7 @@ public class OrderConverter {
             return null;
         }
         OrderPO po = new OrderPO();
+        po.setId(order.getId());
         po.setOrderNo(order.getOrderNo());
         po.setTradeNo(order.getTradeNo());
         po.setIdempotencyKey(order.getIdempotencyKey());

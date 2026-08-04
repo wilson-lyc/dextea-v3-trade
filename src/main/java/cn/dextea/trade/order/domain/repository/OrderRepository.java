@@ -7,9 +7,11 @@ import java.util.List;
 public interface OrderRepository {
     Order save(Order order);
 
-    Order getById(Long orderId);
+    Order getOrderById(Long orderId);
 
-    Order findByOrderNo(String orderNo);
+    Order getSummaryById(Long orderId);
+
+    Order getSummaryByOrderNo(String orderNo);
 
     List<Order> getMonthOrders(Long customerId, int year, int month);
 
