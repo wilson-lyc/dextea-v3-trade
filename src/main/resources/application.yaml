@@ -57,6 +57,7 @@ order:
   payment_ttl: ${ORDER_PAYMENT_TTL:15}
   create_order_idem_ttl: ${ORDER_CREATE_ORDER_IDEM_TTL:1440}
   create_order_lock_ttl: ${ORDER_CREATE_ORDER_LOCK_TTL:1}
+  order_item_cache_ttl: ${ORDER_ITEM_CACHE_TTL:120}
 
 alipay:
   server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}

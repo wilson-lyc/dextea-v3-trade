@@ -4,6 +4,7 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
+import cn.dextea.trade.order.infrastructure.adapter.RedisOrderItemCache;
 import cn.dextea.trade.order.infrastructure.persistence.converter.OrderConverter;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderItemMapper;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderMapper;
@@ -27,6 +28,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final OrderConverter orderConverter;
+    private final RedisOrderItemCache orderItemCache;
 
     @Override
     @Transactional
@@ -42,6 +44,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 itemPOs.add(orderConverter.toOrderItemPO(item));
             }
             orderItemMapper.batchInsert(itemPOs);
+            orderItemCache.put(order.getId(), itemPOs);
         }
         return order;
     }
@@ -99,21 +102,34 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     private Map<Long, List<OrderItem>> getOrderItemsByOrderIds(List<Long> orderIds) {
-        List<OrderItemPO> itemPOs = orderItemMapper.selectByOrderIds(orderIds);
-        if (itemPOs == null || itemPOs.isEmpty()) {
-            return Collections.emptyMap();
+        Map<Long, List<OrderItemPO>> itemsByOrderId = orderItemCache.getMulti(orderIds);
+        List<Long> missingOrderIds = orderIds.stream()
+                .filter(id -> !itemsByOrderId.containsKey(id))
+                .toList();
+        if (!missingOrderIds.isEmpty()) {
+            List<OrderItemPO> dbItems = orderItemMapper.selectByOrderIds(missingOrderIds);
+            if (dbItems != null && !dbItems.isEmpty()) {
+                Map<Long, List<OrderItemPO>> dbMap = dbItems.stream()
+                        .collect(Collectors.groupingBy(OrderItemPO::getOrderId));
+                dbMap.forEach(orderItemCache::put);
+                itemsByOrderId.putAll(dbMap);
+            }
         }
-        return itemPOs.stream().collect(Collectors.groupingBy(OrderItemPO::getOrderId,
-                Collectors.mapping(orderConverter::toOrderItem, Collectors.toList())));
+        return itemsByOrderId.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> e.getValue().stream().map(orderConverter::toOrderItem).collect(Collectors.toList())));
     }
 
     private List<OrderItem> getOrderItems(Long orderId) {
+        List<OrderItemPO> cached = orderItemCache.get(orderId);
+        if (cached != null) {
+            return cached.stream().map(orderConverter::toOrderItem).collect(Collectors.toList());
+        }
         List<OrderItemPO> itemPOs = orderItemMapper.selectByOrderId(orderId);
         if (itemPOs == null || itemPOs.isEmpty()) {
             return Collections.emptyList();
         }
-        return itemPOs.stream()
-                .map(orderConverter::toOrderItem)
-                .collect(Collectors.toList());
+        orderItemCache.put(orderId, itemPOs);
+        return itemPOs.stream().map(orderConverter::toOrderItem).collect(Collectors.toList());
     }
 }
