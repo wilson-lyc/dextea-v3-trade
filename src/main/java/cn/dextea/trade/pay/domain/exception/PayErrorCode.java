@@ -5,7 +5,8 @@ import cn.dextea.trade.shared.domain.error.BizErrorCode;
 public enum PayErrorCode implements BizErrorCode {
     ALIPAY_CREATE_TRADE_FAILED(102001, "支付宝创建交易失败"),
     ALIPAY_CONFIG_MISSING(102002, "支付宝配置缺失"),
-    UNSUPPORTED_PAYMENT_METHOD(102003, "不支持的支付方式");
+    UNSUPPORTED_PAYMENT_METHOD(102003, "不支持的支付方式"),
+    ALIPAY_QUERY_TRADE_FAILED(102004, "支付宝交易查询失败");
 
     private final int code;
     private final String message;

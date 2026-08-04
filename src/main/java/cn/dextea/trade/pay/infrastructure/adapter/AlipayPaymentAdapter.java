@@ -1,16 +1,21 @@
 package cn.dextea.trade.pay.infrastructure.adapter;
 
 import cn.dextea.trade.order.domain.dto.CreateTradeRequest;
+import cn.dextea.trade.order.domain.dto.QueryTradeResult;
 import cn.dextea.trade.order.domain.port.PaymentPort;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.infrastructure.config.AlipayProperties;
 import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.domain.model.Money;
 import com.alipay.v3.ApiClient;
 import com.alipay.v3.ApiException;
 import com.alipay.v3.api.AlipayTradeApi;
 import com.alipay.v3.model.AlipayTradeCreateDefaultResponse;
 import com.alipay.v3.model.AlipayTradeCreateModel;
 import com.alipay.v3.model.AlipayTradeCreateResponseModel;
+import com.alipay.v3.model.AlipayTradeQueryDefaultResponse;
+import com.alipay.v3.model.AlipayTradeQueryModel;
+import com.alipay.v3.model.AlipayTradeQueryResponseModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -62,6 +67,38 @@ public class AlipayPaymentAdapter implements PaymentPort {
             return alipayProperties.getForceAmount();
         }
         return request.getTotalPrice().toString();
+    }
+
+    @Override
+    public QueryTradeResult queryTrade(String outTradeNo) {
+        AlipayTradeQueryModel model = new AlipayTradeQueryModel();
+        model.setOutTradeNo(outTradeNo);
+
+        AlipayTradeApi api = new AlipayTradeApi(alipayApiClient);
+        log.info("调用支付宝交易查询, outTradeNo={}", outTradeNo);
+        try {
+            AlipayTradeQueryResponseModel response = api.query(model, null);
+            if (response == null) {
+                throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED, "支付宝未返回查询结果");
+            }
+            log.info("支付宝交易查询成功, outTradeNo={}, tradeNo={}, tradeStatus={}",
+                    outTradeNo, response.getTradeNo(), response.getTradeStatus());
+            return QueryTradeResult.builder()
+                    .outTradeNo(response.getOutTradeNo())
+                    .tradeNo(response.getTradeNo())
+                    .tradeStatus(response.getTradeStatus())
+                    .totalAmount(response.getTotalAmount() == null
+                            ? null : Money.of(new java.math.BigDecimal(response.getTotalAmount())))
+                    .buyerUserId(response.getBuyerUserId())
+                    .buyerOpenId(response.getBuyerOpenId())
+                    .build();
+        } catch (ApiException e) {
+            AlipayTradeQueryDefaultResponse errorObject =
+                    (AlipayTradeQueryDefaultResponse) e.getErrorObject();
+            log.error("支付宝交易查询失败, outTradeNo={}, error={}", outTradeNo, errorObject, e);
+            throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED,
+                    "支付宝交易查询失败: " + errorObject);
+        }
     }
 
 }
