@@ -5,6 +5,8 @@ import cn.dextea.trade.order.application.dto.result.OrderDetailResult;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 
+import static cn.dextea.trade.order.application.assembler.OrderItemAssembler.toOptionLabels;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,7 +57,7 @@ public final class OrderDetailAssembler {
                 .productId(source.getProductId())
                 .productName(source.getProductName())
                 .skuId(source.getSkuId())
-                .customization(source.getCustomization())
+                .customization(toOptionLabels(source.getCustomization()))
                 .coverUrl(source.getCoverUrl())
                 .quantity(source.getQuantity())
                 .unitPrice(source.getUnitPrice())

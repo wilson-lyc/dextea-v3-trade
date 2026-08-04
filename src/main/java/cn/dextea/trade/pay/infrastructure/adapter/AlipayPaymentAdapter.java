@@ -5,6 +5,7 @@ import cn.dextea.trade.order.domain.port.PaymentPort;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.infrastructure.config.AlipayProperties;
 import cn.dextea.trade.shared.domain.error.BizError;
+import com.alipay.v3.ApiClient;
 import com.alipay.v3.ApiException;
 import com.alipay.v3.api.AlipayTradeApi;
 import com.alipay.v3.model.AlipayTradeCreateDefaultResponse;
@@ -22,6 +23,7 @@ public class AlipayPaymentAdapter implements PaymentPort {
     private static final String PRODUCT_CODE = "JSAPI_PAY";
 
     private final AlipayProperties alipayProperties;
+    private final ApiClient alipayApiClient;
 
     @Override
     public String createTradeNo(CreateTradeRequest request) {
@@ -31,10 +33,14 @@ public class AlipayPaymentAdapter implements PaymentPort {
         model.setSubject(alipayProperties.getSubject());
         model.setBuyerOpenId(request.getBuyerOpenId());
         model.setProductCode(PRODUCT_CODE);
+        if (alipayProperties.getNotifyUrl() != null && !alipayProperties.getNotifyUrl().isBlank()) {
+            model.setNotifyUrl(alipayProperties.getNotifyUrl());
+        }
 
-        AlipayTradeApi api = new AlipayTradeApi();
-        log.info("调用支付宝创建交易, outTradeNo={}, subject={}, totalAmount={}, buyerOpenId={}",
-                request.getOrderNo(), alipayProperties.getSubject(), resolveAmount(request), request.getBuyerOpenId());
+        AlipayTradeApi api = new AlipayTradeApi(alipayApiClient);
+        log.info("调用支付宝创建交易, outTradeNo={}, subject={}, totalAmount={}, buyerOpenId={}, notifyUrl={}",
+                request.getOrderNo(), alipayProperties.getSubject(), resolveAmount(request),
+                request.getBuyerOpenId(), alipayProperties.getNotifyUrl());
         try {
             AlipayTradeCreateResponseModel response = api.create(model, null);
             if (response == null || response.getTradeNo() == null) {
