@@ -50,7 +50,7 @@ springdoc:
     enabled: true
     path: /docs/ui
     disable-swagger-default-url: true
-  packages-to-scan: cn.dextea.trade.health,cn.dextea.trade.order.api.controller
+  packages-to-scan: cn.dextea.trade.order.interfaces.http.controller
   paths-to-match: /api/**
 
 order:
