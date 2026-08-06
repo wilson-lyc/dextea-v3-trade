@@ -18,7 +18,8 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_CREATE_IN_PROGRESS(101015, "订单正在创建中，请稍后重试"),
     ORDER_NOT_FOUND(101016, "订单不存在"),
     ORDER_NOT_BELONG_TO_CUSTOMER(101017, "该订单不属于当前顾客"),
-    ORDER_UPDATE_CONFLICT(101018, "订单状态更新冲突，请重试");
+    ORDER_UPDATE_CONFLICT(101018, "订单状态更新冲突，请重试"),
+    ORDER_CANNOT_CANCEL(101019, "仅支付中的订单可以取消");
     
     private final int code;
     private final String message;

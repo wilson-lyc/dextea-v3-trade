@@ -105,6 +105,17 @@ public class OrderRepositoryImpl implements OrderRepository {
         savePaymentStatusLogs(order);
     }
 
+    @Override
+    @Transactional
+    public void cancelOrder(Order order) {
+        OrderPO orderPO = orderConverter.toOrderPO(order);
+        int updated = orderMapper.cancelOrder(orderPO);
+        if (updated == 0) {
+            throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
+        }
+        savePaymentStatusLogs(order);
+    }
+
     private void savePaymentStatusLogs(Order order) {
         List<OrderPaymentStatusLog> logs = order.pullPaymentStatusLogs();
         if (logs.isEmpty()) {

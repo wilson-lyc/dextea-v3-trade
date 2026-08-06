@@ -14,11 +14,13 @@ import cn.dextea.trade.order.application.usecase.PreBuildOrderUseCase;
 import cn.dextea.trade.order.application.usecase.CreateOrderUseCase;
 import cn.dextea.trade.order.application.usecase.GetOrderDetailUseCase;
 import cn.dextea.trade.order.application.usecase.GetOrderPaymentStatusUseCase;
+import cn.dextea.trade.order.application.usecase.CancelOrderUseCase;
 import cn.dextea.trade.order.application.dto.command.GetMonthOrdersCommand;
 import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.dto.command.GetOrderDetailCommand;
 import cn.dextea.trade.order.application.dto.command.GetOrderPaymentStatusCommand;
+import cn.dextea.trade.order.application.dto.command.CancelOrderCommand;
 import cn.dextea.trade.order.application.dto.result.GetMonthOrdersResult;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
@@ -58,6 +60,7 @@ public class OrderController {
     private final GetMonthOrdersUseCase getMonthOrdersUseCase;
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final GetOrderPaymentStatusUseCase getOrderPaymentStatusUseCase;
+    private final CancelOrderUseCase cancelOrderUseCase;
 
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
@@ -124,5 +127,20 @@ public class OrderController {
         log.info("查询订单支付状态成功, customerId={}, orderId={}, paymentStatus={}",
                 customerId, orderId, result.getPaymentStatus());
         return APIResponse.success(OrderPaymentStatusHttpAssembler.toResponse(result));
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    @Operation(summary = "取消订单")
+    public APIResponse<Void> cancel(
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
+            @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
+        log.info("取消订单请求, customerId={}, orderId={}", customerId, orderId);
+        CancelOrderCommand command = CancelOrderCommand.builder()
+                .customerId(customerId)
+                .orderId(orderId)
+                .build();
+        cancelOrderUseCase.execute(command);
+        log.info("取消订单成功, customerId={}, orderId={}", customerId, orderId);
+        return APIResponse.success();
     }
 }

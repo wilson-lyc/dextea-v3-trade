@@ -16,4 +16,6 @@ public interface OrderRepository {
     List<Order> getMonthOrders(Long customerId, int year, int month);
 
     void updatePaymentStatus(Order order);
+
+    void cancelOrder(Order order);
 }

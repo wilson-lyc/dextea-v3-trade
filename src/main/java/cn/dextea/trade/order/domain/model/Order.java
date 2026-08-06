@@ -10,7 +10,6 @@ import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.shared.domain.model.Money;
 import cn.dextea.trade.shared.domain.model.Quantity;
 
-import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
 import cn.dextea.trade.order.domain.model.OrderPaymentStatusLog;
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
@@ -124,6 +123,11 @@ public class Order {
         this.id = id;
     }
 
+    public void assignAmounts(Money totalPrice, Quantity totalQuantity) {
+        this.totalPrice = totalPrice;
+        this.totalQuantity = totalQuantity;
+    }
+
     public void markCreated(String tradeNo, LocalDateTime paymentExpiredAt) {
         this.tradeNo = tradeNo;
         this.paymentExpiredAt = paymentExpiredAt;
@@ -136,6 +140,23 @@ public class Order {
         this.paymentStatus = PaymentStatus.PAID;
         this.paymentPaidAt = paidAt;
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.PAID, "ORDER_PAID");
+    }
+
+    public void markCancelled() {
+        this.paymentStatus = PaymentStatus.CANCELLED;
+        recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
+    }
+
+    public boolean isPaid() {
+        return paymentStatus == PaymentStatus.PAID;
+    }
+
+    public boolean isPendingPayment() {
+        return paymentStatus == PaymentStatus.PENDING;
+    }
+
+    public boolean isCancelled() {
+        return paymentStatus == PaymentStatus.CANCELLED;
     }
 
     private void recordPaymentStatusChange(PaymentStatus from, PaymentStatus to, String event) {
@@ -157,14 +178,6 @@ public class Order {
         List<OrderPaymentStatusLog> logs = paymentStatusLogs;
         paymentStatusLogs = null;
         return logs;
-    }
-
-    public boolean isPaid() {
-        return paymentStatus == PaymentStatus.PAID;
-    }
-
-    public boolean isPendingPayment() {
-        return paymentStatus == PaymentStatus.PENDING;
     }
 
     public void addItem(Product product, String skuId, Quantity quantity) {
@@ -190,6 +203,12 @@ public class Order {
         }
     }
 
+    public void ensurePendingPayment() {
+        if (!isPendingPayment()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_CANCEL);
+        }
+    }
+
     public boolean isInitialized() {
         return orderNo != null;
     }
@@ -200,10 +219,5 @@ public class Order {
 
     public Quantity getTotalQuantity() {
         return totalQuantity == null ? Quantity.ZERO : totalQuantity;
-    }
-
-    public void assignAmounts(Money totalPrice, Quantity totalQuantity) {
-        this.totalPrice = totalPrice;
-        this.totalQuantity = totalQuantity;
     }
 }
