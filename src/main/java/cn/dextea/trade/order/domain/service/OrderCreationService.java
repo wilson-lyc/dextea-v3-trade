@@ -6,7 +6,6 @@ import cn.dextea.trade.order.domain.model.Customer;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.SkuItem;
-import cn.dextea.trade.order.domain.model.Store;
 import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
@@ -17,6 +16,7 @@ import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
 import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.domain.error.Ensure;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,11 +48,9 @@ public class OrderCreationService {
     public Order preBuildOrder(Long customerId, Long storeId, List<SkuItem> items) {
         log.info("开始预下单, customerId={}, storeId={}, itemCount={}", customerId, storeId, items.size());
 
-        Store store = storeRepository.getStoreById(storeId);
-        store.ensureActive();
+        Ensure.active(Ensure.notNull(storeRepository.getStoreById(storeId), OrderErrorCode.STORE_NOT_FOUND));
 
-        Customer customer = customerRepository.getCustomerById(customerId);
-        customer.ensureActive();
+        Ensure.active(Ensure.notNull(customerRepository.getCustomerById(customerId), OrderErrorCode.CUSTOMER_NOT_FOUND));
 
         List<String> skuIds = items.stream()
                 .map(SkuItem::getSkuId)
