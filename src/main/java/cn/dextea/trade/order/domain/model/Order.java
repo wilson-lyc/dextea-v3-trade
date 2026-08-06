@@ -10,6 +10,8 @@ import cn.dextea.trade.shared.domain.error.BizError;
 import cn.dextea.trade.shared.domain.model.Money;
 import cn.dextea.trade.shared.domain.model.Quantity;
 
+import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
+import cn.dextea.trade.order.domain.model.OrderPaymentStatusLog;
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 
@@ -44,6 +46,9 @@ public class Order {
     private Money totalPrice;
     private Quantity totalQuantity;
     private List<OrderItem> items;
+
+    /** 支付状态变更日志，由 markCreated / markPaid 记录，落库时由 Repository 取出并持久化 */
+    private List<OrderPaymentStatusLog> paymentStatusLogs;
 
     private Order() {
         this.items = new ArrayList<>();
@@ -92,11 +97,37 @@ public class Order {
         this.paymentExpiredAt = paymentExpiredAt;
         this.paymentStatus = PaymentStatus.PENDING;
         this.makingStatus = MakingStatus.PENDING;
+        recordPaymentStatusChange(null, PaymentStatus.PENDING, "ORDER_CREATED");
     }
 
     public void markPaid(LocalDateTime paidAt) {
         this.paymentStatus = PaymentStatus.PAID;
         this.paymentPaidAt = paidAt;
+        recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.PAID, "ORDER_PAID");
+    }
+
+    private void recordPaymentStatusChange(PaymentStatus from, PaymentStatus to, String event) {
+        if (paymentStatusLogs == null) {
+            paymentStatusLogs = new ArrayList<>();
+        }
+        paymentStatusLogs.add(OrderPaymentStatusLog.builder()
+                .fromStatus(from == null ? null : from.getCode())
+                .toStatus(to == null ? null : to.getCode())
+                .event(event)
+                .createdAt(LocalDateTime.now())
+                .build());
+    }
+
+    /**
+     * 取出并清空待持久化的支付状态变更日志，交予 PaymentStatusLogRepository 落库。
+     */
+    public List<OrderPaymentStatusLog> pullPaymentStatusLogs() {
+        if (paymentStatusLogs == null || paymentStatusLogs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<OrderPaymentStatusLog> logs = paymentStatusLogs;
+        paymentStatusLogs = null;
+        return logs;
     }
 
     public boolean isPaid() {

@@ -3,6 +3,7 @@ package cn.dextea.trade.order.infrastructure.persistence.repository;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
+import cn.dextea.trade.order.domain.repository.OrderPaymentStatusLogRepository;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.infrastructure.adapter.RedisOrderItemCache;
 import cn.dextea.trade.order.infrastructure.persistence.converter.OrderConverter;
@@ -31,6 +32,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final OrderItemMapper orderItemMapper;
     private final OrderConverter orderConverter;
     private final RedisOrderItemCache orderItemCache;
+    private final OrderPaymentStatusLogRepository paymentStatusLogRepository;
 
     @Override
     @Transactional
@@ -48,6 +50,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             orderItemMapper.batchInsert(itemPOs);
             putItemsToCacheAfterCommit(order.getId(), itemPOs);
         }
+        savePaymentStatusLogs(order);
         return order;
     }
 
@@ -99,6 +102,18 @@ public class OrderRepositoryImpl implements OrderRepository {
         if (updated == 0) {
             throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
         }
+        savePaymentStatusLogs(order);
+    }
+
+    private void savePaymentStatusLogs(Order order) {
+        List<OrderPaymentStatusLog> logs = order.pullPaymentStatusLogs();
+        if (logs.isEmpty()) {
+            return;
+        }
+        for (OrderPaymentStatusLog log : logs) {
+            log.setOrderId(order.getId());
+        }
+        paymentStatusLogRepository.saveAll(logs);
     }
 
     @Override
