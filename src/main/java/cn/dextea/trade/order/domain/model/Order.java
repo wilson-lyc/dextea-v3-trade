@@ -46,8 +46,6 @@ public class Order {
     private Money totalPrice;
     private Quantity totalQuantity;
     private List<OrderItem> items;
-
-    /** 支付状态变更日志，由 markCreated / markPaid 记录，落库时由 Repository 取出并持久化 */
     private List<OrderPaymentStatusLog> paymentStatusLogs;
 
     private Order() {
@@ -74,8 +72,38 @@ public class Order {
         return order;
     }
 
-    public void save(OrderRepository orderRepository) {
-        orderRepository.save(this);
+    public static Order reconstruct(Long id, String orderNo, String tradeNo, String idempotencyKey,
+                                    Long customerId, Long storeId, DiningMethod diningMethod, String note,
+                                    OrderSource source, String pickupCode, MakingStatus makingStatus,
+                                    PaymentMethod paymentMethod, PaymentStatus paymentStatus,
+                                    LocalDateTime paymentExpiredAt, LocalDateTime paymentPaidAt,
+                                    LocalDateTime paymentRefundedAt, LocalDateTime createdAt,
+                                    LocalDateTime updatedAt, Integer version,
+                                    Money totalPrice, Quantity totalQuantity, List<OrderItem> items) {
+        Order order = new Order();
+        order.id = id;
+        order.orderNo = orderNo;
+        order.tradeNo = tradeNo;
+        order.idempotencyKey = idempotencyKey;
+        order.customerId = customerId;
+        order.storeId = storeId;
+        order.diningMethod = diningMethod;
+        order.note = note;
+        order.source = source;
+        order.pickupCode = pickupCode;
+        order.makingStatus = makingStatus;
+        order.paymentMethod = paymentMethod;
+        order.paymentStatus = paymentStatus;
+        order.paymentExpiredAt = paymentExpiredAt;
+        order.paymentPaidAt = paymentPaidAt;
+        order.paymentRefundedAt = paymentRefundedAt;
+        order.createdAt = createdAt;
+        order.updatedAt = updatedAt;
+        order.version = version;
+        order.totalPrice = totalPrice;
+        order.totalQuantity = totalQuantity;
+        order.items = items == null ? new ArrayList<>() : items;
+        return order;
     }
 
     public void initialize(String orderNo, OrderSource source, PaymentMethod paymentMethod,
@@ -86,6 +114,10 @@ public class Order {
         this.diningMethod = diningMethod;
         this.note = note;
         this.idempotencyKey = idempotencyKey;
+    }
+
+    public void save(OrderRepository orderRepository) {
+        orderRepository.save(this);
     }
 
     public void assignId(Long id) {
@@ -118,9 +150,6 @@ public class Order {
                 .build());
     }
 
-    /**
-     * 取出并清空待持久化的支付状态变更日志，交予 PaymentStatusLogRepository 落库。
-     */
     public List<OrderPaymentStatusLog> pullPaymentStatusLogs() {
         if (paymentStatusLogs == null || paymentStatusLogs.isEmpty()) {
             return Collections.emptyList();
@@ -134,10 +163,6 @@ public class Order {
         return paymentStatus == PaymentStatus.PAID;
     }
 
-    /**
-     * 是否处于「未支付」状态，即支付结果尚未确定、仍可能被支付渠道回填。
-     * 该状态下允许主动向支付渠道查询交易结果做对账补偿。
-     */
     public boolean isPendingPayment() {
         return paymentStatus == PaymentStatus.PENDING;
     }
@@ -180,39 +205,5 @@ public class Order {
     public void assignAmounts(Money totalPrice, Quantity totalQuantity) {
         this.totalPrice = totalPrice;
         this.totalQuantity = totalQuantity;
-    }
-
-    public static Order reconstruct(Long id, String orderNo, String tradeNo, String idempotencyKey,
-                                    Long customerId, Long storeId, DiningMethod diningMethod, String note,
-                                    OrderSource source, String pickupCode, MakingStatus makingStatus,
-                                    PaymentMethod paymentMethod, PaymentStatus paymentStatus,
-                                    LocalDateTime paymentExpiredAt, LocalDateTime paymentPaidAt,
-                                    LocalDateTime paymentRefundedAt, LocalDateTime createdAt,
-                                    LocalDateTime updatedAt, Integer version,
-                                    Money totalPrice, Quantity totalQuantity, List<OrderItem> items) {
-        Order order = new Order();
-        order.id = id;
-        order.orderNo = orderNo;
-        order.tradeNo = tradeNo;
-        order.idempotencyKey = idempotencyKey;
-        order.customerId = customerId;
-        order.storeId = storeId;
-        order.diningMethod = diningMethod;
-        order.note = note;
-        order.source = source;
-        order.pickupCode = pickupCode;
-        order.makingStatus = makingStatus;
-        order.paymentMethod = paymentMethod;
-        order.paymentStatus = paymentStatus;
-        order.paymentExpiredAt = paymentExpiredAt;
-        order.paymentPaidAt = paymentPaidAt;
-        order.paymentRefundedAt = paymentRefundedAt;
-        order.createdAt = createdAt;
-        order.updatedAt = updatedAt;
-        order.version = version;
-        order.totalPrice = totalPrice;
-        order.totalQuantity = totalQuantity;
-        order.items = items == null ? new ArrayList<>() : items;
-        return order;
     }
 }

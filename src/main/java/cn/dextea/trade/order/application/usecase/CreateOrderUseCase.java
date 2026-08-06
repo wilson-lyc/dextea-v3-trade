@@ -67,7 +67,7 @@ public class CreateOrderUseCase {
                         customerId, idempotencyKey);
                 throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
             }
-            return doCreate(command, idempotencyKey);
+            return doCreate(command);
         } finally {
             // 释放锁
             try {
@@ -79,7 +79,8 @@ public class CreateOrderUseCase {
         }
     }
 
-    private OrderCreateResult doCreate(CreateOrderCommand command, String idempotencyKey) {
+    private OrderCreateResult doCreate(CreateOrderCommand command) {
+        String idempotencyKey = command.getIdempotencyKey();
         List<SkuItem> skuItems = OrderItemAssembler.toSkuItems(command.getItems());
 
         Order order;
