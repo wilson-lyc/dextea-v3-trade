@@ -2,7 +2,7 @@ package cn.dextea.trade.pay.interfaces.mq;
 
 import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.application.service.PaymentCallbackApplicationService;
-import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.error.BizError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

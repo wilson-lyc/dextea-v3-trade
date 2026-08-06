@@ -2,8 +2,8 @@ package cn.dextea.trade.order.domain.service;
 
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 import org.springframework.stereotype.Component;
 
 @Component

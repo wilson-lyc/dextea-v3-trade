@@ -5,8 +5,8 @@ import cn.dextea.trade.order.domain.model.enumeration.CustomizationOptionGlobalS
 import cn.dextea.trade.order.domain.model.enumeration.CustomizationOptionStoreStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationOptionPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.CustomizationOptionStoreStatusPO;
-import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
-import cn.dextea.trade.shared.domain.model.Money;
+import cn.dextea.trade.shared.enumeration.EnumUtils;
+import cn.dextea.trade.shared.model.Money;
 import org.springframework.stereotype.Component;
 
 @Component

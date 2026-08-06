@@ -2,7 +2,7 @@ package cn.dextea.trade.order.infrastructure.persistence.repository;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Product;
-import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.order.domain.model.ProductCover;
 import cn.dextea.trade.order.domain.model.CustomizationItem;
 import cn.dextea.trade.order.domain.model.CustomizationOption;

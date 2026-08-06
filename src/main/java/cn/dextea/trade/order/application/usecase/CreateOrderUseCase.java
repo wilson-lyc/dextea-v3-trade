@@ -11,7 +11,7 @@ import cn.dextea.trade.order.domain.model.SkuItem;
 import cn.dextea.trade.order.domain.port.IdempotencyStore;
 import cn.dextea.trade.order.domain.port.OrderCreateLock;
 import cn.dextea.trade.order.domain.service.OrderCreationService;
-import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

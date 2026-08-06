@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.domain.error;
+package cn.dextea.trade.shared.error;
 import lombok.Getter;
 @Getter
 public class BizError extends RuntimeException {

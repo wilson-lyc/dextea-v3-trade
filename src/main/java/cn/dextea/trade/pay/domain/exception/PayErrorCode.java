@@ -1,6 +1,6 @@
 package cn.dextea.trade.pay.domain.exception;
 
-import cn.dextea.trade.shared.domain.error.BizErrorCode;
+import cn.dextea.trade.shared.error.BizErrorCode;
 
 public enum PayErrorCode implements BizErrorCode {
     ALIPAY_CREATE_TRADE_FAILED(102001, "支付宝创建交易失败"),

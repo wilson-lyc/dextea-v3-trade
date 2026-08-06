@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.domain.model;
+package cn.dextea.trade.shared.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

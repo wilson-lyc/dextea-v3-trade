@@ -7,11 +7,11 @@ import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
 import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
-import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
+import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
-import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.enumeration.CodeEnum;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

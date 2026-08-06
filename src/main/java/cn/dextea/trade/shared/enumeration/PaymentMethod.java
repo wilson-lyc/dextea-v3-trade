@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.domain.enumeration;
+package cn.dextea.trade.shared.enumeration;
 
 public enum PaymentMethod implements CodeEnum {
     CASH(0, "现金"),

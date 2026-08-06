@@ -1,11 +1,12 @@
-package cn.dextea.trade.shared.domain.error;
+package cn.dextea.trade.shared.error;
 
 /**
  * 跨模块通用错误码。100xxx 段保留给 shared/通用错误。
  */
 public enum CommonErrorCode implements BizErrorCode {
     MISSING_REQUEST_HEADER(100001, "缺少请求头"),
-    MYBATIS_SYSTEM_EXCEPTION(100002, "系统繁忙，请稍后重试");
+    MYBATIS_SYSTEM_EXCEPTION(100002, "系统繁忙，请稍后重试"),
+    NOT_FOUND(404, "Not Found");
 
     private final int code;
     private final String message;

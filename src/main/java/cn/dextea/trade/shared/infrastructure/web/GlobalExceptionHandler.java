@@ -1,8 +1,8 @@
 package cn.dextea.trade.shared.infrastructure.web;
 
 import cn.dextea.trade.shared.api.APIResponse;
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.shared.domain.error.CommonErrorCode;
+import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.error.CommonErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.dao.DataAccessException;

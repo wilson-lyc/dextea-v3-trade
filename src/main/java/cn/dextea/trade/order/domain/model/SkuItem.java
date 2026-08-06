@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.domain.model;
 
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.model.Quantity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

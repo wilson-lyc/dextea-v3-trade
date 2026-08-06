@@ -2,7 +2,7 @@ package cn.dextea.trade.order.application.dto.command;
 import cn.dextea.trade.order.application.dto.shared.CreateOrderItem;
 import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
-import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
+import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;

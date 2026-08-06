@@ -4,11 +4,11 @@ import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
-import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
+import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 
 import cn.dextea.trade.order.domain.model.OrderPaymentStatusLog;
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;

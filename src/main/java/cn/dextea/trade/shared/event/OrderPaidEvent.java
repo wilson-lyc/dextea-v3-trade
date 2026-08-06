@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.domain.event;
+package cn.dextea.trade.shared.event;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

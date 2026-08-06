@@ -1,7 +1,7 @@
 package cn.dextea.trade.order.domain.model.enumeration;
 
-import cn.dextea.trade.shared.domain.enumeration.CodeEnum;
-import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
+import cn.dextea.trade.shared.enumeration.CodeEnum;
+import cn.dextea.trade.shared.enumeration.EnumUtils;
 
 public enum OrderSource implements CodeEnum {
     OFFLINE(0, "线下"),

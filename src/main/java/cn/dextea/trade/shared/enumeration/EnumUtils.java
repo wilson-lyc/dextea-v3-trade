@@ -1,7 +1,7 @@
-package cn.dextea.trade.shared.domain.enumeration;
+package cn.dextea.trade.shared.enumeration;
 
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.shared.domain.error.BizErrorCode;
+import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.error.BizErrorCode;
 
 import java.util.function.Function;
 

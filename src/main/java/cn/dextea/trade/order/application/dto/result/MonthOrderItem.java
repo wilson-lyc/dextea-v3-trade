@@ -2,8 +2,8 @@ package cn.dextea.trade.order.application.dto.result;
 
 import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

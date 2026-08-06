@@ -1,5 +1,5 @@
 package cn.dextea.trade.order.domain.exception;
-import cn.dextea.trade.shared.domain.error.BizErrorCode;
+import cn.dextea.trade.shared.error.BizErrorCode;
 public enum OrderErrorCode implements BizErrorCode {
     CUSTOMER_NOT_FOUND(101001, "顾客不存在"),
     STORE_NOT_FOUND(101002, "门店不存在"),

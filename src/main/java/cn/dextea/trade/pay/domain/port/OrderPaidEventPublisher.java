@@ -1,6 +1,6 @@
 package cn.dextea.trade.pay.domain.port;
 
-import cn.dextea.trade.shared.domain.event.OrderPaidEvent;
+import cn.dextea.trade.shared.event.OrderPaidEvent;
 
 public interface OrderPaidEventPublisher {
 

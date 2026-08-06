@@ -1,6 +1,6 @@
 package cn.dextea.trade.order.application.dto.result;
 
-import cn.dextea.trade.shared.domain.model.Money;
+import cn.dextea.trade.shared.model.Money;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

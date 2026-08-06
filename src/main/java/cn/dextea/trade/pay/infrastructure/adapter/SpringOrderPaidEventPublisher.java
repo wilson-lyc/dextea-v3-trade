@@ -1,7 +1,7 @@
 package cn.dextea.trade.pay.infrastructure.adapter;
 
 import cn.dextea.trade.pay.domain.port.OrderPaidEventPublisher;
-import cn.dextea.trade.shared.domain.event.OrderPaidEvent;
+import cn.dextea.trade.shared.event.OrderPaidEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;

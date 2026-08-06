@@ -1,9 +1,9 @@
 package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.shared.domain.error.BizError;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 
 import lombok.Getter;
 

@@ -11,7 +11,7 @@ import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderItemMapper;
 import cn.dextea.trade.order.infrastructure.persistence.mapper.OrderMapper;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
-import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.error.BizError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

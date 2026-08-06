@@ -8,7 +8,7 @@ import cn.dextea.trade.order.domain.model.Store;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
-import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

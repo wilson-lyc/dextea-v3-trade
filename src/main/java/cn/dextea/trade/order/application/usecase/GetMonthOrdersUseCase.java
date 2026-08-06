@@ -8,7 +8,7 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.Store;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
-import cn.dextea.trade.shared.domain.model.Money;
+import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

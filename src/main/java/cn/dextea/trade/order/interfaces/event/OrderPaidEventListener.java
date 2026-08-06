@@ -2,7 +2,7 @@ package cn.dextea.trade.order.interfaces.event;
 
 import cn.dextea.trade.order.application.dto.command.MarkOrderPaidCommand;
 import cn.dextea.trade.order.application.usecase.MarkOrderPaidUseCase;
-import cn.dextea.trade.shared.domain.event.OrderPaidEvent;
+import cn.dextea.trade.shared.event.OrderPaidEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

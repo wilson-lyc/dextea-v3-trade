@@ -6,8 +6,8 @@ import cn.dextea.trade.order.domain.model.enumeration.ProductGlobalStatus;
 import cn.dextea.trade.order.domain.model.enumeration.ProductStoreStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.ProductsPO;
 import cn.dextea.trade.order.infrastructure.persistence.po.ProductStoreStatusPO;
-import cn.dextea.trade.shared.domain.enumeration.EnumUtils;
-import cn.dextea.trade.shared.domain.model.Money;
+import cn.dextea.trade.shared.enumeration.EnumUtils;
+import cn.dextea.trade.shared.model.Money;
 import org.springframework.stereotype.Component;
 
 @Component

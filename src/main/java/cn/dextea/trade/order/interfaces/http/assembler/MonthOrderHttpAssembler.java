@@ -5,8 +5,8 @@ import cn.dextea.trade.order.application.dto.result.GetMonthOrdersResult;
 import cn.dextea.trade.order.application.dto.result.MonthOrderItem;
 import cn.dextea.trade.order.interfaces.http.dto.request.GetMonthOrdersRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.GetMonthOrdersResponse;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 
 import java.util.List;
 import java.util.stream.Collectors;

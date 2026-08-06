@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.domain.enumeration;
+package cn.dextea.trade.shared.enumeration;
 public interface StringCodeEnum {
     String getValue();
 }

@@ -1,7 +1,7 @@
 package cn.dextea.trade.order.domain.service;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.shared.domain.error.BizError;
+import cn.dextea.trade.shared.error.BizError;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;

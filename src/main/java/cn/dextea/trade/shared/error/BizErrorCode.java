@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.domain.error;
+package cn.dextea.trade.shared.error;
 public interface BizErrorCode {
     int getCode();
     String getMessage();

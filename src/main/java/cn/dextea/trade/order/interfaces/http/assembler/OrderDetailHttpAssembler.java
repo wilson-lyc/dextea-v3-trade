@@ -5,12 +5,12 @@ import cn.dextea.trade.order.application.dto.result.OrderDetailResult;
 import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
-import cn.dextea.trade.shared.domain.enumeration.PaymentMethod;
+import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderDetailItem;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderDetailResponse;
-import cn.dextea.trade.shared.domain.model.Money;
-import cn.dextea.trade.shared.domain.model.Quantity;
+import cn.dextea.trade.shared.model.Money;
+import cn.dextea.trade.shared.model.Quantity;
 
 import java.math.BigDecimal;
 import java.util.List;
