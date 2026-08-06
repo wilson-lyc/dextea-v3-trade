@@ -23,6 +23,7 @@ public class OrderPaidEventListener {
                 .orderNo(event.orderNo())
                 .tradeNo(event.tradeNo())
                 .paidAt(event.paidAt())
+                .paidAmount(event.amount())
                 .build());
     }
 }

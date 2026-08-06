@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -16,4 +17,6 @@ public class MarkOrderPaidCommand {
     private String tradeNo;
 
     private LocalDateTime paidAt;
+
+    private BigDecimal paidAmount;
 }

@@ -2,6 +2,7 @@ package cn.dextea.trade.pay.interfaces.mq;
 
 import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.application.service.PaymentCallbackApplicationService;
+import cn.dextea.trade.shared.domain.error.BizError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -22,6 +23,8 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,6 +37,8 @@ public class PaymentCallbackMqConsumer {
 
     private static final Duration RECEIVE_TIMEOUT = Duration.ofSeconds(20);
 
+    private static final int MAX_RETRY_TIMES = 5;
+
     private final PaymentCallbackMqProperties properties;
     private final PaymentCallbackApplicationService paymentCallbackApplicationService;
     private final ObjectMapper objectMapper;
@@ -41,6 +46,7 @@ public class PaymentCallbackMqConsumer {
     private SimpleConsumer consumer;
     private ExecutorService consumeExecutor;
     private volatile boolean running = false;
+    private final Map<String, Integer> retryCounter = new ConcurrentHashMap<>();
 
     public PaymentCallbackMqConsumer(PaymentCallbackMqProperties properties,
                                      PaymentCallbackApplicationService paymentCallbackApplicationService,
@@ -93,12 +99,7 @@ public class PaymentCallbackMqConsumer {
             try {
                 List<MessageView> messages = consumer.receive(MAX_RECEIVE_NUM, RECEIVE_TIMEOUT);
                 for (MessageView message : messages) {
-                    try {
-                        handleMessage(message);
-                        consumer.ack(message);
-                    } catch (Exception e) {
-                        log.error("payment-callback 消息处理失败, 将重试, messageId={}", message.getMessageId(), e);
-                    }
+                    processMessage(message);
                 }
             } catch (Exception e) {
                 log.error("payment-callback 消息拉取异常", e);
@@ -107,14 +108,49 @@ public class PaymentCallbackMqConsumer {
         }
     }
 
+    private void processMessage(MessageView message) {
+        String messageId = message.getMessageId();
+        try {
+            handleMessage(message);
+            consumer.ack(message);
+            retryCounter.remove(messageId);
+        } catch (NonRetryableException | BizError e) {
+            log.error("payment-callback 消息不可重试, 直接确认避免死循环, messageId={}, reason={}",
+                    messageId, e.getMessage());
+            consumer.ack(message);
+            retryCounter.remove(messageId);
+        } catch (Exception e) {
+            int times = retryCounter.merge(messageId, 1, Integer::sum);
+            if (times >= MAX_RETRY_TIMES) {
+                log.error("payment-callback 消息重试次数耗尽, 转死信, messageId={}", messageId, e);
+                consumer.ack(message);
+                retryCounter.remove(messageId);
+            } else {
+                log.warn("payment-callback 消息处理失败, 等待 RocketMQ 重新投递, messageId={}, retryTimes={}/{}",
+                        messageId, times, MAX_RETRY_TIMES, e);
+            }
+        }
+    }
+
     private void handleMessage(MessageView message) throws Exception {
         ByteBuffer body = message.getBody();
         byte[] bytes = new byte[body.remaining()];
         body.get(bytes);
-        PaymentCallbackMessage callbackMessage = objectMapper.readValue(bytes, PaymentCallbackMessage.class);
+        PaymentCallbackMessage callbackMessage;
+        try {
+            callbackMessage = objectMapper.readValue(bytes, PaymentCallbackMessage.class);
+        } catch (Exception e) {
+            throw new NonRetryableException("支付回调消息反序列化失败", e);
+        }
         log.info("收到支付回调消息, messageId={}, topic={}, platform={}, data={}",
                 message.getMessageId(), message.getTopic(), callbackMessage.platform(), callbackMessage.data());
         paymentCallbackApplicationService.handle(callbackMessage);
+    }
+
+    private static final class NonRetryableException extends RuntimeException {
+        NonRetryableException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     @PreDestroy
