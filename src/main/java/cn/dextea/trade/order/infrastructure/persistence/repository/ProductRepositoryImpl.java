@@ -79,10 +79,12 @@ public class ProductRepositoryImpl implements ProductRepository {
         Map<Long, List<CustomizationItemPO>> itemsByProductId = itemPOs.stream()
                 .collect(Collectors.groupingBy(CustomizationItemPO::getProductId));
 
-        Map<Long, ProductStoreStatusPO> productStoreStatusByProductId = productIds.stream()
-                .map(pid -> productStoreStatusMapper.selectByProductIdAndStoreId(pid, storeId))
-                .filter(po -> po != null)
+        List<ProductStoreStatusPO> productStoreStatusPOs =
+                productStoreStatusMapper.selectByProductIdsAndStoreId(productIds, storeId);
+        Map<Long, ProductStoreStatusPO> productStoreStatusByProductId = productStoreStatusPOs.stream()
                 .collect(Collectors.toMap(ProductStoreStatusPO::getProductId, Function.identity()));
+
+        Map<Long, ProductCover> coverByProductId = resolveCovers(productIds);
 
         return productPOs.stream().collect(Collectors.toMap(
                 ProductsPO::getId,
@@ -92,7 +94,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                             .stream()
                             .map(itemPO -> toItemDomain(itemPO, optionsByItemId, optionStoreStatusByOptionId))
                             .collect(Collectors.toList());
-                    ProductCover cover = resolveCover(po.getId());
+                    ProductCover cover = coverByProductId.get(po.getId());
                     ProductStoreStatusPO storeStatusPO = productStoreStatusByProductId.get(po.getId());
                     Product product = productConverter.toDomain(po, storeStatusPO, cover);
                     product.setCustomization(items);
@@ -115,18 +117,27 @@ public class ProductRepositoryImpl implements ProductRepository {
         return customizationItemConverter.toDomain(itemPO, options);
     }
 
-    private ProductCover resolveCover(Long productId) {
-        ProductImagePO imagePO = productImageMapper.selectCoverByProductId(productId);
-        if (imagePO == null) {
-            return null;
+    private Map<Long, ProductCover> resolveCovers(Set<Long> productIds) {
+        if (productIds.isEmpty()) {
+            return Collections.emptyMap();
         }
-        GalleryPO galleryPO = galleryMapper.selectById(imagePO.getImageId());
-        if (galleryPO == null) {
-            return null;
+        List<ProductImagePO> imagePOs = productImageMapper.selectCoversByProductIds(productIds);
+        Map<Long, Long> imageIdByProductId = imagePOs.stream()
+                .filter(po -> po.getImageId() != null)
+                .collect(Collectors.toMap(ProductImagePO::getProductId, ProductImagePO::getImageId, (a, b) -> a));
+        if (imageIdByProductId.isEmpty()) {
+            return Collections.emptyMap();
         }
-        return ProductCover.builder()
-                .id(galleryPO.getId())
-                .url(galleryPO.getUrl())
-                .build();
+        List<GalleryPO> galleryPOs = galleryMapper.selectByIds(imageIdByProductId.values());
+        Map<Long, String> urlById = galleryPOs.stream()
+                .collect(Collectors.toMap(GalleryPO::getId, GalleryPO::getUrl));
+        Map<Long, ProductCover> result = new java.util.HashMap<>();
+        imageIdByProductId.forEach((productId, imageId) -> {
+            String url = urlById.get(imageId);
+            if (url != null) {
+                result.put(productId, ProductCover.builder().id(imageId).url(url).build());
+            }
+        });
+        return result;
     }
 }

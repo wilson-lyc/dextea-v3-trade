@@ -5,10 +5,20 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Collection;
+import java.util.List;
+
 @Mapper
 public interface ProductStoreStatusMapper {
 
     @Select("SELECT * FROM product_store_status WHERE product_id = #{productId} AND store_id = #{storeId}")
     ProductStoreStatusPO selectByProductIdAndStoreId(@Param("productId") Long productId,
                                                      @Param("storeId") Long storeId);
+
+    @Select("<script>SELECT * FROM product_store_status WHERE store_id = #{storeId} "
+            + "AND product_id IN "
+            + "<foreach collection='productIds' item='pid' open='(' separator=',' close=')'>#{pid}</foreach>"
+            + "</script>")
+    List<ProductStoreStatusPO> selectByProductIdsAndStoreId(@Param("productIds") Collection<Long> productIds,
+                                                            @Param("storeId") Long storeId);
 }
