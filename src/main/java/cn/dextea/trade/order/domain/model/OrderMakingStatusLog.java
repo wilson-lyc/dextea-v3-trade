@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderStatusLog {
+public class OrderMakingStatusLog {
     private Long id;
     private Long orderId;
     private Integer fromStatus;
@@ -18,4 +18,8 @@ public class OrderStatusLog {
     private String operator;
     private Integer version;
     private LocalDateTime createdAt;
+
+    public void assignId(Long id) {
+        this.id = id;
+    }
 }
