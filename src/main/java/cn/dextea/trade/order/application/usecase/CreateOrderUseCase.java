@@ -153,13 +153,9 @@ public class CreateOrderUseCase {
 
     private boolean isIdempotencyKeyConflict(DuplicateKeyException e) {
         Throwable cause = e.getMostSpecificCause();
-        String message = cause == null ? null : cause.getMessage();
-        if (message == null || !message.contains("idempotency_key")) {
-            return false;
-        }
         if (cause instanceof SQLException sqlException) {
             return sqlException.getErrorCode() == 1062;
         }
-        return true;
+        return false;
     }
 }
