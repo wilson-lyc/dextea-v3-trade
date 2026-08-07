@@ -2,6 +2,7 @@ package cn.dextea.trade.pay.interfaces.mq;
 
 import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.application.service.PaymentCallbackApplicationService;
+import cn.dextea.trade.order.domain.exception.RetryableOrderException;
 import cn.dextea.trade.shared.error.BizError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -118,6 +119,9 @@ public class PaymentCallbackMqConsumer {
             log.error("payment-callback 消息不可重试, 直接确认避免死循环, messageId={}, reason={}",
                     messageId, e.getMessage());
             ackQuietly(message, messageId);
+        } catch (RetryableOrderException e) {
+            log.warn("payment-callback 订单暂未就绪, 不确认消息等待 RocketMQ 重投, messageId={}, reason={}",
+                    messageId, e.getMessage());
         } catch (Exception e) {
             int times = retryCounter.merge(messageId, 1, Integer::sum);
             if (times >= MAX_RETRY_TIMES) {

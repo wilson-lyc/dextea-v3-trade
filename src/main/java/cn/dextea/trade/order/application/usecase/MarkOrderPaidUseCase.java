@@ -2,6 +2,7 @@ package cn.dextea.trade.order.application.usecase;
 
 import cn.dextea.trade.order.application.dto.command.MarkOrderPaidCommand;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
+import cn.dextea.trade.order.domain.exception.RetryableOrderException;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
@@ -29,8 +30,8 @@ public class MarkOrderPaidUseCase {
         String tradeNo = command.getTradeNo();
         Order order = orderRepository.getSummaryByOrderNo(orderNo);
         if (order == null) {
-            log.error("订单已支付事件处理失败, 订单不存在, orderNo={}, tradeNo={}", orderNo, tradeNo);
-            throw new BizError(OrderErrorCode.ORDER_NOT_FOUND);
+            throw new RetryableOrderException(
+                    "订单已支付事件处理时订单暂未查到, 等待重投, orderNo=" + orderNo + ", tradeNo=" + tradeNo);
         }
 
         if (order.isPaid()) {
