@@ -20,7 +20,10 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_NOT_BELONG_TO_CUSTOMER(101017, "该订单不属于当前顾客"),
     ORDER_UPDATE_CONFLICT(101018, "订单状态更新冲突，请重试"),
     ORDER_CANNOT_CANCEL(101019, "仅支付中的订单可以取消"),
-    ORDER_PAID_AMOUNT_MISMATCH(101020, "支付回调金额与订单金额不一致");
+    ORDER_PAID_AMOUNT_MISMATCH(101020, "支付回调金额与订单金额不一致"),
+    ORDER_NOT_PAID(101021, "仅已支付的订单可以开始制作"),
+    ORDER_NOT_PREPARING(101022, "仅制作中的订单可以标记为制作完成"),
+    ORDER_NOT_READY(101023, "仅制作完成的订单可以标记为已取餐");
     
     private final int code;
     private final String message;

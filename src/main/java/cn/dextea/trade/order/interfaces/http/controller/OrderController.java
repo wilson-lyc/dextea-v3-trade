@@ -15,12 +15,16 @@ import cn.dextea.trade.order.application.usecase.CreateOrderUseCase;
 import cn.dextea.trade.order.application.usecase.GetOrderDetailUseCase;
 import cn.dextea.trade.order.application.usecase.GetOrderPaymentStatusUseCase;
 import cn.dextea.trade.order.application.usecase.CancelOrderUseCase;
+import cn.dextea.trade.order.application.usecase.MarkOrderReadyUseCase;
+import cn.dextea.trade.order.application.usecase.MarkOrderCollectedUseCase;
 import cn.dextea.trade.order.application.dto.command.GetMonthOrdersCommand;
 import cn.dextea.trade.order.application.dto.command.PreBuildOrderCommand;
 import cn.dextea.trade.order.application.dto.command.CreateOrderCommand;
 import cn.dextea.trade.order.application.dto.command.GetOrderDetailCommand;
 import cn.dextea.trade.order.application.dto.command.GetOrderPaymentStatusCommand;
 import cn.dextea.trade.order.application.dto.command.CancelOrderCommand;
+import cn.dextea.trade.order.application.dto.command.MarkOrderReadyCommand;
+import cn.dextea.trade.order.application.dto.command.MarkOrderCollectedCommand;
 import cn.dextea.trade.order.application.dto.result.GetMonthOrdersResult;
 import cn.dextea.trade.order.application.dto.result.PreBuildOrderResult;
 import cn.dextea.trade.order.application.dto.result.OrderCreateResult;
@@ -61,6 +65,8 @@ public class OrderController {
     private final GetOrderDetailUseCase getOrderDetailUseCase;
     private final GetOrderPaymentStatusUseCase getOrderPaymentStatusUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
+    private final MarkOrderReadyUseCase markOrderReadyUseCase;
+    private final MarkOrderCollectedUseCase markOrderCollectedUseCase;
 
     @PostMapping("/pre-build")
     @Operation(summary = "订单预构建")
@@ -141,6 +147,36 @@ public class OrderController {
                 .build();
         cancelOrderUseCase.execute(command);
         log.info("取消订单成功, customerId={}, orderId={}", customerId, orderId);
+        return APIResponse.success();
+    }
+
+    @PostMapping("/{orderId}/ready")
+    @Operation(summary = "标记订单制作完成", description = "制作中 -> 制作完成")
+    public APIResponse<Void> markReady(
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
+            @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
+        log.info("标记订单制作完成请求, customerId={}, orderId={}", customerId, orderId);
+        MarkOrderReadyCommand command = MarkOrderReadyCommand.builder()
+                .customerId(customerId)
+                .orderId(orderId)
+                .build();
+        markOrderReadyUseCase.execute(command);
+        log.info("标记订单制作完成成功, customerId={}, orderId={}", customerId, orderId);
+        return APIResponse.success();
+    }
+
+    @PostMapping("/{orderId}/collect")
+    @Operation(summary = "标记订单已取餐", description = "制作完成 -> 已取餐")
+    public APIResponse<Void> markCollected(
+            @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
+            @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
+        log.info("标记订单已取餐请求, customerId={}, orderId={}", customerId, orderId);
+        MarkOrderCollectedCommand command = MarkOrderCollectedCommand.builder()
+                .customerId(customerId)
+                .orderId(orderId)
+                .build();
+        markOrderCollectedUseCase.execute(command);
+        log.info("标记订单已取餐成功, customerId={}, orderId={}", customerId, orderId);
         return APIResponse.success();
     }
 }

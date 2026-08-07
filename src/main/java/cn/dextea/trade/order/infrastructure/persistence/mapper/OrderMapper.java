@@ -50,4 +50,9 @@ public interface OrderMapper {
             + "updated_at = NOW(), version = version + 1 "
             + "WHERE id = #{id} AND version = #{version}")
     int cancelOrder(OrderPO orderPO);
+
+    @Update("UPDATE orders SET making_status = #{makingStatus}, "
+            + "updated_at = NOW(), version = version + 1 "
+            + "WHERE id = #{id} AND version = #{version}")
+    int updateMakingStatus(OrderPO orderPO);
 }

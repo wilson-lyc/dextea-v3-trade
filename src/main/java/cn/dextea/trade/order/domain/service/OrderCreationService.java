@@ -37,7 +37,8 @@ public class OrderCreationService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final SkuIdService skuIdService;
+    private final SkuIdParser skuIdParser;
+    private final OrderItemFactory orderItemFactory;
     private final OrderNoGenerator orderNoGenerator;
     private final PaymentPort paymentPort;
     private final OrderAmountService orderAmountService;
@@ -55,23 +56,23 @@ public class OrderCreationService {
         List<String> skuIds = items.stream()
                 .map(SkuItem::getSkuId)
                 .collect(Collectors.toList());
-        Set<Long> productIds = skuIdService.extractProductIds(skuIds);
+        Set<Long> productIds = skuIdParser.extractProductIds(skuIds);
         Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, storeId);
         log.debug("预下单商品加载完成, customerId={}, storeId={}, skuCount={}, productCount={}",
                 customerId, storeId, skuIds.size(), products.size());
 
-        Order order = Order.create(customerId, storeId);
+        Order order = Order.createDraft(customerId, storeId);
         log.debug("预下单订单领域对象创建完成, customerId={}, storeId={}", customerId, storeId);
 
         for (SkuItem item : items) {
-            Long productId = skuIdService.extractProductId(item.getSkuId());
+            Long productId = skuIdParser.extractProductId(item.getSkuId());
             Product product = products.get(productId);
             if (product == null) {
                 log.warn("预下单失败, 商品不存在, customerId={}, storeId={}, skuId={}, productId={}",
                         customerId, storeId, item.getSkuId(), productId);
                 throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品不存在: productId=" + productId);
             }
-            order.addItem(product, item.getSkuId(), item.getQuantity());
+            order.addItem(orderItemFactory.create(product, item.getSkuId(), item.getQuantity()));
         }
 
         order.assignAmounts(
@@ -102,7 +103,8 @@ public class OrderCreationService {
         }
 
         // 补充订单信息：订单号、来源、支付方式、取餐方式、备注、幂等键
-        order.initialize(orderNoGenerator.next(), source, paymentMethod, diningMethod, note, idempotencyKey);
+        order.place(orderNoGenerator.next(), source, paymentMethod, diningMethod, note, idempotencyKey,
+                order.getTotalPrice(), order.getTotalQuantity());
 
         // 创建支付单
         Customer customer = customerRepository.getCustomerById(customerId);

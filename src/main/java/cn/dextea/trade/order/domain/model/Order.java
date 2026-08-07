@@ -11,7 +11,6 @@ import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
 
 import cn.dextea.trade.order.domain.model.OrderPaymentStatusLog;
-import cn.dextea.trade.order.domain.port.OrderNoGenerator;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 
 import lombok.Getter;
@@ -51,23 +50,10 @@ public class Order {
         this.items = new ArrayList<>();
     }
 
-    public static Order create(Long customerId, Long storeId) {
+    public static Order createDraft(Long customerId, Long storeId) {
         Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
-        return order;
-    }
-
-    public static Order create(Long customerId, Long storeId, OrderNoGenerator orderNoGenerator,
-                                OrderSource source, PaymentMethod paymentMethod, DiningMethod diningMethod,
-                                String note, String idempotencyKey) {
-        Order order = create(customerId, storeId);
-        order.orderNo = orderNoGenerator.next();
-        order.source = source;
-        order.paymentMethod = paymentMethod;
-        order.diningMethod = diningMethod;
-        order.note = note;
-        order.idempotencyKey = idempotencyKey;
         return order;
     }
 
@@ -105,14 +91,17 @@ public class Order {
         return order;
     }
 
-    public void initialize(String orderNo, OrderSource source, PaymentMethod paymentMethod,
-                           DiningMethod diningMethod, String note, String idempotencyKey) {
+    public void place(String orderNo, OrderSource source, PaymentMethod paymentMethod,
+                       DiningMethod diningMethod, String note, String idempotencyKey,
+                       Money totalPrice, Quantity totalQuantity) {
         this.orderNo = orderNo;
         this.source = source;
         this.paymentMethod = paymentMethod;
         this.diningMethod = diningMethod;
         this.note = note;
         this.idempotencyKey = idempotencyKey;
+        this.totalPrice = totalPrice;
+        this.totalQuantity = totalQuantity;
     }
 
     public void save(OrderRepository orderRepository) {
@@ -121,11 +110,6 @@ public class Order {
 
     public void assignId(Long id) {
         this.id = id;
-    }
-
-    public void assignAmounts(Money totalPrice, Quantity totalQuantity) {
-        this.totalPrice = totalPrice;
-        this.totalQuantity = totalQuantity;
     }
 
     public void markCreated(String tradeNo, LocalDateTime paymentExpiredAt) {
@@ -148,6 +132,14 @@ public class Order {
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
     }
 
+    public void markReady() {
+        this.makingStatus = MakingStatus.READY;
+    }
+
+    public void markCollected() {
+        this.makingStatus = MakingStatus.COLLECTED;
+    }
+
     public boolean isPaid() {
         return paymentStatus == PaymentStatus.PAID;
     }
@@ -158,6 +150,32 @@ public class Order {
 
     public boolean isCancelled() {
         return paymentStatus == PaymentStatus.CANCELLED;
+    }
+
+    public boolean isPreparing() {
+        return makingStatus == MakingStatus.PREPARING;
+    }
+
+    public boolean isReady() {
+        return makingStatus == MakingStatus.READY;
+    }
+
+    public void ensurePaid() {
+        if (!isPaid()) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_PAID);
+        }
+    }
+
+    public void ensurePreparing() {
+        if (!isPreparing()) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_PREPARING);
+        }
+    }
+
+    public void ensureReady() {
+        if (!isReady()) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_READY);
+        }
     }
 
     private void recordPaymentStatusChange(PaymentStatus from, PaymentStatus to, String event) {
@@ -181,8 +199,12 @@ public class Order {
         return logs;
     }
 
-    public void addItem(Product product, String skuId, Quantity quantity) {
-        OrderItem orderItem = OrderItem.create(product, skuId, quantity);
+    public void assignAmounts(Money totalPrice, Quantity totalQuantity) {
+        this.totalPrice = totalPrice;
+        this.totalQuantity = totalQuantity;
+    }
+
+    public void addItem(OrderItem orderItem) {
         items.add(orderItem);
     }
 
