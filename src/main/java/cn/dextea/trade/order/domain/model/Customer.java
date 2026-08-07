@@ -1,7 +1,8 @@
 package cn.dextea.trade.order.domain.model;
 
+import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.enumeration.CustomerStatus;
-import cn.dextea.trade.shared.error.Activatable;
+import cn.dextea.trade.shared.error.BizError;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,14 +12,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Customer implements Activatable {
+public class Customer {
     private Long id;
     private String weixinOpenId;
     private String alipayOpenId;
     private CustomerStatus status;
 
-    @Override
-    public boolean isActive() {
-        return status == CustomerStatus.ACTIVE;
+    public void ensureActive() {
+        if (status != CustomerStatus.ACTIVE) {
+            throw new BizError(OrderErrorCode.CUSTOMER_INACTIVE);
+        }
     }
 }

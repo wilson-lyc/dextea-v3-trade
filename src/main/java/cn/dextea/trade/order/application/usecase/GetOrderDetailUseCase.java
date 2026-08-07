@@ -10,7 +10,7 @@ import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.shared.error.BizError;
-import cn.dextea.trade.shared.error.Ensure;
+import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class GetOrderDetailUseCase {
     public OrderDetailResult execute(GetOrderDetailCommand command) {
         log.info("查询订单详情, customerId={}, orderId={}", command.getCustomerId(), command.getOrderId());
 
-        Order order = Ensure.notNull(orderRepository.getOrderById(command.getOrderId()), OrderErrorCode.ORDER_NOT_FOUND);
+        Order order = EnsureUtil.notNull(orderRepository.getOrderById(command.getOrderId()), OrderErrorCode.ORDER_NOT_FOUND);
 
         order.ensureBelongsTo(command.getCustomerId());
 

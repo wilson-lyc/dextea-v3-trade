@@ -16,7 +16,7 @@ import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.shared.error.BizError;
-import cn.dextea.trade.shared.error.Ensure;
+import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,9 +49,9 @@ public class OrderCreationService {
     public Order preBuildOrder(Long customerId, Long storeId, List<SkuItem> items) {
         log.info("开始预下单, customerId={}, storeId={}, itemCount={}", customerId, storeId, items.size());
 
-        Ensure.active(Ensure.notNull(storeRepository.getStoreById(storeId), OrderErrorCode.STORE_NOT_FOUND), OrderErrorCode.STORE_INACTIVE);
+        EnsureUtil.notNull(storeRepository.getStoreById(storeId), OrderErrorCode.STORE_NOT_FOUND).ensureActive();
 
-        Ensure.active(Ensure.notNull(customerRepository.getCustomerById(customerId), OrderErrorCode.CUSTOMER_NOT_FOUND), OrderErrorCode.CUSTOMER_INACTIVE);
+        EnsureUtil.notNull(customerRepository.getCustomerById(customerId), OrderErrorCode.CUSTOMER_NOT_FOUND).ensureActive();
 
         List<String> skuIds = items.stream()
                 .map(SkuItem::getSkuId)
