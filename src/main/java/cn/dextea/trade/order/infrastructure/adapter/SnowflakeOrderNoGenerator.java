@@ -23,6 +23,6 @@ public class SnowflakeOrderNoGenerator implements OrderNoGenerator {
     public String next() {
         IdGenerator idGenerator = idGeneratorProvider.getRequired(PROVIDER_NAME);
         String datePrefix = LocalDate.now().format(DATE_FORMAT);
-        return datePrefix + idGenerator.generateAsString();
+        return datePrefix + Long.toString(idGenerator.generate());
     }
 }

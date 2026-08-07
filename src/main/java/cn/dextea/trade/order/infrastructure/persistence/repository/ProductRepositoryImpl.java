@@ -1,8 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.repository;
 
-import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Product;
-import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.order.domain.model.ProductCover;
 import cn.dextea.trade.order.domain.model.CustomizationItem;
 import cn.dextea.trade.order.domain.model.CustomizationOption;
@@ -53,11 +51,6 @@ public class ProductRepositoryImpl implements ProductRepository {
     public Map<Long, Product> getProductByIdsWithStoreId(Set<Long> ids, Long storeId) {
         List<ProductsPO> productPOs = productMapper.selectByIds(ids);
         Set<Long> productIds = productPOs.stream().map(ProductsPO::getId).collect(Collectors.toSet());
-        for (Long id : ids) {
-            if (!productIds.contains(id)) {
-                throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND);
-            }
-        }
 
         List<CustomizationItemPO> itemPOs = customizationItemMapper.selectByProductIds(productIds);
         Set<Long> itemIds = itemPOs.stream().map(CustomizationItemPO::getId).collect(Collectors.toSet());

@@ -49,12 +49,17 @@ public class OrderItemFactory {
 
                 CustomizationItem item = itemMap.get(itemId);
                 if (item == null) {
-                    throw new BizError(OrderErrorCode.INVALID_BINDING, "客制化项目未绑定到该商品: productId=" + product.getId() + ", itemId=" + itemId);
+                    available = false;
+                    continue;
                 }
-                CustomizationOption option = item.getOptions().stream()
+                CustomizationOption option = item.getOptions() == null ? null : item.getOptions().stream()
                         .filter(o -> o.getId().equals(optionId))
                         .findFirst()
-                        .orElseThrow(() -> new BizError(OrderErrorCode.INVALID_BINDING, "客制化选项未绑定到该项目: productId=" + product.getId() + ", itemId=" + itemId + ", optionId=" + optionId));
+                        .orElse(null);
+                if (option == null) {
+                    available = false;
+                    continue;
+                }
 
                 if (!item.isActive() || !option.isActive()) {
                     available = false;

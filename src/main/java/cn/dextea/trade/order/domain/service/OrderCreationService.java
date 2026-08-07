@@ -70,9 +70,11 @@ public class OrderCreationService {
             Long productId = skuIdParser.extractProductId(item.getSkuId());
             Product product = products.get(productId);
             if (product == null) {
-                log.warn("预下单失败, 商品不存在, customerId={}, storeId={}, skuId={}, productId={}",
+                log.warn("预下单商品不存在, 列入不可售, customerId={}, storeId={}, skuId={}, productId={}",
                         customerId, storeId, item.getSkuId(), productId);
-                throw new BizError(OrderErrorCode.PRODUCT_NOT_FOUND, "商品不存在: productId=" + productId);
+                order.addItem(OrderItem.create(productId, null, item.getSkuId(), null,
+                        null, item.getQuantity(), Money.ZERO, false));
+                continue;
             }
             order.addItem(orderItemFactory.create(product, item.getSkuId(), item.getQuantity()));
         }
