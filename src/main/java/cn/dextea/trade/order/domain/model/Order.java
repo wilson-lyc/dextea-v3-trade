@@ -139,6 +139,7 @@ public class Order {
     public void markPaid(LocalDateTime paidAt) {
         this.paymentStatus = PaymentStatus.PAID;
         this.paymentPaidAt = paidAt;
+        this.makingStatus = MakingStatus.PREPARING;
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.PAID, "ORDER_PAID");
     }
 
