@@ -15,9 +15,6 @@ public class SnowflakeOrderNoGenerator implements OrderNoGenerator {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    /**
-     * 与 application.yaml 中 cosid.snowflake.provider.order.namespace 对应的 provider 名称。
-     */
     private static final String PROVIDER_NAME = "order";
 
     private final IdGeneratorProvider idGeneratorProvider;
