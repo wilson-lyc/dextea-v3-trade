@@ -3,6 +3,7 @@ package cn.dextea.trade.order.infrastructure.persistence.repository;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
+import cn.dextea.trade.order.domain.model.OrderPaymentStatusLog;
 import cn.dextea.trade.order.domain.repository.OrderPaymentStatusLogRepository;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.infrastructure.adapter.RedisOrderItemCache;

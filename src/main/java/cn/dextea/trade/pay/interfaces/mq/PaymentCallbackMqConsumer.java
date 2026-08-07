@@ -109,22 +109,20 @@ public class PaymentCallbackMqConsumer {
     }
 
     private void processMessage(MessageView message) {
-        String messageId = message.getMessageId();
+        String messageId = String.valueOf(message.getMessageId());
         try {
             handleMessage(message);
-            consumer.ack(message);
+            ackQuietly(message, messageId);
             retryCounter.remove(messageId);
         } catch (NonRetryableException | BizError e) {
             log.error("payment-callback 消息不可重试, 直接确认避免死循环, messageId={}, reason={}",
                     messageId, e.getMessage());
-            consumer.ack(message);
-            retryCounter.remove(messageId);
+            ackQuietly(message, messageId);
         } catch (Exception e) {
             int times = retryCounter.merge(messageId, 1, Integer::sum);
             if (times >= MAX_RETRY_TIMES) {
                 log.error("payment-callback 消息重试次数耗尽, 转死信, messageId={}", messageId, e);
-                consumer.ack(message);
-                retryCounter.remove(messageId);
+                ackQuietly(message, messageId);
             } else {
                 log.warn("payment-callback 消息处理失败, 等待 RocketMQ 重新投递, messageId={}, retryTimes={}/{}",
                         messageId, times, MAX_RETRY_TIMES, e);
@@ -132,7 +130,16 @@ public class PaymentCallbackMqConsumer {
         }
     }
 
-    private void handleMessage(MessageView message) throws Exception {
+    private void ackQuietly(MessageView message, String messageId) {
+        try {
+            consumer.ack(message);
+            retryCounter.remove(messageId);
+        } catch (Exception e) {
+            log.warn("payment-callback 消息确认失败, messageId={}", messageId, e);
+        }
+    }
+
+    private void handleMessage(MessageView message) {
         ByteBuffer body = message.getBody();
         byte[] bytes = new byte[body.remaining()];
         body.get(bytes);
