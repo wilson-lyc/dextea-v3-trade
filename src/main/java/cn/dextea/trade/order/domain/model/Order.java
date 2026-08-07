@@ -145,31 +145,43 @@ public class Order {
     }
 
     public boolean isPendingPayment() {
-        return paymentStatus == PaymentStatus.PENDING;
+        return isPaymentStatus(PaymentStatus.PENDING);
     }
 
     public boolean isPaid() {
-        return paymentStatus == PaymentStatus.PAID;
+        return isPaymentStatus(PaymentStatus.PAID);
     }
 
     public boolean isPaymentTimeout() {
-        return paymentStatus == PaymentStatus.TIMEOUT;
+        return isPaymentStatus(PaymentStatus.TIMEOUT);
     }
 
     public boolean isCancelled() {
-        return paymentStatus == PaymentStatus.CANCELLED;
+        return isPaymentStatus(PaymentStatus.CANCELLED);
+    }
+
+    public boolean isRefunding() {
+        return isPaymentStatus(PaymentStatus.REFUNDING);
+    }
+
+    public boolean isRefunded() {
+        return isPaymentStatus(PaymentStatus.REFUNDED);
+    }
+
+    private boolean isPaymentStatus(PaymentStatus status) {
+        return paymentStatus == status;
     }
 
     public boolean canMarkPaid() {
-        return paymentStatus == PaymentStatus.PENDING;
+        return isPendingPayment();
     }
 
     public boolean canMarkPaymentTimeout() {
-        return paymentStatus == PaymentStatus.PENDING;
+        return isPendingPayment();
     }
 
     public boolean canMarkCancelled() {
-        return paymentStatus == PaymentStatus.PENDING || paymentStatus == PaymentStatus.TIMEOUT;
+        return isPendingPayment() || isPaymentTimeout();
     }
 
     public void ensureCanMarkPaid() {
@@ -197,35 +209,37 @@ public class Order {
     }
 
     public void markReady() {
-        ensurePaid();
         ensureCanMarkReady();
         this.makingStatus = MakingStatus.READY;
     }
 
     public void markCollected() {
-        ensurePaid();
         ensureCanMarkCollected();
         this.makingStatus = MakingStatus.COLLECTED;
     }
 
     public boolean isPreparing() {
-        return makingStatus == MakingStatus.PREPARING;
+        return isMakingStatus(MakingStatus.PREPARING);
     }
 
     public boolean isReady() {
-        return makingStatus == MakingStatus.READY;
+        return isMakingStatus(MakingStatus.READY);
     }
 
     public boolean isCollected() {
-        return makingStatus == MakingStatus.COLLECTED;
+        return isMakingStatus(MakingStatus.COLLECTED);
+    }
+
+    private boolean isMakingStatus(MakingStatus status) {
+        return makingStatus == status;
     }
 
     public boolean canMarkReady() {
-        return makingStatus == MakingStatus.PREPARING;
+        return isPaid() && isPreparing();
     }
 
     public boolean canMarkCollected() {
-        return makingStatus == MakingStatus.READY;
+        return isPaid() && isReady();
     }
 
     public void ensurePaid() {
@@ -303,12 +317,6 @@ public class Order {
     public void ensureBelongsTo(Long customerId) {
         if (!belongsTo(customerId)) {
             throw new BizError(OrderErrorCode.ORDER_NOT_BELONG_TO_CUSTOMER);
-        }
-    }
-
-    public void ensurePendingPayment() {
-        if (!isPendingPayment()) {
-            throw new BizError(OrderErrorCode.ORDER_CANNOT_CANCEL);
         }
     }
 
