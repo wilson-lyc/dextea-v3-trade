@@ -4,13 +4,16 @@ import cn.dextea.trade.order.application.dto.command.MarkOrderPaidCommand;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
+import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -18,7 +21,9 @@ import java.math.BigDecimal;
 public class MarkOrderPaidUseCase {
 
     private final OrderRepository orderRepository;
+    private final PickupCodeGenerator pickupCodeGenerator;
 
+    @Transactional
     public void execute(MarkOrderPaidCommand command) {
         String orderNo = command.getOrderNo();
         String tradeNo = command.getTradeNo();
@@ -36,8 +41,10 @@ public class MarkOrderPaidUseCase {
         verifyAmount(order, command.getPaidAmount(), orderNo, tradeNo);
 
         order.markPaid(command.getPaidAt());
+        String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
+        order.assignPickupCode(pickupCode);
         orderRepository.updatePaymentStatus(order);
-        log.info("订单已标记为已支付, orderNo={}, tradeNo={}, paidAt={}", orderNo, tradeNo, command.getPaidAt());
+        log.info("订单已标记为已支付, orderNo={}, tradeNo={}, paidAt={}, pickupCode={}", orderNo, tradeNo, command.getPaidAt(), pickupCode);
     }
 
     private void verifyAmount(Order order, BigDecimal paidAmount, String orderNo, String tradeNo) {

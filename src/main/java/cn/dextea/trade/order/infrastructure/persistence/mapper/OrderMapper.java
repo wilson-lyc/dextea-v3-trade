@@ -42,6 +42,7 @@ public interface OrderMapper {
     OrderPO selectByOrderNo(@Param("orderNo") String orderNo);
 
     @Update("UPDATE orders SET payment_status = #{paymentStatus}, payment_paid_at = #{paymentPaidAt}, "
+            + "pickup_code = #{pickupCode}, "
             + "updated_at = NOW(), version = version + 1 "
             + "WHERE id = #{id} AND version = #{version}")
     int updatePaymentStatus(OrderPO orderPO);

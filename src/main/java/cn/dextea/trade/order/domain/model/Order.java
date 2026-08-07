@@ -127,6 +127,10 @@ public class Order {
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.PAID, "ORDER_PAID");
     }
 
+    public void assignPickupCode(String pickupCode) {
+        this.pickupCode = pickupCode;
+    }
+
     public void markCancelled() {
         this.paymentStatus = PaymentStatus.CANCELLED;
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
