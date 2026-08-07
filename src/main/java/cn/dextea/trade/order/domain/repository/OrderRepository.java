@@ -20,4 +20,6 @@ public interface OrderRepository {
     void cancelOrder(Order order);
 
     void updateMakingStatus(Order order);
+
+    boolean timeoutOrder(Order order);
 }

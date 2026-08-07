@@ -23,7 +23,10 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_PAID_AMOUNT_MISMATCH(101020, "支付回调金额与订单金额不一致"),
     ORDER_NOT_PAID(101021, "仅已支付的订单可以开始制作"),
     ORDER_NOT_PREPARING(101022, "仅制作中的订单可以标记为制作完成"),
-    ORDER_NOT_READY(101023, "仅制作完成的订单可以标记为已取餐");
+    ORDER_NOT_READY(101023, "仅制作完成的订单可以标记为已取餐"),
+    ORDER_CANNOT_TIMEOUT(101024, "仅支付中的订单可以标记为支付超时"),
+    ORDER_CANNOT_PAID(101025, "仅支付中的订单可以标记为已支付"),
+    ORDER_INVALID_MAKING_TRANSITION(101027, "制作状态必须按 待制作->制作中->制作完成->已取餐 逐级变更");
     
     private final int code;
     private final String message;

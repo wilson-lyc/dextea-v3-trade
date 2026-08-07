@@ -25,8 +25,6 @@ public class MarkOrderReadyUseCase {
         }
 
         order.ensureBelongsTo(command.getCustomerId());
-        order.ensurePaid();
-        order.ensurePreparing();
 
         order.markReady();
         orderRepository.updateMakingStatus(order);

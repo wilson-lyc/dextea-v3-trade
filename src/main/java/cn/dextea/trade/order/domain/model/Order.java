@@ -119,40 +119,93 @@ public class Order {
         recordPaymentStatusChange(null, PaymentStatus.PENDING, "ORDER_CREATED");
     }
 
+    public void assignPickupCode(String pickupCode) {
+        this.pickupCode = pickupCode;
+    }
+
     public void markPaid(LocalDateTime paidAt) {
+        ensureCanMarkPaid();
         this.paymentStatus = PaymentStatus.PAID;
         this.paymentPaidAt = paidAt;
         this.makingStatus = MakingStatus.PREPARING;
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.PAID, "ORDER_PAID");
     }
 
-    public void assignPickupCode(String pickupCode) {
-        this.pickupCode = pickupCode;
+    public void markPaymentTimeout() {
+        ensureCanMarkPaymentTimeout();
+        this.paymentStatus = PaymentStatus.TIMEOUT;
+        recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.TIMEOUT, "ORDER_PAYMENT_TIMEOUT");
     }
 
     public void markCancelled() {
+        ensureCanMarkCancelled();
+        PaymentStatus from = this.paymentStatus;
         this.paymentStatus = PaymentStatus.CANCELLED;
-        recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
-    }
-
-    public void markReady() {
-        this.makingStatus = MakingStatus.READY;
-    }
-
-    public void markCollected() {
-        this.makingStatus = MakingStatus.COLLECTED;
-    }
-
-    public boolean isPaid() {
-        return paymentStatus == PaymentStatus.PAID;
+        recordPaymentStatusChange(from, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
     }
 
     public boolean isPendingPayment() {
         return paymentStatus == PaymentStatus.PENDING;
     }
 
+    public boolean isPaid() {
+        return paymentStatus == PaymentStatus.PAID;
+    }
+
+    public boolean isPaymentTimeout() {
+        return paymentStatus == PaymentStatus.TIMEOUT;
+    }
+
     public boolean isCancelled() {
         return paymentStatus == PaymentStatus.CANCELLED;
+    }
+
+    public boolean canMarkPaid() {
+        return paymentStatus == PaymentStatus.PENDING;
+    }
+
+    public boolean canMarkPaymentTimeout() {
+        return paymentStatus == PaymentStatus.PENDING;
+    }
+
+    public boolean canMarkCancelled() {
+        return paymentStatus == PaymentStatus.PENDING || paymentStatus == PaymentStatus.TIMEOUT;
+    }
+
+    public void ensureCanMarkPaid() {
+        if (!canMarkPaid()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_PAID);
+        }
+    }
+
+    public void ensureCanMarkPaymentTimeout() {
+        if (!canMarkPaymentTimeout()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_TIMEOUT);
+        }
+    }
+
+    public void ensureCanMarkCancelled() {
+        if (!canMarkCancelled()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_CANCEL);
+        }
+    }
+
+    public void ensurePendingPayment() {
+        if (!isPendingPayment()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_CANCEL);
+        }
+    }
+
+    public void markReady() {
+        ensurePaid();
+        ensureCanMarkReady();
+        this.makingStatus = MakingStatus.READY;
+    }
+
+    public void markCollected() {
+        ensurePaid();
+        ensureCanMarkCollected();
+        this.makingStatus = MakingStatus.COLLECTED;
     }
 
     public boolean isPreparing() {
@@ -160,6 +213,18 @@ public class Order {
     }
 
     public boolean isReady() {
+        return makingStatus == MakingStatus.READY;
+    }
+
+    public boolean isCollected() {
+        return makingStatus == MakingStatus.COLLECTED;
+    }
+
+    public boolean canMarkReady() {
+        return makingStatus == MakingStatus.PREPARING;
+    }
+
+    public boolean canMarkCollected() {
         return makingStatus == MakingStatus.READY;
     }
 
@@ -178,6 +243,18 @@ public class Order {
     public void ensureReady() {
         if (!isReady()) {
             throw new BizError(OrderErrorCode.ORDER_NOT_READY);
+        }
+    }
+
+    public void ensureCanMarkReady() {
+        if (!canMarkReady()) {
+            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
+        }
+    }
+
+    public void ensureCanMarkCollected() {
+        if (!canMarkCollected()) {
+            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
         }
     }
 

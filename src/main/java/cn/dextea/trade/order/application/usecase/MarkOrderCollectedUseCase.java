@@ -25,8 +25,6 @@ public class MarkOrderCollectedUseCase {
         }
 
         order.ensureBelongsTo(command.getCustomerId());
-        order.ensurePaid();
-        order.ensureReady();
 
         order.markCollected();
         orderRepository.updateMakingStatus(order);

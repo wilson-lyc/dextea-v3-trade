@@ -56,4 +56,12 @@ public interface OrderMapper {
             + "updated_at = NOW(), version = version + 1 "
             + "WHERE id = #{id} AND version = #{version}")
     int updateMakingStatus(OrderPO orderPO);
+
+    @Update("UPDATE orders SET payment_status = #{paymentStatus}, "
+            + "updated_at = NOW(), version = version + 1 "
+            + "WHERE id = #{id} AND version = #{version} AND payment_status = #{fromPaymentStatus}")
+    int timeoutOrder(@Param("id") Long id,
+                     @Param("version") Integer version,
+                     @Param("paymentStatus") Integer paymentStatus,
+                     @Param("fromPaymentStatus") Integer fromPaymentStatus);
 }

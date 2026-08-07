@@ -1,5 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.repository;
 
+import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
@@ -125,6 +126,21 @@ public class OrderRepositoryImpl implements OrderRepository {
         if (updated == 0) {
             throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
         }
+    }
+
+    @Override
+    @Transactional
+    public boolean timeoutOrder(Order order) {
+        int updated = orderMapper.timeoutOrder(
+                order.getId(),
+                order.getVersion(),
+                PaymentStatus.TIMEOUT.getCode(),
+                PaymentStatus.PENDING.getCode());
+        if (updated == 0) {
+            return false;
+        }
+        savePaymentStatusLogs(order);
+        return true;
     }
 
     private void savePaymentStatusLogs(Order order) {

@@ -9,6 +9,7 @@ import cn.dextea.trade.order.domain.model.SkuItem;
 import cn.dextea.trade.order.domain.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.enumeration.OrderSource;
 import cn.dextea.trade.order.domain.port.OrderNoGenerator;
+import cn.dextea.trade.order.domain.port.OrderTimeoutDelayPort;
 import cn.dextea.trade.order.domain.port.PaymentPort;
 import cn.dextea.trade.order.domain.repository.CustomerRepository;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
@@ -42,6 +43,7 @@ public class OrderCreationService {
     private final OrderNoGenerator orderNoGenerator;
     private final PaymentPort paymentPort;
     private final OrderAmountService orderAmountService;
+    private final OrderTimeoutDelayPort orderTimeoutDelayPort;
 
     @Value("${order.payment_ttl:15}")
     private long paymentTtlMinutes;
@@ -125,6 +127,9 @@ public class OrderCreationService {
         order.save(orderRepository);
         log.debug("订单落库成功, orderNo={}, orderId={}, idempotencyKey={}",
                 order.getOrderNo(), order.getId(), idempotencyKey);
+
+        // 发送支付超时延迟消息，到期后由消费者将未支付订单置为支付超时
+        orderTimeoutDelayPort.scheduleTimeout(order);
 
         log.info("创建订单成功, customerId={}, storeId={}, orderNo={}, tradeNo={}, totalPrice={}, totalQuantity={}",
                 customerId, storeId, order.getOrderNo(), order.getTradeNo(),
