@@ -1,7 +1,7 @@
 package cn.dextea.trade.order.domain.model;
 
-import cn.dextea.trade.order.domain.model.enumeration.CustomizationOptionGlobalStatus;
-import cn.dextea.trade.order.domain.model.enumeration.CustomizationOptionStoreStatus;
+import cn.dextea.trade.order.domain.enumeration.CustomizationOptionGlobalStatus;
+import cn.dextea.trade.order.domain.enumeration.CustomizationOptionStoreStatus;
 import cn.dextea.trade.shared.model.Money;
 
 import lombok.AllArgsConstructor;

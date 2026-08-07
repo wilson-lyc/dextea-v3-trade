@@ -2,7 +2,7 @@ package cn.dextea.trade.order.interfaces.http.assembler;
 
 import cn.dextea.trade.order.application.dto.command.GetOrderPaymentStatusCommand;
 import cn.dextea.trade.order.application.dto.result.OrderPaymentStatusResult;
-import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
+import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.order.interfaces.http.dto.response.OrderPaymentStatusResponse;
 
 public final class OrderPaymentStatusHttpAssembler {

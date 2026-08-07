@@ -1,10 +1,10 @@
 package cn.dextea.trade.order.application.dto.result;
 
-import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
-import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
-import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
+import cn.dextea.trade.order.domain.enumeration.DiningMethod;
+import cn.dextea.trade.order.domain.enumeration.MakingStatus;
+import cn.dextea.trade.order.domain.enumeration.OrderSource;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
-import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
+import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
 import lombok.Getter;

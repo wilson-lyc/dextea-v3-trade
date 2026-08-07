@@ -1,16 +1,18 @@
-package cn.dextea.trade.order.domain.model.enumeration;
+package cn.dextea.trade.order.domain.enumeration;
 
 import cn.dextea.trade.shared.enumeration.CodeEnum;
 import cn.dextea.trade.shared.enumeration.EnumUtils;
 
-public enum CustomizationItemStatus implements CodeEnum {
-    DISABLED(0, "禁用"),
-    ACTIVE(1, "激活");
+public enum StoreStatus implements CodeEnum {
+    CLOSED(0, "休息中"),
+    OPEN(1, "营业中"),
+    PENDING(2, "筹备中"),
+    DEFUNCT(3, "已注销");
 
     private final int code;
     private final String description;
 
-    CustomizationItemStatus(int code, String description) {
+    StoreStatus(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -24,7 +26,7 @@ public enum CustomizationItemStatus implements CodeEnum {
         return description;
     }
 
-    public static CustomizationItemStatus of(Integer code) {
-        return EnumUtils.of(CustomizationItemStatus.class, code);
+    public static StoreStatus of(Integer code) {
+        return EnumUtils.of(StoreStatus.class, code);
     }
 }

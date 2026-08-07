@@ -1,4 +1,4 @@
-package cn.dextea.trade.order.domain.model.enumeration;
+package cn.dextea.trade.order.domain.enumeration;
 
 import cn.dextea.trade.shared.enumeration.CodeEnum;
 import cn.dextea.trade.shared.enumeration.EnumUtils;

@@ -1,16 +1,16 @@
-package cn.dextea.trade.order.domain.model.enumeration;
+package cn.dextea.trade.order.domain.enumeration;
 
 import cn.dextea.trade.shared.enumeration.CodeEnum;
 import cn.dextea.trade.shared.enumeration.EnumUtils;
 
-public enum ProductStoreStatus implements CodeEnum {
-    SOLD_OUT(0, "售罄"),
-    ACTIVE(1, "可售");
+public enum DiningMethod implements CodeEnum {
+    DINE_IN(1, "堂食"),
+    TAKEOUT(2, "外带");
 
     private final int code;
     private final String description;
 
-    ProductStoreStatus(int code, String description) {
+    DiningMethod(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -24,7 +24,7 @@ public enum ProductStoreStatus implements CodeEnum {
         return description;
     }
 
-    public static ProductStoreStatus of(Integer code) {
-        return EnumUtils.of(ProductStoreStatus.class, code);
+    public static DiningMethod of(Integer code) {
+        return EnumUtils.of(DiningMethod.class, code);
     }
 }

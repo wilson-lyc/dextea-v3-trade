@@ -1,7 +1,7 @@
 package cn.dextea.trade.order.domain.model;
 
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
-import cn.dextea.trade.order.domain.model.enumeration.CustomerStatus;
+import cn.dextea.trade.order.domain.enumeration.CustomerStatus;
 import cn.dextea.trade.shared.error.BizError;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

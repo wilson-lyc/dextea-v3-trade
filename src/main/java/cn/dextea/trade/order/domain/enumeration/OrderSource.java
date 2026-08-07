@@ -1,16 +1,18 @@
-package cn.dextea.trade.order.domain.model.enumeration;
+package cn.dextea.trade.order.domain.enumeration;
 
 import cn.dextea.trade.shared.enumeration.CodeEnum;
 import cn.dextea.trade.shared.enumeration.EnumUtils;
 
-public enum CustomizationOptionGlobalStatus implements CodeEnum {
-    DISABLED(0, "禁用"),
-    ACTIVE(1, "激活");
+public enum OrderSource implements CodeEnum {
+    OFFLINE(0, "线下"),
+    ALIPAY(1, "支付宝"),
+    WEIXIN(2, "微信"),
+    APP(3, "APP");
 
     private final int code;
     private final String description;
 
-    CustomizationOptionGlobalStatus(int code, String description) {
+    OrderSource(int code, String description) {
         this.code = code;
         this.description = description;
     }
@@ -24,7 +26,7 @@ public enum CustomizationOptionGlobalStatus implements CodeEnum {
         return description;
     }
 
-    public static CustomizationOptionGlobalStatus of(Integer code) {
-        return EnumUtils.of(CustomizationOptionGlobalStatus.class, code);
+    public static OrderSource of(Integer code) {
+        return EnumUtils.of(OrderSource.class, code);
     }
 }

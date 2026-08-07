@@ -2,10 +2,10 @@ package cn.dextea.trade.order.infrastructure.persistence.converter;
 
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
-import cn.dextea.trade.order.domain.model.enumeration.DiningMethod;
-import cn.dextea.trade.order.domain.model.enumeration.MakingStatus;
-import cn.dextea.trade.order.domain.model.enumeration.OrderSource;
-import cn.dextea.trade.order.domain.model.enumeration.PaymentStatus;
+import cn.dextea.trade.order.domain.enumeration.DiningMethod;
+import cn.dextea.trade.order.domain.enumeration.MakingStatus;
+import cn.dextea.trade.order.domain.enumeration.OrderSource;
+import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderItemPO;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.order.infrastructure.persistence.po.OrderPO;
