@@ -7,7 +7,8 @@ public enum MakingStatus implements CodeEnum {
     PENDING(0, "待制作"),
     PREPARING(1, "制作中"),
     READY(2, "制作完成"),
-    COLLECTED(3, "已取餐");
+    COLLECTED(3, "已取餐"),
+    CANCELLED(4, "已取消");
 
     private final int code;
     private final String description;

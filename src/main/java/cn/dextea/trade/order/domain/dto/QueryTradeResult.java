@@ -16,6 +16,7 @@ public class QueryTradeResult {
 
     private static final String TRADE_STATUS_SUCCESS = "TRADE_SUCCESS";
     private static final String TRADE_STATUS_FINISHED = "TRADE_FINISHED";
+    private static final String TRADE_STATUS_CLOSED = "TRADE_CLOSED";
 
     private String outTradeNo;
 
@@ -33,5 +34,9 @@ public class QueryTradeResult {
 
     public boolean isPaidStatus() {
         return TRADE_STATUS_SUCCESS.equals(tradeStatus) || TRADE_STATUS_FINISHED.equals(tradeStatus);
+    }
+
+    public boolean isClosedStatus() {
+        return TRADE_STATUS_CLOSED.equals(tradeStatus);
     }
 }

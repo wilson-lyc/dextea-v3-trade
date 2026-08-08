@@ -134,6 +134,7 @@ public class Order {
     public void markPaymentTimeout() {
         ensureCanMarkPaymentTimeout();
         this.paymentStatus = PaymentStatus.TIMEOUT;
+        this.makingStatus = MakingStatus.CANCELLED;
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.TIMEOUT, "ORDER_PAYMENT_TIMEOUT");
     }
 
@@ -141,6 +142,7 @@ public class Order {
         ensureCanMarkCancelled();
         PaymentStatus from = this.paymentStatus;
         this.paymentStatus = PaymentStatus.CANCELLED;
+        this.makingStatus = MakingStatus.CANCELLED;
         recordPaymentStatusChange(from, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
     }
 

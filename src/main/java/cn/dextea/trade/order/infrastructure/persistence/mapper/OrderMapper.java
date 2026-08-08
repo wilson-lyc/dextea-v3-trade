@@ -43,12 +43,12 @@ public interface OrderMapper {
     OrderPO selectByOrderNo(@Param("orderNo") String orderNo);
 
     @Update("UPDATE orders SET payment_status = #{paymentStatus}, payment_paid_at = #{paymentPaidAt}, "
-            + "pickup_code = #{pickupCode}, "
+            + "pickup_code = #{pickupCode}, making_status = #{makingStatus}, "
             + "updated_at = NOW(), version = version + 1 "
             + "WHERE id = #{id} AND version = #{version}")
     int updatePaymentStatus(OrderPO orderPO);
 
-    @Update("UPDATE orders SET payment_status = #{paymentStatus}, "
+    @Update("UPDATE orders SET payment_status = #{paymentStatus}, making_status = #{makingStatus}, "
             + "updated_at = NOW(), version = version + 1 "
             + "WHERE id = #{id} AND version = #{version}")
     int cancelOrder(OrderPO orderPO);
@@ -58,11 +58,12 @@ public interface OrderMapper {
             + "WHERE id = #{id} AND version = #{version}")
     int updateMakingStatus(OrderPO orderPO);
 
-    @Update("UPDATE orders SET payment_status = #{paymentStatus}, "
+    @Update("UPDATE orders SET payment_status = #{paymentStatus}, making_status = #{makingStatus}, "
             + "updated_at = NOW(), version = version + 1 "
             + "WHERE id = #{id} AND version = #{version} AND payment_status = #{fromPaymentStatus}")
     int timeoutOrder(@Param("id") Long id,
                      @Param("version") Integer version,
                      @Param("paymentStatus") Integer paymentStatus,
+                     @Param("makingStatus") Integer makingStatus,
                      @Param("fromPaymentStatus") Integer fromPaymentStatus);
 }

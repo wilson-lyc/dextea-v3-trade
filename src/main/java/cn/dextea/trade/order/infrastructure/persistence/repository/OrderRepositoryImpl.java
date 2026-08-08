@@ -137,6 +137,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 order.getId(),
                 order.getVersion(),
                 PaymentStatus.TIMEOUT.getCode(),
+                MakingStatus.CANCELLED.getCode(),
                 PaymentStatus.PENDING.getCode());
         if (updated == 0) {
             return false;
