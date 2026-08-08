@@ -4,6 +4,7 @@ import cn.dextea.trade.order.application.dto.OrderTimeoutMessage;
 import cn.dextea.trade.order.application.dto.command.MarkOrderTimeoutCommand;
 import cn.dextea.trade.order.application.usecase.MarkOrderTimeoutUseCase;
 import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.error.RetryableException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -119,6 +120,9 @@ public class OrderTimeoutMqConsumer {
             log.error("order-timeout 消息不可重试, 直接确认避免死循环, messageId={}, reason={}",
                     messageId, e.getMessage());
             ackQuietly(message, messageId);
+        } catch (RetryableException e) {
+            log.warn("order-timeout 消息暂不可处理, 不确认消息等待 RocketMQ 重投, messageId={}, reason={}",
+                    messageId, e.getMessage());
         } catch (Exception e) {
             int times = retryCounter.merge(messageId, 1, Integer::sum);
             if (times >= MAX_RETRY_TIMES) {

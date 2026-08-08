@@ -2,6 +2,7 @@ package cn.dextea.trade.pay.application.service;
 
 import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
+import cn.dextea.trade.pay.domain.exception.RetryableCallbackException;
 import cn.dextea.trade.pay.domain.port.OrderPaidEventPublisher;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.event.OrderPaidEvent;
@@ -83,11 +84,5 @@ public class PaymentCallbackApplicationService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    public static final class RetryableCallbackException extends RuntimeException {
-        RetryableCallbackException(String message) {
-            super(message);
-        }
     }
 }

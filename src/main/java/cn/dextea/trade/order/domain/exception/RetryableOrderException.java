@@ -1,6 +1,9 @@
 package cn.dextea.trade.order.domain.exception;
 
-public class RetryableOrderException extends RuntimeException {
+import cn.dextea.trade.shared.error.RetryableException;
+
+public class RetryableOrderException extends RetryableException {
+
     public RetryableOrderException(String message) {
         super(message);
     }
