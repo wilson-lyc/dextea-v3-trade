@@ -31,8 +31,6 @@ public class OrderDetailResult {
 
     private Long storeId;
 
-    private String storeName;
-
     private DiningMethod diningMethod;
 
     private String note;

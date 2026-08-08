@@ -8,6 +8,8 @@ import cn.dextea.trade.order.interfaces.http.dto.response.GetMonthOrdersResponse
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
 
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,10 +19,13 @@ public final class MonthOrderHttpAssembler {
     }
 
     public static GetMonthOrdersCommand toCommand(GetMonthOrdersRequest request, Long customerId) {
+        YearMonth ym = YearMonth.of(request.getYear(), request.getMonth());
         return GetMonthOrdersCommand.builder()
                 .customerId(customerId)
                 .year(request.getYear())
                 .month(request.getMonth())
+                .startAt(ym.atDay(1).atStartOfDay())
+                .endAt(ym.plusMonths(1).atDay(1).atStartOfDay())
                 .build();
     }
 

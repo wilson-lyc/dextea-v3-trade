@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import java.time.LocalDateTime;
+
 @Repository
 @RequiredArgsConstructor
 public class OrderRepositoryImpl implements OrderRepository {
@@ -155,8 +157,8 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public List<Order> getMonthOrders(Long customerId, int year, int month) {
-        List<OrderPO> orderPOs = orderMapper.selectByCustomerAndMonth(customerId, year, month);
+    public List<Order> getMonthOrders(Long customerId, LocalDateTime startAt, LocalDateTime endAt) {
+        List<OrderPO> orderPOs = orderMapper.selectByCustomerAndMonthRange(customerId, startAt, endAt);
         if (orderPOs == null || orderPOs.isEmpty()) {
             return Collections.emptyList();
         }

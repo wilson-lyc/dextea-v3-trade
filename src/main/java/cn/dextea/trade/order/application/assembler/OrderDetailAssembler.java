@@ -16,7 +16,7 @@ public final class OrderDetailAssembler {
     private OrderDetailAssembler() {
     }
 
-    public static OrderDetailResult toResult(Order order, String storeName) {
+    public static OrderDetailResult toResult(Order order) {
         if (order == null) {
             return null;
         }
@@ -26,7 +26,6 @@ public final class OrderDetailAssembler {
                 .tradeNo(order.getTradeNo())
                 .customerId(order.getCustomerId())
                 .storeId(order.getStoreId())
-                .storeName(storeName)
                 .diningMethod(order.getDiningMethod())
                 .note(order.getNote())
                 .source(order.getSource())

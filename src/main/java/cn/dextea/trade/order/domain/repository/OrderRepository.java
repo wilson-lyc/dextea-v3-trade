@@ -2,6 +2,7 @@ package cn.dextea.trade.order.domain.repository;
 
 import cn.dextea.trade.order.domain.model.Order;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderRepository {
@@ -13,7 +14,7 @@ public interface OrderRepository {
 
     Order getSummaryByOrderNo(String orderNo);
 
-    List<Order> getMonthOrders(Long customerId, int year, int month);
+    List<Order> getMonthOrders(Long customerId, LocalDateTime startAt, LocalDateTime endAt);
 
     void updatePaymentStatus(Order order);
 

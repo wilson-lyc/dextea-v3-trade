@@ -32,9 +32,6 @@ public class OrderDetailResponse {
     @Schema(description = "门店ID", example = "1")
     private Long storeId;
 
-    @Schema(description = "门店名称", example = "朝阳旗舰店")
-    private String storeName;
-
     @Schema(description = "用餐方式", example = "0")
     private Integer diningMethod;
 

@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,11 +25,11 @@ public interface OrderMapper {
     int insert(OrderPO orderPO);
 
     @Select("SELECT * FROM orders WHERE customer_id = #{customerId} "
-            + "AND YEAR(created_at) = #{year} AND MONTH(created_at) = #{month} "
+            + "AND created_at >= #{startAt} AND created_at < #{endAt} "
             + "ORDER BY created_at DESC")
-    List<OrderPO> selectByCustomerAndMonth(@Param("customerId") Long customerId,
-                                           @Param("year") int year,
-                                           @Param("month") int month);
+    List<OrderPO> selectByCustomerAndMonthRange(@Param("customerId") Long customerId,
+                                                @Param("startAt") LocalDateTime startAt,
+                                                @Param("endAt") LocalDateTime endAt);
 
     @Select("<script>SELECT * FROM orders WHERE id IN "
             + "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>"

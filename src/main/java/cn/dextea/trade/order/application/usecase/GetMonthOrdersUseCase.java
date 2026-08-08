@@ -33,7 +33,7 @@ public class GetMonthOrdersUseCase {
         log.info("查询月订单, customerId={}, year={}, month={}",
                 command.getCustomerId(), command.getYear(), command.getMonth());
         List<Order> orders = orderRepository.getMonthOrders(
-                command.getCustomerId(), command.getYear(), command.getMonth());
+                command.getCustomerId(), command.getStartAt(), command.getEndAt());
 
         Set<Long> storeIds = orders.stream()
                 .map(Order::getStoreId)
