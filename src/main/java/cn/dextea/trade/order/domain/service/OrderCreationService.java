@@ -4,6 +4,7 @@ import cn.dextea.trade.order.domain.dto.CreateTradeRequest;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Customer;
 import cn.dextea.trade.order.domain.model.Order;
+import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.Product;
 import cn.dextea.trade.order.domain.model.SkuItem;
 import cn.dextea.trade.order.domain.enumeration.DiningMethod;
@@ -17,6 +18,7 @@ import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,41 +53,13 @@ public class OrderCreationService {
     public Order preBuildOrder(Long customerId, Long storeId, List<SkuItem> items) {
         log.info("开始预下单, customerId={}, storeId={}, itemCount={}", customerId, storeId, items.size());
 
+        // 校验门店
         EnsureUtil.notNull(storeRepository.getStoreById(storeId), OrderErrorCode.STORE_NOT_FOUND).ensureActive();
 
+        // 校验顾客
         EnsureUtil.notNull(customerRepository.getCustomerById(customerId), OrderErrorCode.CUSTOMER_NOT_FOUND).ensureActive();
 
-        List<String> skuIds = items.stream()
-                .map(SkuItem::getSkuId)
-                .collect(Collectors.toList());
-        Set<Long> productIds = skuIdParser.extractProductIds(skuIds);
-        Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, storeId);
-        log.debug("预下单商品加载完成, customerId={}, storeId={}, skuCount={}, productCount={}",
-                customerId, storeId, skuIds.size(), products.size());
-
-        Order order = Order.createDraft(customerId, storeId);
-        log.debug("预下单订单领域对象创建完成, customerId={}, storeId={}", customerId, storeId);
-
-        for (SkuItem item : items) {
-            Long productId = skuIdParser.extractProductId(item.getSkuId());
-            Product product = products.get(productId);
-            if (product == null) {
-                log.warn("预下单商品不存在, 列入不可售, customerId={}, storeId={}, skuId={}, productId={}",
-                        customerId, storeId, item.getSkuId(), productId);
-                order.addItem(OrderItem.create(productId, null, item.getSkuId(), null,
-                        null, item.getQuantity(), Money.ZERO, false));
-                continue;
-            }
-            order.addItem(orderItemFactory.create(product, item.getSkuId(), item.getQuantity()));
-        }
-
-        order.assignAmounts(
-                orderAmountService.calculateTotalPrice(order),
-                orderAmountService.calculateTotalQuantity(order));
-
-        log.info("预下单成功, customerId={}, storeId={}, itemCount={}, totalPrice={}, totalQuantity={}",
-                customerId, storeId, order.getItems().size(), order.getTotalPrice(), order.getTotalQuantity());
-        return order;
+        return buildOrder(customerId, storeId, items);
     }
 
     public Order createOrder(Long customerId, Long storeId, List<SkuItem> items,
@@ -94,8 +68,16 @@ public class OrderCreationService {
         log.info("开始创建订单, customerId={}, storeId={}, itemCount={}, paymentMethod={}, idempotencyKey={}",
                 customerId, storeId, items.size(), paymentMethod, idempotencyKey);
 
-        // 复用 preBuildOrder 完成门店/顾客校验、商品加载与订单明细初始化
-        Order order = preBuildOrder(customerId, storeId, items);
+        // 校验门店
+        EnsureUtil.notNull(storeRepository.getStoreById(storeId), OrderErrorCode.STORE_NOT_FOUND).ensureActive();
+
+        // 校验顾客
+        Customer customer = EnsureUtil.notNull(customerRepository.getCustomerById(customerId),
+                OrderErrorCode.CUSTOMER_NOT_FOUND);
+        customer.ensureActive();
+
+        // 构建订单
+        Order order = buildOrder(customerId, storeId, items);
 
         // 存在不可售订单项：终止生成订单号与创建交易，降级为预构建结果，仅返回订单数据
         boolean hasUnavailableItem = order.getItems().stream()
@@ -111,7 +93,6 @@ public class OrderCreationService {
                 order.getTotalPrice(), order.getTotalQuantity());
 
         // 创建支付单
-        Customer customer = customerRepository.getCustomerById(customerId);
         LocalDateTime paymentExpiredAt = LocalDateTime.now().plusMinutes(paymentTtlMinutes);
         String tradeNo = paymentPort.createTradeNo(CreateTradeRequest.builder()
                 .orderNo(order.getOrderNo())
@@ -130,7 +111,7 @@ public class OrderCreationService {
         log.debug("订单落库成功, orderNo={}, orderId={}, idempotencyKey={}",
                 order.getOrderNo(), order.getId(), idempotencyKey);
 
-        // 发送支付超时延迟消息，到期后由消费者将未支付订单置为支付超时
+        // 发送支付超时延迟消息
         orderTimeoutDelayPort.scheduleTimeout(order);
 
         log.info("创建订单成功, customerId={}, storeId={}, orderNo={}, tradeNo={}, totalPrice={}, totalQuantity={}",
@@ -147,5 +128,43 @@ public class OrderCreationService {
             return customer.getAlipayOpenId();
         }
         return null;
+    }
+
+    private Order buildOrder(Long customerId, Long storeId, List<SkuItem> items) {
+        // 获取商品
+        List<String> skuIds = items.stream()
+                .map(SkuItem::getSkuId)
+                .collect(Collectors.toList());
+        Set<Long> productIds = skuIdParser.extractProductIds(skuIds);
+        Map<Long, Product> products = productRepository.getProductByIdsWithStoreId(productIds, storeId);
+        log.debug("预下单商品加载完成, customerId={}, storeId={}, skuCount={}, productCount={}",
+                customerId, storeId, skuIds.size(), products.size());
+
+        // 创建订单草稿
+        Order order = Order.createDraft(customerId, storeId);
+        log.debug("预下单订单领域对象创建完成, customerId={}, storeId={}", customerId, storeId);
+
+        // 往订单中添加商品
+        for (SkuItem item : items) {
+            Long productId = skuIdParser.extractProductId(item.getSkuId());
+            Product product = products.get(productId);
+            if (product == null) {
+                log.warn("预下单商品不存在, 列入不可售, customerId={}, storeId={}, skuId={}, productId={}",
+                        customerId, storeId, item.getSkuId(), productId);
+                order.addItem(OrderItem.create(productId, null, item.getSkuId(), null,
+                        null, item.getQuantity(), Money.ZERO, false));
+                continue;
+            }
+            order.addItem(orderItemFactory.create(product, item.getSkuId(), item.getQuantity()));
+        }
+
+        // 计算订单金额和数量
+        order.assignAmounts(
+                orderAmountService.calculateTotalPrice(order),
+                orderAmountService.calculateTotalQuantity(order));
+
+        log.info("预下单成功, customerId={}, storeId={}, itemCount={}, totalPrice={}, totalQuantity={}",
+                customerId, storeId, order.getItems().size(), order.getTotalPrice(), order.getTotalQuantity());
+        return order;
     }
 }
