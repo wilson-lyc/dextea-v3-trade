@@ -1,5 +1,6 @@
 package cn.dextea.trade.order.infrastructure.persistence.repository;
 
+import cn.dextea.trade.order.domain.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;

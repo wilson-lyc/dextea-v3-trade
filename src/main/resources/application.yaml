@@ -69,7 +69,7 @@ alipay:
   notify-url: ${ALIPAY_NOTIFY_URL}
 
 payment-callback-mq:
-  enabled: ${PAYMENT_CALLBACK_MQ_ENABLED:true}
+  enabled: ${PAYMENT_CALLBACK_MQ_ENABLED:false}
   endpoints: ${PAYMENT_CALLBACK_MQ_ENDPOINTS}
   namespace: ${PAYMENT_CALLBACK_MQ_NAMESPACE:}
   access-key: ${PAYMENT_CALLBACK_MQ_ACCESS_KEY:}
@@ -79,7 +79,7 @@ payment-callback-mq:
   tag: ${PAYMENT_CALLBACK_MQ_TAG:*}
 
 order-making-mq:
-  enabled: ${ORDER_MAKING_MQ_ENABLED:true}
+  enabled: ${ORDER_MAKING_MQ_ENABLED:false}
   endpoints: ${ORDER_MAKING_MQ_ENDPOINTS}
   namespace: ${ORDER_MAKING_MQ_NAMESPACE:}
   access-key: ${ORDER_MAKING_MQ_ACCESS_KEY:}
@@ -89,7 +89,7 @@ order-making-mq:
   tag: ${ORDER_MAKING_MQ_TAG:*}
 
 order-timeout-mq:
-  enabled: ${ORDER_TIMEOUT_MQ_ENABLED:true}
+  enabled: ${ORDER_TIMEOUT_MQ_ENABLED:false}
   producer-enabled: ${ORDER_TIMEOUT_MQ_PRODUCER_ENABLED:true}
   consumer-enabled: ${ORDER_TIMEOUT_MQ_CONSUMER_ENABLED:true}
   endpoints: ${ORDER_TIMEOUT_MQ_ENDPOINTS}
