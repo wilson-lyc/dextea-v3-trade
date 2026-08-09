@@ -8,8 +8,7 @@ public enum PaymentStatus implements CodeEnum {
     TIMEOUT(1, "支付超时"),
     PAID(2, "已支付"),
     REFUNDING(3, "退款中"),
-    REFUNDED(4, "已退款"),
-    CANCELLED(5, "已取消");
+    REFUNDED(4, "已退款");
 
     private final int code;
     private final String description;

@@ -51,20 +51,4 @@ public class OrderPaymentService {
         }
         log.info("订单已标记为支付超时, orderNo={}, paymentExpiredAt={}", order.getOrderNo(), order.getPaymentExpiredAt());
     }
-
-    public void cancel(Order order) {
-        if (!order.canMarkCancelled()) {
-            log.info("订单当前状态不允许标记为取消, 忽略本次更新, orderNo={}, paymentStatus={}",
-                    order.getOrderNo(), order.getPaymentStatus());
-            return;
-        }
-        order.markCancelled();
-        try {
-            orderRepository.cancelOrder(order);
-            log.info("订单已标记为取消, orderNo={}", order.getOrderNo());
-        } catch (RuntimeException e) {
-            // 与并发更新冲突：本地已被对方更新，结果一致，无需重试
-            log.warn("回写取消状态冲突, 视为已被并发更新, orderNo={}", order.getOrderNo());
-        }
-    }
 }

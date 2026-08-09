@@ -60,13 +60,7 @@ public class PaymentReconciliationService {
     }
 
     private void reconcileClosed(Order order) {
-        // PENDING 订单在支付宝侧关闭：已到支付过期时间视为超时, 否则视为用户主动取消
-        boolean timeout = order.getPaymentExpiredAt() != null
-                && !LocalDateTime.now().isBefore(order.getPaymentExpiredAt());
-        if (timeout) {
-            orderPaymentService.markTimeout(order);
-        } else {
-            orderPaymentService.cancel(order);
-        }
+        // 支付渠道侧交易关闭：订单不再提供手动取消, 统一按支付超时处理
+        orderPaymentService.markTimeout(order);
     }
 }

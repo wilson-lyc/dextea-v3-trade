@@ -101,7 +101,7 @@ public class CreateOrderUseCase {
 
         // 存在不可售商品时已降级为预构建结果：未生成订单号、未创建交易、未落库，也不记录幂等键，
         // 直接返回订单数据供前端识别不可下单的商品
-        if (!order.isInitialized()) {
+        if (!order.isCreated()) {
             log.warn("创建订单降级为预构建结果, 不记录幂等键, customerId={}, storeId={}, idempotencyKey={}",
                     command.getCustomerId(), command.getStoreId(), idempotencyKey);
             return toResult(order);

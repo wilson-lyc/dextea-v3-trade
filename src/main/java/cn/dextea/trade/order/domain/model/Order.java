@@ -46,6 +46,8 @@ public class Order {
 
     private Order() {
         this.items = new ArrayList<>();
+        this.paymentStatusLogs = new ArrayList<>();
+        this.makingStatusLogs = new ArrayList<>();
     }
 
     public static Order initialize(Long customerId, Long storeId) {
@@ -95,14 +97,124 @@ public class Order {
         order.version = version;
         order.totalPrice = totalPrice;
         order.totalQuantity = totalQuantity;
-        order.items = items == null ? new ArrayList<>() : items;
-        order.paymentStatusLogs = new ArrayList<>();
-        order.makingStatusLogs = new ArrayList<>();
+        order.items = items;
         return order;
     }
 
     public void assignId(Long id) {
         this.id = id;
+    }
+
+    // 状态判断
+    private boolean isPaymentStatus(PaymentStatus status) {
+        return paymentStatus == status;
+    }
+
+    public boolean isPendingPayment() {
+        return isPaymentStatus(PaymentStatus.PENDING);
+    }
+
+    public boolean isPaid() {
+        return isPaymentStatus(PaymentStatus.PAID);
+    }
+
+    public boolean isPaymentTimeout() {
+        return isPaymentStatus(PaymentStatus.TIMEOUT);
+    }
+
+    public boolean isRefunding() {
+        return isPaymentStatus(PaymentStatus.REFUNDING);
+    }
+
+    public boolean isRefunded() {
+        return isPaymentStatus(PaymentStatus.REFUNDED);
+    }
+
+    private boolean isMakingStatus(MakingStatus status) {
+        return makingStatus == status;
+    }
+
+    public boolean isPreparing() {
+        return isMakingStatus(MakingStatus.PREPARING);
+    }
+
+    public boolean isReady() {
+        return isMakingStatus(MakingStatus.READY);
+    }
+
+    public boolean isCollected() {
+        return isMakingStatus(MakingStatus.COLLECTED);
+    }
+
+    // 状态流转规则
+    public boolean canMarkPaid() {
+        return isPendingPayment() || isPaymentTimeout();
+    }
+
+    public boolean canMarkPaymentTimeout() {
+        return isPendingPayment();
+    }
+
+    public boolean canMarkRefunding() {
+        return isPaid();
+    }
+
+    public boolean canMarkRefunded() {
+        return isRefunding();
+    }
+
+    public boolean canMarkPreparing() {
+        return isPaid();
+    }
+
+    public boolean canMarkReady() {
+        return isPaid() && isPreparing();
+    }
+
+    public boolean canMarkCollected() {
+        return isPaid() && isReady();
+    }
+
+    public void ensureCanMarkPaid() {
+        if (!canMarkPaid()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_PAID);
+        }
+    }
+
+    public void ensureCanMarkPaymentTimeout() {
+        if (!canMarkPaymentTimeout()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_TIMEOUT);
+        }
+    }
+
+    public void ensureCanMarkRefunding() {
+        if (!canMarkRefunding()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_REFUND);
+        }
+    }
+
+    public void ensureCanMarkRefunded() {
+        if (!canMarkRefunded()) {
+            throw new BizError(OrderErrorCode.ORDER_CANNOT_REFUND);
+        }
+    }
+
+    public void ensureCanMarkPreparing(){
+        if (!canMarkPreparing()) {
+            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
+        }
+    }
+
+    public void ensureCanMarkReady() {
+        if (!canMarkReady()) {
+            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
+        }
+    }
+
+    public void ensureCanMarkCollected() {
+        if (!canMarkCollected()) {
+            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
+        }
     }
 
     public void markCreated(String tradeNo, LocalDateTime paymentExpiredAt) {
@@ -131,84 +243,12 @@ public class Order {
 
     public void markPaymentTimeout() {
         ensureCanMarkPaymentTimeout();
+        PaymentStatus paymentFrom = this.paymentStatus;
+        MakingStatus makingFrom = this.makingStatus;
         this.paymentStatus = PaymentStatus.TIMEOUT;
         this.makingStatus = MakingStatus.CANCELLED;
-        recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.TIMEOUT, "ORDER_PAYMENT_TIMEOUT");
-        recordMakingStatusChange(MakingStatus.PENDING, MakingStatus.CANCELLED, "ORDER_PAYMENT_TIMEOUT");
-    }
-
-    public void markCancelled() {
-        ensureCanMarkCancelled();
-        PaymentStatus from = this.paymentStatus;
-        MakingStatus makingFrom = this.makingStatus;
-        this.paymentStatus = PaymentStatus.CANCELLED;
-        this.makingStatus = MakingStatus.CANCELLED;
-        recordPaymentStatusChange(from, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
-        recordMakingStatusChange(makingFrom, MakingStatus.CANCELLED, "ORDER_CANCELLED");
-    }
-
-    public boolean isPendingPayment() {
-        return isPaymentStatus(PaymentStatus.PENDING);
-    }
-
-    public boolean isPaid() {
-        return isPaymentStatus(PaymentStatus.PAID);
-    }
-
-    public boolean isPaymentTimeout() {
-        return isPaymentStatus(PaymentStatus.TIMEOUT);
-    }
-
-    public boolean isCancelled() {
-        return isPaymentStatus(PaymentStatus.CANCELLED);
-    }
-
-    public boolean isRefunding() {
-        return isPaymentStatus(PaymentStatus.REFUNDING);
-    }
-
-    public boolean isRefunded() {
-        return isPaymentStatus(PaymentStatus.REFUNDED);
-    }
-
-    private boolean isPaymentStatus(PaymentStatus status) {
-        return paymentStatus == status;
-    }
-
-    public boolean canMarkPaid() {
-        return isPendingPayment() || isPaymentTimeout();
-    }
-
-    public boolean canMarkPaymentTimeout() {
-        return isPendingPayment();
-    }
-
-    public boolean canMarkCancelled() {
-        return isPendingPayment() || isPaymentTimeout();
-    }
-
-    public void ensureCanMarkPaid() {
-        if (!canMarkPaid()) {
-            throw new BizError(OrderErrorCode.ORDER_CANNOT_PAID);
-        }
-    }
-
-    public void ensureCanMarkPaymentTimeout() {
-        if (!canMarkPaymentTimeout()) {
-            throw new BizError(OrderErrorCode.ORDER_CANNOT_TIMEOUT);
-        }
-    }
-
-    public void ensureCanMarkCancelled() {
-        if (!canMarkCancelled()) {
-            throw new BizError(OrderErrorCode.ORDER_CANNOT_CANCEL);
-        }
-    }
-
-    public void ensurePendingPayment() {
-        if (!isPendingPayment()) {
-            throw new BizError(OrderErrorCode.ORDER_CANNOT_CANCEL);
-        }
+        recordPaymentStatusChange(paymentFrom, PaymentStatus.TIMEOUT, "ORDER_PAYMENT_TIMEOUT");
+        recordMakingStatusChange(makingFrom, MakingStatus.CANCELLED, "ORDER_PAYMENT_TIMEOUT");
     }
 
     public void markReady() {
@@ -225,64 +265,7 @@ public class Order {
         recordMakingStatusChange(from, MakingStatus.COLLECTED, "ORDER_COLLECTED");
     }
 
-    public boolean isPreparing() {
-        return isMakingStatus(MakingStatus.PREPARING);
-    }
-
-    public boolean isReady() {
-        return isMakingStatus(MakingStatus.READY);
-    }
-
-    public boolean isCollected() {
-        return isMakingStatus(MakingStatus.COLLECTED);
-    }
-
-    private boolean isMakingStatus(MakingStatus status) {
-        return makingStatus == status;
-    }
-
-    public boolean canMarkReady() {
-        return isPaid() && isPreparing();
-    }
-
-    public boolean canMarkCollected() {
-        return isPaid() && isReady();
-    }
-
-    public void ensurePaid() {
-        if (!isPaid()) {
-            throw new BizError(OrderErrorCode.ORDER_NOT_PAID);
-        }
-    }
-
-    public void ensurePreparing() {
-        if (!isPreparing()) {
-            throw new BizError(OrderErrorCode.ORDER_NOT_PREPARING);
-        }
-    }
-
-    public void ensureReady() {
-        if (!isReady()) {
-            throw new BizError(OrderErrorCode.ORDER_NOT_READY);
-        }
-    }
-
-    public void ensureCanMarkReady() {
-        if (!canMarkReady()) {
-            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
-        }
-    }
-
-    public void ensureCanMarkCollected() {
-        if (!canMarkCollected()) {
-            throw new BizError(OrderErrorCode.ORDER_INVALID_MAKING_TRANSITION);
-        }
-    }
-
     private void recordPaymentStatusChange(PaymentStatus from, PaymentStatus to, String event) {
-        if (paymentStatusLogs == null) {
-            paymentStatusLogs = new ArrayList<>();
-        }
         paymentStatusLogs.add(OrderPaymentStatusLog.builder()
                 .fromStatus(from == null ? null : from.getCode())
                 .toStatus(to == null ? null : to.getCode())
@@ -301,9 +284,6 @@ public class Order {
     }
 
     private void recordMakingStatusChange(MakingStatus from, MakingStatus to, String event) {
-        if (makingStatusLogs == null) {
-            makingStatusLogs = new ArrayList<>();
-        }
         makingStatusLogs.add(OrderMakingStatusLog.builder()
                 .fromStatus(from == null ? null : from.getCode())
                 .toStatus(to == null ? null : to.getCode())
@@ -348,7 +328,7 @@ public class Order {
         }
     }
 
-    public boolean isInitialized() {
+    public boolean isCreated() {
         return orderNo != null;
     }
 

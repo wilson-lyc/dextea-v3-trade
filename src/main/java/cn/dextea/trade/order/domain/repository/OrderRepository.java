@@ -18,8 +18,6 @@ public interface OrderRepository {
 
     void updatePaymentStatus(Order order);
 
-    void cancelOrder(Order order);
-
     void updateMakingStatus(Order order);
 
     boolean timeoutOrder(Order order);
