@@ -68,9 +68,12 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
     }
 
     public void publishMakingStatusChange(String orderNo, MakingStatus fromStatus, MakingStatus toStatus) {
-        if (!properties.isProducerActive() || producer == null) {
+        if (!properties.isProducerActive()) {
             log.debug("order-making-mq 生产未启用，跳过发送制作状态消息, orderNo={}", orderNo);
             return;
+        }
+        if (producer == null) {
+            throw new IllegalStateException("order-making-mq 生产者未初始化, 无法发送制作状态消息, orderNo=" + orderNo);
         }
         OrderMakingStatusMessage message = new OrderMakingStatusMessage(orderNo, fromStatus, toStatus);
         sendAfterCommit(message);
