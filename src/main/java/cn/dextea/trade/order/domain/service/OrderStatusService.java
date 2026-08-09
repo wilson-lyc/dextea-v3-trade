@@ -2,6 +2,7 @@ package cn.dextea.trade.order.domain.service;
 
 import cn.dextea.trade.order.domain.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.Order;
+import cn.dextea.trade.order.domain.port.MakingStatusPublisher;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +13,10 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderPaymentService {
+public class OrderStatusService {
 
     private final OrderRepository orderRepository;
-    private final OrderMakingStatusService orderMakingStatusService;
+    private final MakingStatusPublisher makingStatusPublisher;
 
     public void markPaid(Order order, LocalDateTime paidAt, String tradeNo, String pickupCode) {
         if (!order.canMarkPaid()) {
@@ -34,7 +35,11 @@ public class OrderPaymentService {
             log.warn("回写支付状态冲突, 视为已被并发更新, orderNo={}", order.getOrderNo());
             return;
         }
-        orderMakingStatusService.startMaking(order, fromMakingStatus);
+        orderRepository.updateMakingStatus(order);
+        if (fromMakingStatus == MakingStatus.PENDING) {
+            makingStatusPublisher.publishMakingStatusChange(order.getOrderNo(), fromMakingStatus, MakingStatus.PREPARING);
+        }
+        log.info("订单进入制作中, orderNo={}, fromMakingStatus={}", order.getOrderNo(), fromMakingStatus);
     }
 
     public void markTimeout(Order order) {
@@ -50,5 +55,21 @@ public class OrderPaymentService {
             return;
         }
         log.info("订单已标记为支付超时, orderNo={}, paymentExpiredAt={}", order.getOrderNo(), order.getPaymentExpiredAt());
+    }
+
+    public void markReady(Order order) {
+        MakingStatus fromMakingStatus = order.getMakingStatus();
+        order.markReady();
+        orderRepository.updateMakingStatus(order);
+        if (fromMakingStatus == MakingStatus.PREPARING) {
+            makingStatusPublisher.publishMakingStatusChange(order.getOrderNo(), fromMakingStatus, MakingStatus.READY);
+        }
+        log.info("订单制作完成, orderNo={}, fromMakingStatus={}", order.getOrderNo(), fromMakingStatus);
+    }
+
+    public void markCollected(Order order) {
+        order.markCollected();
+        orderRepository.updateMakingStatus(order);
+        log.info("订单已取餐, orderNo={}", order.getOrderNo());
     }
 }

@@ -4,7 +4,7 @@ import cn.dextea.trade.order.application.dto.command.MarkOrderTimeoutCommand;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
-import cn.dextea.trade.order.domain.service.OrderPaymentService;
+import cn.dextea.trade.order.domain.service.OrderStatusService;
 import cn.dextea.trade.shared.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MarkOrderTimeoutUseCase {
 
     private final OrderRepository orderRepository;
-    private final OrderPaymentService orderPaymentService;
+    private final OrderStatusService orderStatusService;
 
     @Transactional
     public void execute(MarkOrderTimeoutCommand command) {
@@ -28,6 +28,6 @@ public class MarkOrderTimeoutUseCase {
             throw new BizError(OrderErrorCode.ORDER_NOT_FOUND);
         }
 
-        orderPaymentService.markTimeout(order);
+        orderStatusService.markTimeout(order);
     }
 }

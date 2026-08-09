@@ -5,7 +5,7 @@ import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.exception.RetryableOrderException;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
-import cn.dextea.trade.order.domain.service.OrderPaymentService;
+import cn.dextea.trade.order.domain.service.OrderStatusService;
 import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
@@ -23,7 +23,7 @@ import java.time.LocalDate;
 public class MarkOrderPaidUseCase {
 
     private final OrderRepository orderRepository;
-    private final OrderPaymentService orderPaymentService;
+    private final OrderStatusService orderStatusService;
     private final PickupCodeGenerator pickupCodeGenerator;
 
     @Transactional
@@ -39,7 +39,7 @@ public class MarkOrderPaidUseCase {
         verifyAmount(order, command.getPaidAmount(), orderNo, tradeNo);
 
         String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
-        orderPaymentService.markPaid(order, command.getPaidAt(), tradeNo, pickupCode);
+        orderStatusService.markPaid(order, command.getPaidAt(), tradeNo, pickupCode);
     }
 
     private void verifyAmount(Order order, BigDecimal paidAmount, String orderNo, String tradeNo) {
