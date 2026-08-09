@@ -4,6 +4,7 @@ import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
 import cn.dextea.trade.pay.domain.exception.PayErrorCode;
 import cn.dextea.trade.pay.domain.exception.RetryableCallbackException;
 import cn.dextea.trade.pay.domain.port.OrderPaidEventPublisher;
+import cn.dextea.trade.pay.infrastructure.config.AlipayProperties;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.event.OrderPaidEvent;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class PaymentCallbackApplicationService {
     private static final String TRADE_STATUS_SUCCESS = "TRADE_SUCCESS";
 
     private final OrderPaidEventPublisher orderPaidEventPublisher;
+    private final AlipayProperties alipayProperties;
 
     public void handle(PaymentCallbackMessage message) {
         Map<String, String> data = message.data();
@@ -42,7 +44,7 @@ public class PaymentCallbackApplicationService {
             return;
         }
 
-        BigDecimal amount = parseAmount(data.get("total_amount"));
+        BigDecimal amount = resolveAmount(data.get("total_amount"));
         if (amount == null) {
             throw new RetryableCallbackException("支付回调金额缺失或解析失败, 等待上游数据修复后重试, orderNo=" + orderNo);
         }
@@ -52,6 +54,13 @@ public class PaymentCallbackApplicationService {
 
         log.info("支付成功回调处理完成, orderNo={}, tradeNo={}, platform={}, amount={}",
                 orderNo, tradeNo, message.platform(), amount);
+    }
+
+    private BigDecimal resolveAmount(String callbackAmount) {
+        if (alipayProperties.getForceAmount() != null && !alipayProperties.getForceAmount().isBlank()) {
+            return parseAmount(alipayProperties.getForceAmount());
+        }
+        return parseAmount(callbackAmount);
     }
 
     private BigDecimal parseAmount(String value) {
