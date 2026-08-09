@@ -4,10 +4,12 @@ import cn.dextea.trade.order.domain.dto.QueryTradeResult;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.port.PaymentPort;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
+import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -17,6 +19,7 @@ public class PaymentReconciliationService {
 
     private final OrderRepository orderRepository;
     private final PaymentPort paymentPort;
+    private final PickupCodeGenerator pickupCodeGenerator;
 
     public void reconcileIfPending(Order order) {
         if (order == null || !order.isPendingPayment()) {
@@ -53,6 +56,8 @@ public class PaymentReconciliationService {
         // 优先采用支付宝返回的买家付款时间, 缺失时才退化为当前时间
         LocalDateTime paidAt = tradeResult.getPaidAt() == null ? LocalDateTime.now() : tradeResult.getPaidAt();
         order.markPaid(paidAt);
+        String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
+        order.assignPickupCode(pickupCode);
         try {
             orderRepository.updatePaymentStatus(order);
             log.info("主动对账发现订单已支付, 已回写本地, orderId={}, orderNo={}, tradeNo={}, paidAt={}",
