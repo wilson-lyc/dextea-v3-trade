@@ -7,6 +7,7 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderStatusService;
 import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
+import cn.dextea.trade.pay.infrastructure.config.AlipayProperties;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class MarkOrderPaidUseCase {
     private final OrderRepository orderRepository;
     private final OrderStatusService orderStatusService;
     private final PickupCodeGenerator pickupCodeGenerator;
+    private final AlipayProperties alipayProperties;
 
     @Transactional
     public void execute(MarkOrderPaidCommand command) {
@@ -48,7 +50,13 @@ public class MarkOrderPaidUseCase {
         if (paidAmount == null) {
             return;
         }
-        Money orderAmount = order.getTotalPrice();
+        Money expectedAmount;
+        String forceAmount = alipayProperties.getForceAmount();
+        if (forceAmount != null && !forceAmount.isBlank()) {
+            expectedAmount = Money.of(new BigDecimal(forceAmount));
+        } else {
+            expectedAmount = order.getTotalPrice();
+        }
         Money callbackAmount;
         try {
             callbackAmount = Money.of(paidAmount);
@@ -56,9 +64,9 @@ public class MarkOrderPaidUseCase {
             log.error("支付回调金额非法, orderNo={}, tradeNo={}, paidAmount={}", orderNo, tradeNo, paidAmount);
             throw new BizError(OrderErrorCode.ORDER_PAID_AMOUNT_MISMATCH, "支付回调金额非法");
         }
-        if (orderAmount.isGreaterThan(callbackAmount) || callbackAmount.isGreaterThan(orderAmount)) {
-            log.error("支付回调金额与订单金额不一致, orderNo={}, tradeNo={}, orderAmount={}, paidAmount={}",
-                    orderNo, tradeNo, orderAmount, callbackAmount);
+        if (expectedAmount.isGreaterThan(callbackAmount) || callbackAmount.isGreaterThan(expectedAmount)) {
+            log.error("支付回调金额与订单金额不一致, orderNo={}, tradeNo={}, expectedAmount={}, paidAmount={}",
+                    orderNo, tradeNo, expectedAmount, callbackAmount);
             throw new BizError(OrderErrorCode.ORDER_PAID_AMOUNT_MISMATCH);
         }
     }
