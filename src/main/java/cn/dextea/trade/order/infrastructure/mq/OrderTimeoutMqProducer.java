@@ -43,7 +43,7 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
 
     @PostConstruct
     public void start() {
-        if (!properties.isProducerActive()) {
+        if (!properties.isEnabled()) {
             log.info("order-timeout-mq 生产未启用，跳过生产者初始化");
             return;
         }
@@ -75,7 +75,7 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
 
     @Override
     public void scheduleTimeout(Order order) {
-        if (!properties.isProducerActive() || producer == null) {
+        if (!properties.isEnabled() || producer == null) {
             log.debug("order-timeout-mq 生产未启用，跳过发送超时延迟消息, orderNo={}", order.getOrderNo());
             return;
         }
@@ -108,7 +108,7 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
             ClientServiceProvider provider = ClientServiceProvider.loadService();
             Message message = provider.newMessageBuilder()
                     .setTopic(properties.getTopic())
-                    .setTag(resolveTag())
+                    .setTag("order-timeout")
                     .setKeys(orderNo)
                     .setDeliveryTimestamp(deliveryTimestamp)
                     .setBody(objectMapper.writeValueAsBytes(timeoutMessage))
@@ -121,14 +121,6 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
         } catch (Exception e) {
             log.error("订单超时延迟消息发送失败, orderNo={}", orderNo, e);
         }
-    }
-
-    private String resolveTag() {
-        String tag = properties.getTag();
-        if (!hasText(tag) || "*".equals(tag)) {
-            return "order-timeout";
-        }
-        return tag;
     }
 
     @PreDestroy

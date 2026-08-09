@@ -60,7 +60,7 @@ public class OrderTimeoutMqConsumer {
 
     @PostConstruct
     public void start() {
-        if (!properties.isConsumerActive()) {
+        if (!properties.isEnabled()) {
             log.info("order-timeout-mq 消费未启用，跳过消费者初始化");
             return;
         }
@@ -69,8 +69,8 @@ public class OrderTimeoutMqConsumer {
             this.running = true;
             this.consumeExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "order-timeout-mq-consumer"));
             this.consumeExecutor.submit(this::consumeLoop);
-            log.info("order-timeout-mq 消费者启动成功, topic={}, consumerGroup={}, tag={}",
-                    properties.getTopic(), properties.getConsumerGroup(), properties.getTag());
+            log.info("order-timeout-mq 消费者启动成功, topic={}, consumerGroup={}",
+                    properties.getTopic(), properties.getConsumerGroup());
         } catch (Exception e) {
             throw new IllegalStateException("order-timeout-mq 消费者初始化失败", e);
         }
@@ -87,7 +87,7 @@ public class OrderTimeoutMqConsumer {
             configBuilder.setNamespace(properties.getNamespace());
         }
 
-        FilterExpression filterExpression = new FilterExpression(properties.getTag(), FilterExpressionType.TAG);
+        FilterExpression filterExpression = new FilterExpression("order-timeout", FilterExpressionType.TAG);
         return provider.newSimpleConsumerBuilder()
                 .setClientConfiguration(configBuilder.build())
                 .setConsumerGroup(properties.getConsumerGroup())

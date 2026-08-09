@@ -89,13 +89,10 @@ order-making-mq:
 
 order-timeout-mq:
   enabled: ${ORDER_TIMEOUT_MQ_ENABLED:false}
-  producer-enabled: ${ORDER_TIMEOUT_MQ_PRODUCER_ENABLED:true}
-  consumer-enabled: ${ORDER_TIMEOUT_MQ_CONSUMER_ENABLED:true}
   endpoints: ${ORDER_TIMEOUT_MQ_ENDPOINTS}
   namespace: ${ORDER_TIMEOUT_MQ_NAMESPACE:}
   access-key: ${ORDER_TIMEOUT_MQ_ACCESS_KEY:}
   secret-key: ${ORDER_TIMEOUT_MQ_SECRET_KEY:}
   topic: ${ORDER_TIMEOUT_MQ_TOPIC:order_timeout}
   consumer-group: ${ORDER_TIMEOUT_MQ_CONSUMER_GROUP:order_timeout}
-  tag: ${ORDER_TIMEOUT_MQ_TAG:*}
   delay-minutes: ${ORDER_TIMEOUT_MQ_DELAY_MINUTES:16}
