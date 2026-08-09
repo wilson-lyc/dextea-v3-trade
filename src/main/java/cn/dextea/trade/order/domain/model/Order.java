@@ -10,8 +10,6 @@ import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
 
-import cn.dextea.trade.order.domain.repository.OrderRepository;
-
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -44,18 +42,29 @@ public class Order {
     private Quantity totalQuantity;
     private List<OrderItem> items;
     private List<OrderPaymentStatusLog> paymentStatusLogs;
+    private List<OrderMakingStatusLog> makingStatusLogs;
 
     private Order() {
         this.items = new ArrayList<>();
     }
 
-    public static Order createDraft(Long customerId, Long storeId) {
+    public static Order initialize(Long customerId, Long storeId) {
         Order order = new Order();
         order.customerId = customerId;
         order.storeId = storeId;
         return order;
     }
 
+    public void place(String orderNo, OrderSource source, PaymentMethod paymentMethod,
+                       DiningMethod diningMethod, String note, String idempotencyKey) {
+        this.orderNo = orderNo;
+        this.source = source;
+        this.paymentMethod = paymentMethod;
+        this.diningMethod = diningMethod;
+        this.note = note;
+        this.idempotencyKey = idempotencyKey;
+    }
+    
     public static Order reconstruct(Long id, String orderNo, String tradeNo, String idempotencyKey,
                                     Long customerId, Long storeId, DiningMethod diningMethod, String note,
                                     OrderSource source, String pickupCode, MakingStatus makingStatus,
@@ -87,24 +96,9 @@ public class Order {
         order.totalPrice = totalPrice;
         order.totalQuantity = totalQuantity;
         order.items = items == null ? new ArrayList<>() : items;
+        order.paymentStatusLogs = new ArrayList<>();
+        order.makingStatusLogs = new ArrayList<>();
         return order;
-    }
-
-    public void place(String orderNo, OrderSource source, PaymentMethod paymentMethod,
-                       DiningMethod diningMethod, String note, String idempotencyKey,
-                       Money totalPrice, Quantity totalQuantity) {
-        this.orderNo = orderNo;
-        this.source = source;
-        this.paymentMethod = paymentMethod;
-        this.diningMethod = diningMethod;
-        this.note = note;
-        this.idempotencyKey = idempotencyKey;
-        this.totalPrice = totalPrice;
-        this.totalQuantity = totalQuantity;
-    }
-
-    public void save(OrderRepository orderRepository) {
-        orderRepository.save(this);
     }
 
     public void assignId(Long id) {
@@ -117,24 +111,22 @@ public class Order {
         this.paymentStatus = PaymentStatus.PENDING;
         this.makingStatus = MakingStatus.PENDING;
         recordPaymentStatusChange(null, PaymentStatus.PENDING, "ORDER_CREATED");
+        recordMakingStatusChange(null, MakingStatus.PENDING, "ORDER_CREATED");
     }
 
-    public void assignPickupCode(String pickupCode) {
-        this.pickupCode = pickupCode;
-    }
-
-    public void setTradeNoIfAbsent(String tradeNo) {
-        if (this.tradeNo == null && tradeNo != null) {
-            this.tradeNo = tradeNo;
-        }
-    }
-
-    public void markPaid(LocalDateTime paidAt) {
+    public void markPaid(LocalDateTime paidAt, String pickupCode) {
         ensureCanMarkPaid();
-        this.paymentStatus = PaymentStatus.PAID;
+        if (pickupCode == null || pickupCode.isBlank()) {
+            throw new BizError(OrderErrorCode.ORDER_PAYMENT_PICKUP_CODE_REQUIRED);
+        }
+        this.pickupCode = pickupCode;
         this.paymentPaidAt = paidAt;
+        PaymentStatus paymentFrom = this.paymentStatus;
+        MakingStatus makingFrom = this.makingStatus;
+        this.paymentStatus = PaymentStatus.PAID;
         this.makingStatus = MakingStatus.PREPARING;
-        recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.PAID, "ORDER_PAID");
+        recordPaymentStatusChange(paymentFrom, PaymentStatus.PAID, "ORDER_PAID");
+        recordMakingStatusChange(makingFrom, MakingStatus.PREPARING, "ORDER_PAID");
     }
 
     public void markPaymentTimeout() {
@@ -142,14 +134,17 @@ public class Order {
         this.paymentStatus = PaymentStatus.TIMEOUT;
         this.makingStatus = MakingStatus.CANCELLED;
         recordPaymentStatusChange(PaymentStatus.PENDING, PaymentStatus.TIMEOUT, "ORDER_PAYMENT_TIMEOUT");
+        recordMakingStatusChange(MakingStatus.PENDING, MakingStatus.CANCELLED, "ORDER_PAYMENT_TIMEOUT");
     }
 
     public void markCancelled() {
         ensureCanMarkCancelled();
         PaymentStatus from = this.paymentStatus;
+        MakingStatus makingFrom = this.makingStatus;
         this.paymentStatus = PaymentStatus.CANCELLED;
         this.makingStatus = MakingStatus.CANCELLED;
         recordPaymentStatusChange(from, PaymentStatus.CANCELLED, "ORDER_CANCELLED");
+        recordMakingStatusChange(makingFrom, MakingStatus.CANCELLED, "ORDER_CANCELLED");
     }
 
     public boolean isPendingPayment() {
@@ -181,7 +176,7 @@ public class Order {
     }
 
     public boolean canMarkPaid() {
-        return isPendingPayment();
+        return isPendingPayment() || isPaymentTimeout();
     }
 
     public boolean canMarkPaymentTimeout() {
@@ -218,12 +213,16 @@ public class Order {
 
     public void markReady() {
         ensureCanMarkReady();
+        MakingStatus from = this.makingStatus;
         this.makingStatus = MakingStatus.READY;
+        recordMakingStatusChange(from, MakingStatus.READY, "ORDER_READY");
     }
 
     public void markCollected() {
         ensureCanMarkCollected();
+        MakingStatus from = this.makingStatus;
         this.makingStatus = MakingStatus.COLLECTED;
+        recordMakingStatusChange(from, MakingStatus.COLLECTED, "ORDER_COLLECTED");
     }
 
     public boolean isPreparing() {
@@ -298,6 +297,27 @@ public class Order {
         }
         List<OrderPaymentStatusLog> logs = paymentStatusLogs;
         paymentStatusLogs = null;
+        return logs;
+    }
+
+    private void recordMakingStatusChange(MakingStatus from, MakingStatus to, String event) {
+        if (makingStatusLogs == null) {
+            makingStatusLogs = new ArrayList<>();
+        }
+        makingStatusLogs.add(OrderMakingStatusLog.builder()
+                .fromStatus(from == null ? null : from.getCode())
+                .toStatus(to == null ? null : to.getCode())
+                .event(event)
+                .createdAt(LocalDateTime.now())
+                .build());
+    }
+
+    public List<OrderMakingStatusLog> pullMakingStatusLogs() {
+        if (makingStatusLogs == null || makingStatusLogs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<OrderMakingStatusLog> logs = makingStatusLogs;
+        makingStatusLogs = null;
         return logs;
     }
 

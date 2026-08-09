@@ -6,6 +6,7 @@ import cn.dextea.trade.order.domain.exception.RetryableOrderException;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderPaymentService;
+import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -22,6 +24,7 @@ public class MarkOrderPaidUseCase {
 
     private final OrderRepository orderRepository;
     private final OrderPaymentService orderPaymentService;
+    private final PickupCodeGenerator pickupCodeGenerator;
 
     @Transactional
     public void execute(MarkOrderPaidCommand command) {
@@ -35,7 +38,8 @@ public class MarkOrderPaidUseCase {
 
         verifyAmount(order, command.getPaidAmount(), orderNo, tradeNo);
 
-        orderPaymentService.markPaid(order, command.getPaidAt(), tradeNo);
+        String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
+        orderPaymentService.markPaid(order, command.getPaidAt(), tradeNo, pickupCode);
     }
 
     private void verifyAmount(Order order, BigDecimal paidAmount, String orderNo, String tradeNo) {

@@ -5,8 +5,6 @@ import cn.dextea.trade.shared.model.Quantity;
 
 import lombok.Getter;
 
-import java.util.List;
-
 @Getter
 public class OrderItem {
     private Long id;
@@ -24,7 +22,7 @@ public class OrderItem {
     }
 
     public static OrderItem create(Long productId, String productName, String skuId, String customization,
-                                   String coverUrl, Quantity quantity, Money unitPrice, Boolean available) {
+            String coverUrl, Quantity quantity, Money unitPrice, Boolean available) {
         OrderItem orderItem = new OrderItem();
         orderItem.productId = productId;
         orderItem.productName = productName;
@@ -38,8 +36,8 @@ public class OrderItem {
     }
 
     public static OrderItem reconstruct(Long id, Long orderId, Long productId, String productName,
-                                        String skuId, String customization, String coverUrl,
-                                        Quantity quantity, Money unitPrice, Boolean available) {
+            String skuId, String customization, String coverUrl,
+            Quantity quantity, Money unitPrice, Boolean available) {
         OrderItem orderItem = new OrderItem();
         orderItem.id = id;
         orderItem.orderId = orderId;

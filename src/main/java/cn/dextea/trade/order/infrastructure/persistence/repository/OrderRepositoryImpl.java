@@ -6,7 +6,9 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.exception.OrderErrorCode;
 import cn.dextea.trade.order.domain.model.OrderPaymentStatusLog;
+import cn.dextea.trade.order.domain.model.OrderMakingStatusLog;
 import cn.dextea.trade.order.domain.repository.OrderPaymentStatusLogRepository;
+import cn.dextea.trade.order.domain.repository.OrderMakingStatusLogRepository;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.infrastructure.adapter.RedisOrderItemCache;
 import cn.dextea.trade.order.infrastructure.persistence.converter.OrderConverter;
@@ -38,6 +40,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final OrderConverter orderConverter;
     private final RedisOrderItemCache orderItemCache;
     private final OrderPaymentStatusLogRepository paymentStatusLogRepository;
+    private final OrderMakingStatusLogRepository makingStatusLogRepository;
 
     @Override
     @Transactional
@@ -56,6 +59,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             putItemsToCacheAfterCommit(order.getId(), itemPOs);
         }
         savePaymentStatusLogs(order);
+        saveMakingStatusLogs(order);
         return order;
     }
 
@@ -108,6 +112,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
         }
         savePaymentStatusLogs(order);
+        saveMakingStatusLogs(order);
     }
 
     @Override
@@ -119,6 +124,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
         }
         savePaymentStatusLogs(order);
+        saveMakingStatusLogs(order);
     }
 
     @Override
@@ -129,6 +135,7 @@ public class OrderRepositoryImpl implements OrderRepository {
         if (updated == 0) {
             throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
         }
+        saveMakingStatusLogs(order);
     }
 
     @Override
@@ -144,6 +151,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             return false;
         }
         savePaymentStatusLogs(order);
+        saveMakingStatusLogs(order);
         return true;
     }
 
@@ -156,6 +164,17 @@ public class OrderRepositoryImpl implements OrderRepository {
             log.setOrderId(order.getId());
         }
         paymentStatusLogRepository.saveAll(logs);
+    }
+
+    private void saveMakingStatusLogs(Order order) {
+        List<OrderMakingStatusLog> logs = order.pullMakingStatusLogs();
+        if (logs.isEmpty()) {
+            return;
+        }
+        for (OrderMakingStatusLog log : logs) {
+            log.setOrderId(order.getId());
+        }
+        makingStatusLogRepository.saveAll(logs);
     }
 
     @Override

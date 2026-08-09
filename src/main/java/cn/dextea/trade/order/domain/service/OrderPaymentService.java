@@ -2,13 +2,11 @@ package cn.dextea.trade.order.domain.service;
 
 import cn.dextea.trade.order.domain.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.Order;
-import cn.dextea.trade.order.domain.port.MakingStatusPublisher;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -17,21 +15,16 @@ import java.time.LocalDateTime;
 public class OrderPaymentService {
 
     private final OrderRepository orderRepository;
-    private final PickupCodeGenerator pickupCodeGenerator;
-    private final MakingStatusPublisher makingStatusPublisher;
+    private final OrderMakingStatusService orderMakingStatusService;
 
-    public void markPaid(Order order, LocalDateTime paidAt, String tradeNo) {
-        if (order.isPaid()) {
-            log.info("订单已是已支付状态, 忽略重复支付更新, orderNo={}", order.getOrderNo());
+    public void markPaid(Order order, LocalDateTime paidAt, String tradeNo, String pickupCode) {
+        if (!order.canMarkPaid()) {
+            log.info("订单当前状态不允许标记为已支付, 忽略本次更新, orderNo={}, paymentStatus={}",
+                    order.getOrderNo(), order.getPaymentStatus());
             return;
         }
-        if (tradeNo != null) {
-            order.setTradeNoIfAbsent(tradeNo);
-        }
         MakingStatus fromMakingStatus = order.getMakingStatus();
-        order.markPaid(paidAt);
-        String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
-        order.assignPickupCode(pickupCode);
+        order.markPaid(paidAt, pickupCode);
         try {
             orderRepository.updatePaymentStatus(order);
             log.info("订单已标记为已支付, orderNo={}, paidAt={}, pickupCode={}, tradeNo={}",
@@ -41,9 +34,7 @@ public class OrderPaymentService {
             log.warn("回写支付状态冲突, 视为已被并发更新, orderNo={}", order.getOrderNo());
             return;
         }
-        if (fromMakingStatus == MakingStatus.PENDING) {
-            makingStatusPublisher.publishMakingStatusChange(order.getOrderNo(), fromMakingStatus, MakingStatus.PREPARING);
-        }
+        orderMakingStatusService.startMaking(order, fromMakingStatus);
     }
 
     public void markTimeout(Order order) {

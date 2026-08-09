@@ -17,7 +17,6 @@ import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
-import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
@@ -89,8 +88,7 @@ public class OrderCreationService {
         }
 
         // 补充订单信息：订单号、来源、支付方式、取餐方式、备注、幂等键
-        order.place(orderNoGenerator.next(), source, paymentMethod, diningMethod, note, idempotencyKey,
-                order.getTotalPrice(), order.getTotalQuantity());
+        order.place(orderNoGenerator.next(), source, paymentMethod, diningMethod, note, idempotencyKey);
 
         // 创建支付单
         LocalDateTime paymentExpiredAt = LocalDateTime.now().plusMinutes(paymentTtlMinutes);
@@ -107,7 +105,7 @@ public class OrderCreationService {
                 customerId, order.getOrderNo(), tradeNo, paymentExpiredAt);
 
         // 落库
-        order.save(orderRepository);
+        orderRepository.save(order);
         log.debug("订单落库成功, orderNo={}, orderId={}, idempotencyKey={}",
                 order.getOrderNo(), order.getId(), idempotencyKey);
 
@@ -141,7 +139,7 @@ public class OrderCreationService {
                 customerId, storeId, skuIds.size(), products.size());
 
         // 创建订单草稿
-        Order order = Order.createDraft(customerId, storeId);
+        Order order = Order.initialize(customerId, storeId);
         log.debug("预下单订单领域对象创建完成, customerId={}, storeId={}", customerId, storeId);
 
         // 往订单中添加商品

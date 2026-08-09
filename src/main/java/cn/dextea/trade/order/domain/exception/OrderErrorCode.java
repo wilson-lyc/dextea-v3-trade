@@ -26,7 +26,8 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_NOT_READY(101023, "仅制作完成的订单可以标记为已取餐"),
     ORDER_CANNOT_TIMEOUT(101024, "仅支付中的订单可以标记为支付超时"),
     ORDER_CANNOT_PAID(101025, "仅支付中的订单可以标记为已支付"),
-    ORDER_INVALID_MAKING_TRANSITION(101027, "制作状态必须按 待制作->制作中->制作完成->已取餐 逐级变更");
+    ORDER_INVALID_MAKING_TRANSITION(101027, "制作状态必须按 待制作->制作中->制作完成->已取餐 逐级变更"),
+    ORDER_PAYMENT_PICKUP_CODE_REQUIRED(101028, "订单支付时必须包含取餐码");
     
     private final int code;
     private final String message;
