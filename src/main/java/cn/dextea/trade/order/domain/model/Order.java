@@ -123,6 +123,12 @@ public class Order {
         this.pickupCode = pickupCode;
     }
 
+    public void setTradeNoIfAbsent(String tradeNo) {
+        if (this.tradeNo == null && tradeNo != null) {
+            this.tradeNo = tradeNo;
+        }
+    }
+
     public void markPaid(LocalDateTime paidAt) {
         ensureCanMarkPaid();
         this.paymentStatus = PaymentStatus.PAID;

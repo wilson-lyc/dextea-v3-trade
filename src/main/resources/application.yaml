@@ -74,8 +74,8 @@ payment-callback-mq:
   namespace: ${PAYMENT_CALLBACK_MQ_NAMESPACE:}
   access-key: ${PAYMENT_CALLBACK_MQ_ACCESS_KEY:}
   secret-key: ${PAYMENT_CALLBACK_MQ_SECRET_KEY:}
-  topic: ${PAYMENT_CALLBACK_MQ_TOPIC}
-  consumer-group: ${PAYMENT_CALLBACK_MQ_CONSUMER_GROUP}
+  topic: ${PAYMENT_CALLBACK_MQ_TOPIC:payment_callback}
+  consumer-group: ${PAYMENT_CALLBACK_MQ_CONSUMER_GROUP:payment_callback}
   tag: ${PAYMENT_CALLBACK_MQ_TAG:*}
 
 order-making-mq:
@@ -84,8 +84,8 @@ order-making-mq:
   namespace: ${ORDER_MAKING_MQ_NAMESPACE:}
   access-key: ${ORDER_MAKING_MQ_ACCESS_KEY:}
   secret-key: ${ORDER_MAKING_MQ_SECRET_KEY:}
-  topic: ${ORDER_MAKING_MQ_TOPIC}
-  consumer-group: ${ORDER_MAKING_MQ_CONSUMER_GROUP}
+  topic: ${ORDER_MAKING_MQ_TOPIC:order_making_status}
+  consumer-group: ${ORDER_MAKING_MQ_CONSUMER_GROUP:order_making_status}
   tag: ${ORDER_MAKING_MQ_TAG:*}
 
 order-timeout-mq:
@@ -96,7 +96,7 @@ order-timeout-mq:
   namespace: ${ORDER_TIMEOUT_MQ_NAMESPACE:}
   access-key: ${ORDER_TIMEOUT_MQ_ACCESS_KEY:}
   secret-key: ${ORDER_TIMEOUT_MQ_SECRET_KEY:}
-  topic: ${ORDER_TIMEOUT_MQ_TOPIC}
-  consumer-group: ${ORDER_TIMEOUT_MQ_CONSUMER_GROUP}
-  tag: ${ORDER_TIMEOUT_MQ_TAG:order-timeout}
+  topic: ${ORDER_TIMEOUT_MQ_TOPIC:order_timeout}
+  consumer-group: ${ORDER_TIMEOUT_MQ_CONSUMER_GROUP:order_timeout}
+  tag: ${ORDER_TIMEOUT_MQ_TAG:*}
   delay-minutes: ${ORDER_TIMEOUT_MQ_DELAY_MINUTES:16}
