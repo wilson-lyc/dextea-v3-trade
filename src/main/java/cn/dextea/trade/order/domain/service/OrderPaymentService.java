@@ -1,6 +1,8 @@
 package cn.dextea.trade.order.domain.service;
 
+import cn.dextea.trade.order.domain.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.model.Order;
+import cn.dextea.trade.order.domain.port.MakingStatusPublisher;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ public class OrderPaymentService {
 
     private final OrderRepository orderRepository;
     private final PickupCodeGenerator pickupCodeGenerator;
+    private final MakingStatusPublisher makingStatusPublisher;
 
     public void markPaid(Order order, LocalDateTime paidAt, String tradeNo) {
         if (order.isPaid()) {
@@ -25,6 +28,7 @@ public class OrderPaymentService {
         if (tradeNo != null) {
             order.setTradeNoIfAbsent(tradeNo);
         }
+        MakingStatus fromMakingStatus = order.getMakingStatus();
         order.markPaid(paidAt);
         String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
         order.assignPickupCode(pickupCode);
@@ -35,6 +39,10 @@ public class OrderPaymentService {
         } catch (RuntimeException e) {
             // 与支付回调/对账并发更新导致乐观锁冲突：本地已被对方更新为已支付，结果一致，无需重试
             log.warn("回写支付状态冲突, 视为已被并发更新, orderNo={}", order.getOrderNo());
+            return;
+        }
+        if (fromMakingStatus == MakingStatus.PENDING) {
+            makingStatusPublisher.publishMakingStatusChange(order.getOrderNo(), fromMakingStatus, MakingStatus.PREPARING);
         }
     }
 
