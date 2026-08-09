@@ -10,6 +10,7 @@ import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +39,9 @@ public class MarkOrderPaidUseCase {
 
         verifyAmount(order, command.getPaidAmount(), orderNo, tradeNo);
 
+        LocalDateTime paidAt = LocalDateTime.now();
         String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
-        orderStatusService.markPaid(order, command.getPaidAt(), tradeNo, pickupCode);
+        orderStatusService.markPaid(order, paidAt, tradeNo, pickupCode);
     }
 
     private void verifyAmount(Order order, BigDecimal paidAmount, String orderNo, String tradeNo) {

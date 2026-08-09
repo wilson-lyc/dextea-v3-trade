@@ -11,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Slf4j
@@ -21,9 +19,6 @@ import java.util.Map;
 public class PaymentCallbackApplicationService {
 
     private static final String TRADE_STATUS_SUCCESS = "TRADE_SUCCESS";
-
-    private static final DateTimeFormatter PAID_AT_FORMAT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final OrderPaidEventPublisher orderPaidEventPublisher;
 
@@ -47,28 +42,16 @@ public class PaymentCallbackApplicationService {
             return;
         }
 
-        LocalDateTime paidAt = parsePaidAt(data.get("gmt_payment"));
         BigDecimal amount = parseAmount(data.get("total_amount"));
         if (amount == null) {
             throw new RetryableCallbackException("支付回调金额缺失或解析失败, 等待上游数据修复后重试, orderNo=" + orderNo);
         }
 
         orderPaidEventPublisher.publish(new OrderPaidEvent(
-                orderNo, tradeNo, message.platform(), paidAt, amount));
+                orderNo, tradeNo, message.platform(), amount));
 
-        log.info("支付成功回调处理完成, orderNo={}, tradeNo={}, platform={}, paidAt={}, amount={}",
-                orderNo, tradeNo, message.platform(), paidAt, amount);
-    }
-
-    private LocalDateTime parsePaidAt(String value) {
-        if (isBlank(value)) {
-            return null;
-        }
-        try {
-            return LocalDateTime.parse(value, PAID_AT_FORMAT);
-        } catch (Exception e) {
-            throw new RetryableCallbackException("支付回调支付时间解析失败, 等待重试, value=" + value);
-        }
+        log.info("支付成功回调处理完成, orderNo={}, tradeNo={}, platform={}, amount={}",
+                orderNo, tradeNo, message.platform(), amount);
     }
 
     private BigDecimal parseAmount(String value) {

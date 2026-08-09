@@ -7,6 +7,5 @@ public record OrderPaidEvent(
         String orderNo,
         String tradeNo,
         String platform,
-        LocalDateTime paidAt,
         BigDecimal amount) {
 }

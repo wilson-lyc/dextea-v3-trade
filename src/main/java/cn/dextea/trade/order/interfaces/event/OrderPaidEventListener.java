@@ -17,12 +17,11 @@ public class OrderPaidEventListener {
 
     @EventListener
     public void onOrderPaid(OrderPaidEvent event) {
-        log.info("收到订单已支付事件, orderNo={}, tradeNo={}, platform={}, paidAt={}",
-                event.orderNo(), event.tradeNo(), event.platform(), event.paidAt());
+        log.info("收到订单已支付事件, orderNo={}, tradeNo={}, platform={}",
+                event.orderNo(), event.tradeNo(), event.platform());
         markOrderPaidUseCase.execute(MarkOrderPaidCommand.builder()
                 .orderNo(event.orderNo())
                 .tradeNo(event.tradeNo())
-                .paidAt(event.paidAt())
                 .paidAmount(event.amount())
                 .build());
     }

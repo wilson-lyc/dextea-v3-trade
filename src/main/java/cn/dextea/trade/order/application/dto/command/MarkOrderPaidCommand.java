@@ -16,7 +16,5 @@ public class MarkOrderPaidCommand {
 
     private String tradeNo;
 
-    private LocalDateTime paidAt;
-
     private BigDecimal paidAmount;
 }

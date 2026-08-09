@@ -53,8 +53,7 @@ public class PaymentReconciliationService {
     }
 
     private void reconcilePaid(Order order, QueryTradeResult tradeResult) {
-        // 优先采用支付宝返回的买家付款时间, 缺失时才退化为当前时间
-        LocalDateTime paidAt = tradeResult.getPaidAt() == null ? LocalDateTime.now() : tradeResult.getPaidAt();
+        LocalDateTime paidAt = LocalDateTime.now();
         String pickupCode = pickupCodeGenerator.generate(order.getStoreId(), LocalDate.now());
         orderStatusService.markPaid(order, paidAt, tradeResult.getTradeNo(), pickupCode);
     }
