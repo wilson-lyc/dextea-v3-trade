@@ -19,17 +19,17 @@ public class MarkOrderReadyUseCase {
     private final OrderStatusService orderStatusService;
 
     public void execute(MarkOrderReadyCommand command) {
-        log.info("订单制作完成请求, customerId={}, orderId={}", command.getCustomerId(), command.getOrderId());
+        log.info("订单制作完成请求, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());
 
         Order order = orderRepository.getOrderById(command.getOrderId());
         if (order == null) {
             throw new BizError(OrderErrorCode.ORDER_NOT_FOUND);
         }
 
-        order.ensureBelongsTo(command.getCustomerId());
+        order.ensureBelongsToStore(command.getStoreId());
         order.ensureCanMarkReady();
 
         orderStatusService.markReady(order);
-        log.info("订单制作完成成功, customerId={}, orderId={}", command.getCustomerId(), command.getOrderId());
+        log.info("订单制作完成成功, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());
     }
 }

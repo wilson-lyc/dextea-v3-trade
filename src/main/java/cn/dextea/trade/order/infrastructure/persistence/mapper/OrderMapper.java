@@ -31,6 +31,13 @@ public interface OrderMapper {
                                                 @Param("startAt") LocalDateTime startAt,
                                                 @Param("endAt") LocalDateTime endAt);
 
+    @Select("SELECT * FROM orders WHERE store_id = #{storeId} "
+            + "AND created_at >= #{startAt} AND created_at <= #{endAt} "
+            + "ORDER BY created_at DESC")
+    List<OrderPO> selectByStoreAndTimeWindow(@Param("storeId") Long storeId,
+                                             @Param("startAt") LocalDateTime startAt,
+                                             @Param("endAt") LocalDateTime endAt);
+
     @Select("<script>SELECT * FROM orders WHERE id IN "
             + "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>"
             + "</script>")

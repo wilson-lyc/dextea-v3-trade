@@ -18,6 +18,7 @@ public enum OrderErrorCode implements BizErrorCode {
     ORDER_CREATE_IN_PROGRESS(101015, "订单正在创建中，请稍后重试"),
     ORDER_NOT_FOUND(101016, "订单不存在"),
     ORDER_NOT_BELONG_TO_CUSTOMER(101017, "该订单不属于当前顾客"),
+    ORDER_NOT_BELONG_TO_STORE(101019, "该订单不属于当前门店"),
     ORDER_UPDATE_CONFLICT(101018, "订单状态更新冲突，请重试"),
     ORDER_PAID_AMOUNT_MISMATCH(101020, "支付回调金额与订单金额不一致"),
     ORDER_NOT_PAID(101021, "仅已支付的订单可以开始制作"),

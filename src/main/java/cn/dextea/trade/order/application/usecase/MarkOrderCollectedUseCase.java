@@ -19,17 +19,17 @@ public class MarkOrderCollectedUseCase {
     private final OrderStatusService orderStatusService;
 
     public void execute(MarkOrderCollectedCommand command) {
-        log.info("订单已取餐请求, customerId={}, orderId={}", command.getCustomerId(), command.getOrderId());
+        log.info("订单已取餐请求, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());
 
         Order order = orderRepository.getOrderById(command.getOrderId());
         if (order == null) {
             throw new BizError(OrderErrorCode.ORDER_NOT_FOUND);
         }
 
-        order.ensureBelongsTo(command.getCustomerId());
+        order.ensureBelongsToStore(command.getStoreId());
         order.ensureCanMarkCollected();
 
         orderStatusService.markCollected(order);
-        log.info("订单已取餐成功, customerId={}, orderId={}", command.getCustomerId(), command.getOrderId());
+        log.info("订单已取餐成功, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());
     }
 }

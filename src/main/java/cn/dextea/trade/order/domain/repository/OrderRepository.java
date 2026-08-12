@@ -16,6 +16,8 @@ public interface OrderRepository {
 
     List<Order> getMonthOrders(Long customerId, LocalDateTime startAt, LocalDateTime endAt);
 
+    List<Order> getStoreWindowOrders(Long storeId, LocalDateTime startAt, LocalDateTime endAt);
+
     void updatePaymentStatus(Order order);
 
     void updateMakingStatus(Order order);

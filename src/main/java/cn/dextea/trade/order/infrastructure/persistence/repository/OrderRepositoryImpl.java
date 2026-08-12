@@ -180,6 +180,21 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Order> getStoreWindowOrders(Long storeId, LocalDateTime startAt, LocalDateTime endAt) {
+        List<OrderPO> orderPOs = orderMapper.selectByStoreAndTimeWindow(storeId, startAt, endAt);
+        if (orderPOs == null || orderPOs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, List<OrderItem>> itemsByOrderId = getOrderItemsByOrderIds(
+                orderPOs.stream().map(OrderPO::getId).collect(Collectors.toList()));
+        return orderPOs.stream()
+                .map(po -> orderConverter.toOrder(po,
+                        itemsByOrderId.getOrDefault(po.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
+    }
+
     private Map<Long, List<OrderItem>> getOrderItemsByOrderIds(List<Long> orderIds) {
         Map<Long, List<OrderItemPO>> itemsByOrderId = orderItemCache.getMulti(orderIds);
         List<Long> missingOrderIds = orderIds.stream()

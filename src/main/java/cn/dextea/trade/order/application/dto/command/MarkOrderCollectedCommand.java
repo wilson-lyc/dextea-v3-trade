@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class MarkOrderCollectedCommand {
 
-    private Long customerId;
+    private Long storeId;
 
     private Long orderId;
 }

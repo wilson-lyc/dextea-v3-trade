@@ -336,6 +336,16 @@ public class Order {
         }
     }
 
+    public boolean belongsToStore(Long storeId) {
+        return storeId != null && storeId.equals(this.storeId);
+    }
+
+    public void ensureBelongsToStore(Long storeId) {
+        if (!belongsToStore(storeId)) {
+            throw new BizError(OrderErrorCode.ORDER_NOT_BELONG_TO_STORE);
+        }
+    }
+
     public boolean isCreated() {
         return orderNo != null;
     }
