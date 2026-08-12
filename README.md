@@ -4,11 +4,11 @@
 
 ## 项目介绍
 
-交易端承载德贤茶庄现制茶饮点单场景的完整订单/支付流程，由 `dextea-customer-api`（C 端 Go 网关）以反向代理方式接入：
+交易端承载德贤茶庄现制茶饮点单场景的完整订单/支付流程：
 
-- **订单**：预构建（价格/库存预校验）、下单（幂等校验 + Redis 分布式锁 + MySQL 唯一索引兜底）、月订单列表、订单详情、支付状态查询
-- **支付**：支付宝 JSAPI 支付（`alipay.trade.create`，SDK v3）、支付回调处理（校验金额/平台/交易号）、支付状态对账（本地"支付中"时主动查询支付宝并回写）
-- **状态流转**：制作完成、已取餐、超时关单（延迟消息，默认 16 分钟）、取餐码生成（Snowflake + CosId）
+- **订单**：预构建（价格/库存预校验，不可售商品降级返回）、下单（幂等键双重校验 + Redis 分布式锁 + MySQL 唯一索引兜底，落库后写幂等键）、月订单列表、订单详情、支付状态查询
+- **支付**：支付宝 JSAPI 支付（`PRODUCT_CODE=JSAPI_PAY`，调用 `alipay.trade.create` 创建交易、`alipay.trade.query` 查询交易）；支付回调经 `PaymentCallbackMqConsumer` 消费后由 `PaymentCallbackApplicationService` 校验 `trade_status=TRADE_SUCCESS` 与金额（缺失/解析失败可重试），发布 `OrderPaidEvent` 并由 `MarkOrderPaidUseCase` 校验金额后落库；支付状态对账 `PaymentReconciliationService` 仅在本地"支付中"时主动查询支付宝，已支付则回写（含取餐码），交易关闭则标记支付超时。
+- **状态流转**：支付状态 `PENDING → PAID/TIMEOUT/REFUNDING/REFUNDED`；制作状态 `PENDING → PREPARING → READY → COLLECTED`，支付成功自动转 PREPARING 并通过 `order_making_status` 广播；超时关单由下单事务提交后发送延迟消息（默认 `delay-minutes=16`）触发 `MarkOrderTimeoutUseCase`；取餐码由 `PickupCodeGenerator` 基于 `pickup_code_counter` 当日序号生成（`8` + 3 位日序号）
 
 ## 技术栈
 
@@ -46,7 +46,7 @@ dextea-trade/
 
 ## 配置（环境变量）
 
-唯一配置文件 `application.yaml` 中全部关键项使用环境变量占位符（本地可用 `.env` 提供；`.env` 已被 gitignore，不提交）。Nacos 为**可选**配置源（`optional:nacos:...`），连不上不阻塞启动，本地默认值兜底。
+唯一配置文件 `application.yaml` 中全部关键项使用环境变量占位符（本地可用 `.env` 提供）。Nacos 为**可选**配置源（`optional:nacos:...`），连不上不阻塞启动，本地默认值兜底。
 
 | 配置项 | 环境变量 | 默认值 |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ dextea-trade/
 | CosId | `COSID_*` | 应用名 |
 | 订单参数 | `ORDER_PAYMENT_TTL`（15 分钟）/ `ORDER_CREATE_ORDER_IDEM_TTL`（1440）/ `ORDER_CREATE_ORDER_LOCK_TTL`（1）/ `ORDER_ITEM_CACHE_TTL`（120） | — |
 
-依赖的外部服务：**MySQL**（`orders`、`order_items`、`pickup_code_counter` 等表）、**Redis**（幂等键/锁/订单项缓存/CosId 机器号）、可选 Nacos、可选阿里云 RocketMQ 5.x、支付宝开放平台。三个 MQ 默认关闭，本地最小运行仅需 MySQL + Redis。
+依赖的外部服务：**MySQL**（`orders`、`order_items`、`pickup_code_counter` 等表）、**Redis**（幂等键/锁/订单项缓存/CosId 机器号）、**阿里云 RocketMQ 5.x**（支付回调/制作状态/超时关单三个消息通道）、**支付宝开放平台**（JSAPI 支付与回调）。以上均为必选；仅 **Nacos** 为可选配置源（连不上不阻塞启动）。本地最小运行同样需要 MySQL + Redis + RocketMQ + 支付宝。
 
 ## 本地开发
 
