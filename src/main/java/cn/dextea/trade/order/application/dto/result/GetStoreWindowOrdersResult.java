@@ -3,7 +3,6 @@ package cn.dextea.trade.order.application.dto.result;
 import cn.dextea.trade.order.domain.enumeration.DiningMethod;
 import cn.dextea.trade.order.domain.enumeration.MakingStatus;
 import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
-import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
 import java.time.LocalDateTime;
@@ -35,17 +34,15 @@ public class GetStoreWindowOrdersResult {
 
         private String orderNo;
 
+        private String pickupCode;
+
         private Money totalPrice;
 
         private Quantity totalQuantity;
 
         private DiningMethod diningMethod;
 
-        private String note;
-
         private MakingStatus makingStatus;
-
-        private PaymentMethod paymentMethod;
 
         private PaymentStatus paymentStatus;
 

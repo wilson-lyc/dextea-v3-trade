@@ -25,12 +25,11 @@ public class StoreWindowOrderAssembler {
         return GetStoreWindowOrdersResult.StoreWindowOrderItem.builder()
                 .orderId(order.getId())
                 .orderNo(order.getOrderNo())
+                .pickupCode(order.getPickupCode())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(totalQuantity)
                 .diningMethod(order.getDiningMethod())
-                .note(order.getNote())
                 .makingStatus(order.getMakingStatus())
-                .paymentMethod(order.getPaymentMethod())
                 .paymentStatus(order.getPaymentStatus())
                 .createdAt(order.getCreatedAt())
                 .build();

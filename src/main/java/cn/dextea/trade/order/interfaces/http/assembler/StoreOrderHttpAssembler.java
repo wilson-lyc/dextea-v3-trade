@@ -33,12 +33,11 @@ public class StoreOrderHttpAssembler {
         return StoreWindowOrderItem.builder()
                 .orderId(source.getOrderId())
                 .orderNo(source.getOrderNo())
+                .pickupCode(source.getPickupCode())
                 .totalPrice(source.getTotalPrice().getValue())
                 .totalQuantity(source.getTotalQuantity().getValue())
                 .diningMethod(source.getDiningMethod().getCode())
-                .note(source.getNote())
                 .makingStatus(source.getMakingStatus().getCode())
-                .paymentMethod(source.getPaymentMethod().getCode())
                 .paymentStatus(source.getPaymentStatus().getCode())
                 .createdAt(source.getCreatedAt())
                 .build();

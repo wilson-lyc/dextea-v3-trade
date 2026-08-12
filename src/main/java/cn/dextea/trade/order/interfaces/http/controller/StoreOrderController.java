@@ -1,15 +1,20 @@
 package cn.dextea.trade.order.interfaces.http.controller;
 
+import cn.dextea.trade.order.application.dto.command.GetStoreOrderDetailCommand;
 import cn.dextea.trade.order.application.dto.command.GetStoreWindowOrdersCommand;
 import cn.dextea.trade.order.application.dto.command.MarkOrderReadyCommand;
 import cn.dextea.trade.order.application.dto.command.MarkOrderCollectedCommand;
 import cn.dextea.trade.order.application.dto.result.GetStoreWindowOrdersResult;
+import cn.dextea.trade.order.application.dto.result.StoreOrderDetailResult;
+import cn.dextea.trade.order.application.usecase.GetStoreOrderDetailUseCase;
 import cn.dextea.trade.order.application.usecase.GetStoreWindowOrdersUseCase;
 import cn.dextea.trade.order.application.usecase.MarkOrderReadyUseCase;
 import cn.dextea.trade.order.application.usecase.MarkOrderCollectedUseCase;
+import cn.dextea.trade.order.interfaces.http.assembler.StoreOrderDetailHttpAssembler;
 import cn.dextea.trade.order.interfaces.http.assembler.StoreOrderHttpAssembler;
 import cn.dextea.trade.order.interfaces.http.dto.request.GetStoreWindowOrdersRequest;
 import cn.dextea.trade.order.interfaces.http.dto.response.GetStoreWindowOrdersResponse;
+import cn.dextea.trade.order.interfaces.http.dto.response.StoreOrderDetailResponse;
 import cn.dextea.trade.shared.api.APIResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +43,7 @@ public class StoreOrderController {
     private final GetStoreWindowOrdersUseCase getStoreWindowOrdersUseCase;
     private final MarkOrderReadyUseCase markOrderReadyUseCase;
     private final MarkOrderCollectedUseCase markOrderCollectedUseCase;
+    private final GetStoreOrderDetailUseCase getStoreOrderDetailUseCase;
     private final StoreOrderHttpAssembler storeOrderHttpAssembler;
 
     @GetMapping("/window")
@@ -51,6 +57,18 @@ public class StoreOrderController {
         log.info("查询门店窗口订单成功, storeId={}, hours={}, orderCount={}, total={}",
                 storeId, request.getHours(), result.getItems().size(), result.getTotal());
         return APIResponse.success(storeOrderHttpAssembler.toResponse(result));
+    }
+
+    @GetMapping("/{orderId}")
+    @Operation(summary = "获取门店订单详情", description = "仅能查看归属本门店的订单，客制化返回原始值不做格式转换")
+    public APIResponse<StoreOrderDetailResponse> getStoreOrderDetail(
+            @RequestHeader(STORE_ID_HEADER) @NotNull(message = "storeId 不能为空") Long storeId,
+            @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
+        log.info("查询门店订单详情请求, storeId={}, orderId={}", storeId, orderId);
+        GetStoreOrderDetailCommand command = StoreOrderDetailHttpAssembler.toCommand(storeId, orderId);
+        StoreOrderDetailResult result = getStoreOrderDetailUseCase.execute(command);
+        log.info("查询门店订单详情成功, storeId={}, orderId={}", storeId, orderId);
+        return APIResponse.success(StoreOrderDetailHttpAssembler.toResponse(result));
     }
 
     @PostMapping("/{orderId}/ready")

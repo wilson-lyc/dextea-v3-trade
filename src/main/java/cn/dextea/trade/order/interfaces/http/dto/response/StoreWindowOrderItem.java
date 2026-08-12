@@ -18,17 +18,15 @@ public class StoreWindowOrderItem {
 
     private String orderNo;
 
+    private String pickupCode;
+
     private BigDecimal totalPrice;
 
     private Integer totalQuantity;
 
     private Integer diningMethod;
 
-    private String note;
-
     private Integer makingStatus;
-
-    private Integer paymentMethod;
 
     private Integer paymentStatus;
 
