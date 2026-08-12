@@ -9,20 +9,16 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.order.domain.model.SkuItem;
 import cn.dextea.trade.order.domain.port.IdempotencyStore;
-import cn.dextea.trade.order.domain.port.OrderCreateLock;
 import cn.dextea.trade.order.domain.service.OrderCreationService;
 import cn.dextea.trade.shared.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -31,10 +27,6 @@ public class CreateOrderUseCase {
 
     private final OrderCreationService orderCreationService;
     private final IdempotencyStore idempotencyStore;
-    private final OrderCreateLock orderCreateLock;
-
-    @Value("${order.create_order_lock_ttl:1}")
-    private long createOrderLockTtlMinutes;
 
     public OrderCreateResult execute(CreateOrderCommand command) {
         String idempotencyKey = command.getIdempotencyKey();
@@ -50,33 +42,13 @@ public class CreateOrderUseCase {
             throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
         }
 
-        // 加锁
-        String lockKey = "customer_" + customerId;
-        String lockToken = UUID.randomUUID().toString();
-        if (!orderCreateLock.tryLock(lockKey, lockToken, Duration.ofMinutes(createOrderLockTtlMinutes))) {
-            log.warn("获取创建订单分布式锁失败, 已有订单正在处理中, customerId={}, lockKey={}, lockTtlMinutes={}",
-                    customerId, lockKey, createOrderLockTtlMinutes);
-            throw new BizError(OrderErrorCode.ORDER_CREATE_IN_PROGRESS);
+        // 二次校验幂等键，防止并发穿透
+        if (idempotencyStore.exists(idempotencyKey)) {
+            log.warn("创建订单幂等键已存在(二次校验), 拒绝重复请求, customerId={}, idempotencyKey={}",
+                    customerId, idempotencyKey);
+            throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
         }
-        log.debug("获取创建订单分布式锁成功, customerId={}, lockKey={}", customerId, lockKey);
-
-        try {
-            // 二次校验幂等键，防止并发穿透
-            if (idempotencyStore.exists(idempotencyKey)) {
-                log.warn("创建订单幂等键已存在(二次校验), 拒绝重复请求, customerId={}, idempotencyKey={}",
-                        customerId, idempotencyKey);
-                throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
-            }
-            return doCreate(command);
-        } finally {
-            // 释放锁
-            try {
-                orderCreateLock.unlock(lockKey, lockToken);
-                log.debug("释放创建订单分布式锁成功, customerId={}, lockKey={}", customerId, lockKey);
-            } catch (Exception e) {
-                log.error("释放创建订单锁失败, customerId={}, lockKey={}", customerId, lockKey, e);
-            }
-        }
+        return doCreate(command);
     }
 
     private OrderCreateResult doCreate(CreateOrderCommand command) {
