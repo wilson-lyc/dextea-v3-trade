@@ -38,8 +38,8 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
 
     @PostConstruct
     public void start() {
-        if (!properties.isProducerActive()) {
-            log.info("order-making-mq 生产未启用，跳过生产者初始化");
+        if (!properties.isActive()) {
+            log.info("order-making-mq 未启用，跳过生产者初始化");
             return;
         }
         try {
@@ -67,15 +67,15 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
                 .build();
     }
 
-    public void publishMakingStatusChange(String orderNo, MakingStatus fromStatus, MakingStatus toStatus) {
-        if (!properties.isProducerActive()) {
-            log.debug("order-making-mq 生产未启用，跳过发送制作状态消息, orderNo={}", orderNo);
+    public void publishMakingStatusChange(Long orderId, Long storeId, MakingStatus fromStatus, MakingStatus toStatus) {
+        if (!properties.isActive()) {
+            log.debug("order-making-mq 未启用，跳过发送制作状态消息, orderId={}", orderId);
             return;
         }
         if (producer == null) {
-            throw new IllegalStateException("order-making-mq 生产者未初始化, 无法发送制作状态消息, orderNo=" + orderNo);
+            throw new IllegalStateException("order-making-mq 生产者未初始化, 无法发送制作状态消息, orderId=" + orderId);
         }
-        OrderMakingStatusMessage message = new OrderMakingStatusMessage(orderNo, fromStatus, toStatus);
+        OrderMakingStatusMessage message = new OrderMakingStatusMessage(orderId, storeId, fromStatus.getCode(), toStatus.getCode());
         sendAfterCommit(message);
     }
 
@@ -93,21 +93,21 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
     }
 
     private void send(OrderMakingStatusMessage message) {
-        String orderNo = message.orderNo();
+        String orderId = String.valueOf(message.orderId());
         try {
             ClientServiceProvider provider = ClientServiceProvider.loadService();
             Message rocketMessage = provider.newMessageBuilder()
                     .setTopic(properties.getTopic())
                     .setTag(message.toTag())
-                    .setKeys(orderNo)
+                    .setKeys(orderId)
                     .setBody(objectMapper.writeValueAsBytes(message))
                     .build();
 
             SendReceipt receipt = producer.send(rocketMessage);
-            log.info("订单制作状态消息发送成功, orderNo={}, messageId={}, tag={}",
-                    orderNo, receipt.getMessageId(), message.toTag());
+            log.info("订单制作状态消息发送成功, orderId={}, messageId={}, tag={}",
+                    orderId, receipt.getMessageId(), message.toTag());
         } catch (Exception e) {
-            log.error("订单制作状态消息发送失败, orderNo={}, tag={}", orderNo, message.toTag(), e);
+            log.error("订单制作状态消息发送失败, orderId={}, tag={}", orderId, message.toTag(), e);
         }
     }
 

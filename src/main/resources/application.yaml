@@ -84,7 +84,6 @@ order-making-mq:
   access-key: ${ORDER_MAKING_MQ_ACCESS_KEY:}
   secret-key: ${ORDER_MAKING_MQ_SECRET_KEY:}
   topic: ${ORDER_MAKING_MQ_TOPIC:order_making_status}
-  consumer-group: ${ORDER_MAKING_MQ_CONSUMER_GROUP:order_making_status}
 
 order-timeout-mq:
   enabled: ${ORDER_TIMEOUT_MQ_ENABLED:false}
