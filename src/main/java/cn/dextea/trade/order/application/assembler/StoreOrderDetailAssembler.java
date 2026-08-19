@@ -14,7 +14,7 @@ public final class StoreOrderDetailAssembler {
     private StoreOrderDetailAssembler() {
     }
 
-    public static StoreOrderDetailResult toResult(Order order) {
+    public static StoreOrderDetailResult toResult(Order order, List<OrderItem> items) {
         if (order == null) {
             return null;
         }
@@ -37,7 +37,7 @@ public final class StoreOrderDetailAssembler {
                 .updatedAt(order.getUpdatedAt())
                 .totalPrice(order.getTotalPrice())
                 .totalQuantity(order.getTotalQuantity())
-                .items(toItems(order.getItems()))
+                .items(toItems(items == null || items.isEmpty() ? order.getItems() : items))
                 .build();
     }
 
