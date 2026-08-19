@@ -1,131 +1,74 @@
 # dextea-trade
 
-**德贤茶庄线上点餐系统（dextea）交易端** —— 订单 + 支付服务，使用 Java 21 + Spring Boot 3 + Maven 编写，采用 DDD 分层架构。
+**dextea-trade** 是「德贤茶庄」线上点餐系统的交易中台，作为连接顾客端、支付渠道与门店制作系统的核心枢纽，承担订单创建、支付对接、支付回调消费、订单状态流转及制作下单等核心交易职责。系统基于 Spring Boot 构建，采用 DDD（领域驱动设计）分层架构（interface / application / domain / infrastructure），以领域模型与端口（port）/适配器（adapter）隔离业务逻辑与外部依赖，并通过 RocketMQ 与下游制作、通知等模块解耦。
 
-## 项目介绍
+## 主要功能
 
-交易端承载德贤茶庄现制茶饮点单场景的完整订单/支付流程：
-
-- **订单**：预构建（价格/库存预校验，不可售商品降级返回）、下单（幂等键双重校验 + Redis 分布式锁 + MySQL 唯一索引兜底，落库后写幂等键）、月订单列表、订单详情、支付状态查询
-- **支付**：支付宝 JSAPI 支付（`PRODUCT_CODE=JSAPI_PAY`，调用 `alipay.trade.create` 创建交易、`alipay.trade.query` 查询交易）；支付回调经 `PaymentCallbackMqConsumer` 消费后由 `PaymentCallbackApplicationService` 校验 `trade_status=TRADE_SUCCESS` 与金额（缺失/解析失败可重试），发布 `OrderPaidEvent` 并由 `MarkOrderPaidUseCase` 校验金额后落库；支付状态对账 `PaymentReconciliationService` 仅在本地"支付中"时主动查询支付宝，已支付则回写（含取餐码），交易关闭则标记支付超时。
-- **状态流转**：支付状态 `PENDING → PAID/TIMEOUT/REFUNDING/REFUNDED`；制作状态 `PENDING → PREPARING → READY → COLLECTED`，支付成功自动转 PREPARING 并通过 `order_making_status` 广播；超时关单由下单事务提交后发送延迟消息（默认 `delay-minutes=16`）触发 `MarkOrderTimeoutUseCase`；取餐码由 `PickupCodeGenerator` 基于 `pickup_code_counter` 当日序号生成（`8` + 3 位日序号）
+- **订单创建**：支持下单前预构建（算价、识别不可售商品）与正式下单两种模式，正式下单具备严格的幂等控制。
+- **支付对接**：集成支付宝 JSAPI 支付，生成交易单并提供支付所需参数；支持支付金额强制覆盖（测试/联调用）。
+- **支付回调消费**：消费 RocketMQ 中的支付结果回调消息，校验订单号、交易状态与金额后驱动订单进入已支付状态。
+- **取餐码生成**：订单支付成功时按「门店 + 日期」生成递增取餐码，供门店出餐与取餐提醒使用。
+- **订单状态流转**：支付成功后标记订单已支付并转入制作中，驱动制单消息下发至门店制作系统。
+- **支付超时关单**：下单后发送延迟消息，超时未支付则自动关闭订单，释放库存与交易资源。
 
 ## 技术栈
 
-- **Java 21** + **Spring Boot 3.5.16** + Maven（`mvnw` wrapper，Maven 3.9.16）
-- **MyBatis**（注解式 Mapper）+ MySQL、**Spring Data Redis**（幂等存储/创建锁/订单项缓存）
-- **Nacos**（可选注册配置中心）、**阿里云 RocketMQ**（可选消息通道）、**CosId**（Snowflake 订单号）
-- springdoc-openapi（接口文档）、spring-boot-actuator
+| 分类 | 技术 |
+| --- | --- |
+| 语言 / 框架 | Java 21、Spring Boot |
+| 持久化 | MySQL（MyBatis）、Redis |
+| 消息队列 | 阿里云 RocketMQ 5.x |
+| 支付 | 支付宝开放平台（JSAPI） |
+| 分布式 ID | CosId（Snowflake，机器号由 Redis 分配） |
+| 配置 / 注册 | Nacos（可选） |
+| 文档 | SpringDoc OpenAPI（Swagger） |
 
-## 目录结构
+## 部署与运行
 
-```
-dextea-trade/
-├── src/main/java/cn/dextea/trade/
-│   ├── order/                # 核心订单模块（DDD 五层）
-│   │   ├── interfaces/       # OrderController（/api/v1/orders）+ DTO + assembler
-│   │   ├── application/      # 9 个 usecase + PaymentReconciliationService 对账
-│   │   ├── domain/           # 模型（Order/OrderItem/Product/Store/Customer）、枚举、端口、领域服务
-│   │   └── infrastructure/   # Redis 适配器、MyBatis 持久层（乐观锁 version）、CosId 订单号
-│   ├── pay/                  # 支付模块
-│   │   ├── AlipayPaymentAdapter        # 实现 PaymentPort（创建/查询交易）
-│   │   ├── PaymentCallbackApplicationService  # 支付回调消息处理
-│   │   └── PaymentCallbackMqConsumer   # 消费 RocketMQ payment_callback 主题
-│   └── shared/               # APIResponse、全局异常处理、Money/Quantity 值对象、OpenApiConfig
-└── src/main/resources/
-    └── application.yaml      # 唯一配置文件（全部为环境变量占位符）
-```
+### 环境依赖
 
-### RocketMQ 消息通道（默认全部禁用，可选启用）
+下列组件为本服务运行的必要依赖，部署前须就绪：
 
-| 主题 | 角色 | 用途 |
-| --- | --- | --- |
-| `payment_callback` | 消费者 | 支付宝支付回调异步落单 |
-| `order_making_status` | 生产者 | 制作状态变化广播 |
-| `order_timeout` | 生产者 + 消费者 | 延迟消息触发超时关单 |
+- **JDK 21**
+- **MySQL**（建议库名 `dextea`，含订单、订单项、取餐码计数等表）
+- **Redis**（承载幂等键、分布式锁、缓存及 CosId 机器号）
+- **阿里云 RocketMQ 5.x**（承载支付回调、制作状态、超时关单三个消息通道）
+- **支付宝开放平台**应用（JSAPI 支付与异步通知回调）
 
-## 配置（环境变量）
+Nacos 为可选的配置源与注册中心，未连接时不阻塞服务启动。
 
-唯一配置文件 `application.yaml` 中全部关键项使用环境变量占位符（本地可用 `.env` 提供）。Nacos 为**可选**插件式能力：配置中心用 `optional:nacos:...` 导入，连不上不阻塞启动；服务注册由 `NACOS_DISCOVERY_ENABLED=true` 开启（`spring.nacos.discovery`），默认关闭，开启后连不上仅告警、不影响应用运行。本地默认值兜底。
-
-| 配置项 | 环境变量 | 默认值 |
-| --- | --- | --- |
-| 服务端口 | `SERVER_PORT` | `9090` |
-| 应用名 | `SPRING_APPLICATION_NAME` | `dextea-trade` |
-| Nacos | `NACOS_SERVER_ADDR` / `NACOS_NAMESPACE` / `NACOS_USERNAME` / `NACOS_PASSWORD` / `NACOS_CONFIG_GROUP` | `127.0.0.1:8848` / DEFAULT_GROUP |
-| Nacos 服务注册 | `NACOS_DISCOVERY_ENABLED` / `NACOS_DISCOVERY_GROUP` / `NACOS_DISCOVERY_REGISTER_ENABLED` / `NACOS_DISCOVERY_IP` | `false` / DEFAULT_GROUP / true |
-| MySQL | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` | `localhost:3306` / `dextea` / root |
-| Redis | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | `localhost:6379` |
-| 支付宝 | `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_GATEWAY` / `ALIPAY_NOTIFY_URL` / `ALIPAY_FORCE_AMOUNT` / `ALIPAY_SUBJECT` | 无 / 官方网关 |
-| RocketMQ ×3 | `*_MQ_ENABLED` / `*_MQ_ENDPOINTS` / `*_MQ_NAMESPACE` / `*_MQ_ACCESS_KEY` / `*_MQ_SECRET_KEY` / `*_MQ_TOPIC` / `*_MQ_CONSUMER_GROUP` | 默认禁用 |
-| CosId | `COSID_*` | 应用名 |
-| 订单参数 | `ORDER_PAYMENT_TTL`（15 分钟）/ `ORDER_CREATE_ORDER_IDEM_TTL`（1440）/ `ORDER_CREATE_ORDER_LOCK_TTL`（1）/ `ORDER_ITEM_CACHE_TTL`（120） | — |
-
-依赖的外部服务：**MySQL**（`orders`、`order_items`、`pickup_code_counter` 等表）、**Redis**（幂等键/锁/订单项缓存/CosId 机器号）、**阿里云 RocketMQ 5.x**（支付回调/制作状态/超时关单三个消息通道）、**支付宝开放平台**（JSAPI 支付与回调）。以上均为必选；仅 **Nacos** 为可选配置源（连不上不阻塞启动）。本地最小运行同样需要 MySQL + Redis + RocketMQ + 支付宝。
-
-## 本地开发
+### 构建与运行
 
 ```bash
-./mvnw spring-boot:run        # 依赖 .env 提供的环境变量
-```
-
-## 构建
-
-```bash
+# 使用 Maven Wrapper 构建
 ./mvnw clean package -DskipTests
+
+# 以可执行 JAR 启动（可通过环境变量覆盖配置）
+java -jar target/trade-*.jar
 ```
 
-产物：`target/trade-0.0.1-SNAPSHOT.jar`（Spring Boot 可执行 fat jar）。
+常用环境变量（完整配置详见各文档与 `application.yaml`）：
 
-## 部署
+| 变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `SERVER_PORT` | HTTP 端口 | `9090` |
+| `SPRING_APPLICATION_NAME` | 应用名 | `dextea-trade` |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` | MySQL 连接 | `localhost` / `3306` / `dextea` |
+| `REDIS_HOST` / `REDIS_PORT` | Redis 连接 | `localhost` / `6379` |
+| `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_NOTIFY_URL` | 支付宝对接参数 | 无 |
+| `PAYMENT_CALLBACK_MQ_ENABLED` | 支付回调消费开关 | `false` |
 
-### 运行
+### 接口文档
 
-```bash
-java -jar target/trade-0.0.1-SNAPSHOT.jar
-```
+服务启动后，可通过 Swagger UI 查阅接口定义：`http://localhost:9090/swagger-ui.html`
 
-所有配置通过环境变量注入，服务默认监听 `:9090`。
+## 文档
 
-### systemd 示例
+详细的设计与实现说明请参阅 `docs/` 目录下的文档：
 
-```bash
-mkdir -p /opt/dextea-trade
-cp target/trade-0.0.1-SNAPSHOT.jar /opt/dextea-trade/
-```
-
-```ini
-[Unit]
-Description=dextea-trade
-After=network.target mysql.service redis.service
-
-[Service]
-WorkingDirectory=/opt/dextea-trade
-EnvironmentFile=/opt/dextea-trade/.env
-ExecStart=/usr/bin/java -jar /opt/dextea-trade/trade-0.0.1-SNAPSHOT.jar
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Docker 示例
-
-```dockerfile
-FROM eclipse-temurin:21-jre
-WORKDIR /app
-COPY target/trade-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 9090
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
-
-```bash
-docker build -t dextea-trade .
-docker run -d --name dextea-trade --env-file .env -p 9090:9090 dextea-trade
-```
-
-### 部署要点
-
-- 对外暴露 `:9090`（`/api/v1/orders`），置于内网供 `dextea-customer-api` 代理调用，或经网关暴露。
-- 生产环境保证 MySQL/Redis 可访问；如需支付回调实时落单，启用 RocketMQ `payment_callback` 消费者并配置支付宝 `ALIPAY_NOTIFY_URL`。
-- 支付宝私钥、MQ AK/SK 等敏感配置建议由密钥管理/CI 密钥注入，勿入库。
+- [项目代码结构](docs/code-structure.md)
+- [创建订单逻辑](docs/order-creation.md)
+- [订单 ID 生成逻辑](docs/order-id-generation.md)
+- [取餐码生成逻辑](docs/pickup-code-generation.md)
+- [支付回调 MQ 消费说明](docs/payment-callback-mq.md)
+- [制单 MQ 设计说明](docs/order-making-mq.md)
