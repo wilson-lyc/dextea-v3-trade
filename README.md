@@ -14,7 +14,7 @@
 
 - **Java 21** + **Spring Boot 3.5.16** + Maven（`mvnw` wrapper，Maven 3.9.16）
 - **MyBatis**（注解式 Mapper）+ MySQL、**Spring Data Redis**（幂等存储/创建锁/订单项缓存）
-- **Nacos**（可选配置中心）、**阿里云 RocketMQ**（可选消息通道）、**CosId**（Snowflake 订单号）
+- **Nacos**（可选注册配置中心）、**阿里云 RocketMQ**（可选消息通道）、**CosId**（Snowflake 订单号）
 - springdoc-openapi（接口文档）、spring-boot-actuator
 
 ## 目录结构
@@ -46,13 +46,14 @@ dextea-trade/
 
 ## 配置（环境变量）
 
-唯一配置文件 `application.yaml` 中全部关键项使用环境变量占位符（本地可用 `.env` 提供）。Nacos 为**可选**配置源（`optional:nacos:...`），连不上不阻塞启动，本地默认值兜底。
+唯一配置文件 `application.yaml` 中全部关键项使用环境变量占位符（本地可用 `.env` 提供）。Nacos 为**可选**插件式能力：配置中心用 `optional:nacos:...` 导入，连不上不阻塞启动；服务注册由 `NACOS_DISCOVERY_ENABLED=true` 开启（`spring.nacos.discovery`），默认关闭，开启后连不上仅告警、不影响应用运行。本地默认值兜底。
 
 | 配置项 | 环境变量 | 默认值 |
 | --- | --- | --- |
 | 服务端口 | `SERVER_PORT` | `9090` |
 | 应用名 | `SPRING_APPLICATION_NAME` | `dextea-trade` |
 | Nacos | `NACOS_SERVER_ADDR` / `NACOS_NAMESPACE` / `NACOS_USERNAME` / `NACOS_PASSWORD` / `NACOS_CONFIG_GROUP` | `127.0.0.1:8848` / DEFAULT_GROUP |
+| Nacos 服务注册 | `NACOS_DISCOVERY_ENABLED` / `NACOS_DISCOVERY_GROUP` / `NACOS_DISCOVERY_REGISTER_ENABLED` / `NACOS_DISCOVERY_IP` | `false` / DEFAULT_GROUP / true |
 | MySQL | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` | `localhost:3306` / `dextea` / root |
 | Redis | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | `localhost:6379` |
 | 支付宝 | `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_GATEWAY` / `ALIPAY_NOTIFY_URL` / `ALIPAY_FORCE_AMOUNT` / `ALIPAY_SUBJECT` | 无 / 官方网关 |

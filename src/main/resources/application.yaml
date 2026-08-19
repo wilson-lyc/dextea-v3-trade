@@ -13,6 +13,17 @@ spring:
       namespace: ${NACOS_NAMESPACE:}
       username: ${NACOS_USERNAME:}
       password: ${NACOS_PASSWORD:}
+    discovery:
+      enabled: ${NACOS_DISCOVERY_ENABLED:false}
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      namespace: ${NACOS_NAMESPACE:}
+      username: ${NACOS_USERNAME:}
+      password: ${NACOS_PASSWORD:}
+      service: ${SPRING_APPLICATION_NAME:dextea-trade}
+      group: ${NACOS_DISCOVERY_GROUP:DEFAULT_GROUP}
+      register-enabled: ${NACOS_DISCOVERY_REGISTER_ENABLED:true}
+      ip: ${NACOS_DISCOVERY_IP:}
+      port: ${SERVER_PORT:9090}
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:dextea}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}

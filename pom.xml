@@ -30,6 +30,7 @@
         <java.version>21</java.version>
         <cosid.version>2.15.2</cosid.version>
         <nacos-config.version>2023.0.3.2</nacos-config.version>
+        <nacos-client.version>2.4.2</nacos-client.version>
     </properties>
     <dependencies>
         <dependency>
@@ -93,6 +94,11 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-alibaba-nacos-config</artifactId>
             <version>${nacos-config.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.nacos</groupId>
+            <artifactId>nacos-client</artifactId>
+            <version>${nacos-client.version}</version>
         </dependency>
         <dependency>
             <groupId>me.ahoo.cosid</groupId>
