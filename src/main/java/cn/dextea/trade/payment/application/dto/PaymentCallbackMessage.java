@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.application.dto;
+package cn.dextea.trade.payment.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -1,7 +1,7 @@
-package cn.dextea.trade.pay.interfaces.mq;
+package cn.dextea.trade.payment.interfaces.mq;
 
-import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
-import cn.dextea.trade.pay.application.service.PaymentCallbackApplicationService;
+import cn.dextea.trade.payment.application.dto.PaymentCallbackMessage;
+import cn.dextea.trade.payment.application.service.PaymentCallbackApplicationService;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.error.RetryableException;
 import com.fasterxml.jackson.databind.ObjectMapper;

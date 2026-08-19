@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.nacos;
+package cn.dextea.trade.platform.nacos;
 
 import com.alibaba.nacos.api.PropertyKeyConst;
 import com.alibaba.nacos.api.exception.NacosException;

@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.domain.exception;
+package cn.dextea.trade.payment.domain.exception;
 
 import cn.dextea.trade.shared.error.RetryableException;
 

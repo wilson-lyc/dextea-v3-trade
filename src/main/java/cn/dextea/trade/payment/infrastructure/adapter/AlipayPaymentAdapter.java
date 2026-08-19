@@ -1,10 +1,10 @@
-package cn.dextea.trade.pay.infrastructure.adapter;
+package cn.dextea.trade.payment.infrastructure.adapter;
 
 import cn.dextea.trade.order.domain.dto.CreateTradeRequest;
 import cn.dextea.trade.order.domain.dto.QueryTradeResult;
 import cn.dextea.trade.order.domain.port.PaymentPort;
-import cn.dextea.trade.pay.domain.exception.PayErrorCode;
-import cn.dextea.trade.pay.infrastructure.config.AlipayProperties;
+import cn.dextea.trade.payment.domain.exception.PayErrorCode;
+import cn.dextea.trade.payment.infrastructure.config.AlipayProperties;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import com.alipay.v3.ApiClient;

@@ -1,4 +1,4 @@
-package cn.dextea.trade.shared.nacos;
+package cn.dextea.trade.platform.nacos;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

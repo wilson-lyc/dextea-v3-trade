@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.infrastructure.config;
+package cn.dextea.trade.payment.infrastructure.config;
 
 import lombok.Getter;
 import lombok.Setter;

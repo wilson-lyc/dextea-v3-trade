@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.domain.port;
+package cn.dextea.trade.payment.domain.port;
 
 import cn.dextea.trade.shared.event.OrderPaidEvent;
 

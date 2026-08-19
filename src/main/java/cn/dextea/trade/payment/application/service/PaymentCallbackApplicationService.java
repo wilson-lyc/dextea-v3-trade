@@ -1,9 +1,9 @@
-package cn.dextea.trade.pay.application.service;
+package cn.dextea.trade.payment.application.service;
 
-import cn.dextea.trade.pay.application.dto.PaymentCallbackMessage;
-import cn.dextea.trade.pay.domain.exception.PayErrorCode;
-import cn.dextea.trade.pay.domain.exception.RetryableCallbackException;
-import cn.dextea.trade.pay.domain.port.OrderPaidEventPublisher;
+import cn.dextea.trade.payment.application.dto.PaymentCallbackMessage;
+import cn.dextea.trade.payment.domain.exception.PayErrorCode;
+import cn.dextea.trade.payment.domain.exception.RetryableCallbackException;
+import cn.dextea.trade.payment.domain.port.OrderPaidEventPublisher;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.event.OrderPaidEvent;
 import lombok.RequiredArgsConstructor;

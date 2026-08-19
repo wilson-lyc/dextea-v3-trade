@@ -1,4 +1,4 @@
-package cn.dextea.trade.pay.interfaces.mq;
+package cn.dextea.trade.payment.interfaces.mq;
 
 import lombok.Getter;
 import lombok.Setter;

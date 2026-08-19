@@ -7,7 +7,7 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.service.OrderStatusService;
 import cn.dextea.trade.order.domain.service.PickupCodeGenerator;
-import cn.dextea.trade.pay.infrastructure.config.AlipayProperties;
+import cn.dextea.trade.payment.infrastructure.config.AlipayProperties;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
