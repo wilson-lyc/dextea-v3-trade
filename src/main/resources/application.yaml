@@ -105,3 +105,6 @@ order-timeout-mq:
   topic: ${ORDER_TIMEOUT_MQ_TOPIC:order_timeout}
   consumer-group: ${ORDER_TIMEOUT_MQ_CONSUMER_GROUP:order_timeout}
   delay-minutes: ${ORDER_TIMEOUT_MQ_DELAY_MINUTES:16}
+
+otel:
+  enabled: ${OTEL_ENABLED:true}
