@@ -17,6 +17,8 @@ import cn.dextea.trade.order.domain.repository.OrderRepository;
 import cn.dextea.trade.order.domain.repository.ProductRepository;
 import cn.dextea.trade.order.domain.repository.StoreRepository;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
+import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.error.CommonErrorCode;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +52,11 @@ public class OrderCreationService {
     private long paymentTtlMinutes;
 
     public Order preBuildOrder(Long customerId, Long storeId, List<SkuItem> items) {
+        EnsureUtil.notNull(customerId, CommonErrorCode.PARAM_MISSING, "请先登录或提供顾客信息");
+        EnsureUtil.notNull(storeId, CommonErrorCode.PARAM_MISSING, "请选择门店");
+        EnsureUtil.notNull(items, CommonErrorCode.PARAM_MISSING, "请选择商品");
+        EnsureUtil.notEmpty(items, CommonErrorCode.PARAM_MISSING, "请至少选择一个商品");
+        
         log.info("开始预下单, customerId={}, storeId={}, itemCount={}", customerId, storeId, items.size());
 
         // 校验门店
@@ -64,6 +71,14 @@ public class OrderCreationService {
     public Order createOrder(Long customerId, Long storeId, List<SkuItem> items,
                              OrderSource source, PaymentMethod paymentMethod, DiningMethod diningMethod,
                              String note, String idempotencyKey) {
+        EnsureUtil.notNull(customerId, CommonErrorCode.PARAM_MISSING, "请先登录或提供顾客信息");
+        EnsureUtil.notNull(storeId, CommonErrorCode.PARAM_MISSING, "请选择门店");
+        EnsureUtil.notNull(items, CommonErrorCode.PARAM_MISSING, "请选择商品");
+        EnsureUtil.notEmpty(items, CommonErrorCode.PARAM_MISSING, "请至少选择一个商品");
+        EnsureUtil.notNull(source, CommonErrorCode.PARAM_MISSING, "请提供订单来源");
+        EnsureUtil.notNull(paymentMethod, CommonErrorCode.PARAM_MISSING, "请选择支付方式");
+        EnsureUtil.notNull(diningMethod, CommonErrorCode.PARAM_MISSING, "请选择就餐方式");
+        EnsureUtil.notNull(idempotencyKey, CommonErrorCode.PARAM_MISSING, "缺少幂等键");
         log.info("开始创建订单, customerId={}, storeId={}, itemCount={}, paymentMethod={}, idempotencyKey={}",
                 customerId, storeId, items.size(), paymentMethod, idempotencyKey);
 
@@ -123,12 +138,14 @@ public class OrderCreationService {
 
     private String resolveBuyerOpenId(Customer customer, PaymentMethod method) {
         if (method == PaymentMethod.WEIXIN) {
-            return customer.getWeixinOpenId();
+            return EnsureUtil.notNull(customer.getWeixinOpenId(),
+                    OrderErrorCode.INVALID_PAYMENT_METHOD, "微信支付需绑定微信 openId");
         }
         if (method == PaymentMethod.ALIPAY) {
-            return customer.getAlipayOpenId();
+            return EnsureUtil.notNull(customer.getAlipayOpenId(),
+                    OrderErrorCode.INVALID_PAYMENT_METHOD, "支付宝支付需绑定支付宝 openId");
         }
-        return null;
+        throw new BizError(OrderErrorCode.INVALID_PAYMENT_METHOD, "不支持的支付方式: " + method);
     }
 
     private Order buildOrder(Long customerId, Long storeId, List<SkuItem> items) {

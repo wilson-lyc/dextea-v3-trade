@@ -4,6 +4,8 @@ import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.error.BizErrorCode;
 import cn.dextea.trade.shared.error.CommonErrorCode;
 
+import java.util.Collection;
+
 public final class EnsureUtil {
     private EnsureUtil() {
     }
@@ -34,5 +36,12 @@ public final class EnsureUtil {
             throw new BizError(code, message);
         }
         return object;
+    }
+
+    public static <C extends Collection<?>> C notEmpty(C collection, BizErrorCode errorCode, String message) {
+        if (collection == null || collection.isEmpty()) {
+            throw new BizError(errorCode, message);
+        }
+        return collection;
     }
 }
