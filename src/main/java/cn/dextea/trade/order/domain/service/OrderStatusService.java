@@ -19,11 +19,6 @@ public class OrderStatusService {
     private final MakingStatusPublisher makingStatusPublisher;
 
     public void markPaid(Order order, LocalDateTime paidAt, String tradeNo, String pickupCode) {
-        if (!order.canMarkPaid()) {
-            log.info("订单当前状态不允许标记为已支付, 忽略本次更新, orderNo={}, paymentStatus={}",
-                    order.getOrderNo(), order.getPaymentStatus());
-            return;
-        }
         MakingStatus fromMakingStatus = order.getMakingStatus();
         order.markPaid(paidAt, pickupCode);
         try {
@@ -43,11 +38,6 @@ public class OrderStatusService {
     }
 
     public void markTimeout(Order order) {
-        if (!order.canMarkPaymentTimeout()) {
-            log.info("订单当前状态不允许标记为支付超时, 忽略本次更新, orderNo={}, paymentStatus={}",
-                    order.getOrderNo(), order.getPaymentStatus());
-            return;
-        }
         order.markPaymentTimeout();
         boolean updated = orderRepository.timeoutOrder(order);
         if (!updated) {

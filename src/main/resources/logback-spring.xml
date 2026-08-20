@@ -3,10 +3,21 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
+    <springProperty scope="context" name="OTEL_LOGS_EXPORT_ENABLED" source="otel.logs-export-enabled" defaultValue="true"/>
+
     <property name="CONSOLE_LOG_PATTERN"
               value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(%-40.40logger{39}){cyan} %clr([%X{traceId:-}]){yellow} %clr(:){faint} %m%n"/>
 
+    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_4.OpenTelemetryAppender">
+        <captureLogsInReverseOrder>false</captureLogsInReverseOrder>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <if condition='Boolean.valueOf("${OTEL_LOGS_EXPORT_ENABLED}")'>
+            <then>
+                <appender-ref ref="OTEL"/>
+            </then>
+        </if>
     </root>
 </configuration>

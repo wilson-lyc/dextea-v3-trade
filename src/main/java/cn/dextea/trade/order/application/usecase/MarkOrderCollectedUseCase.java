@@ -27,7 +27,6 @@ public class MarkOrderCollectedUseCase {
         }
 
         order.ensureBelongsToStore(command.getStoreId());
-        order.ensureCanMarkCollected();
 
         orderStatusService.markCollected(order);
         log.info("订单已取餐成功, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());

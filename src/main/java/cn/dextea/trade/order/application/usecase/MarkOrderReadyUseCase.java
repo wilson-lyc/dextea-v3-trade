@@ -27,7 +27,6 @@ public class MarkOrderReadyUseCase {
         }
 
         order.ensureBelongsToStore(command.getStoreId());
-        order.ensureCanMarkReady();
 
         orderStatusService.markReady(order);
         log.info("订单制作完成成功, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());

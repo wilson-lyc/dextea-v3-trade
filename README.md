@@ -22,6 +22,7 @@
 | 分布式 ID | CosId（Snowflake，机器号由 Redis 分配） |
 | 配置 / 注册 | Nacos（可选） |
 | 文档 | SpringDoc OpenAPI（Swagger） |
+| 可观测性 | OpenTelemetry（Trace + Log 上报 OTLP，可选） |
 
 ## 部署与运行
 
@@ -57,6 +58,29 @@ java -jar target/trade-*.jar
 | `REDIS_HOST` / `REDIS_PORT` | Redis 连接 | `localhost` / `6379` |
 | `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_NOTIFY_URL` | 支付宝对接参数 | 无 |
 | `PAYMENT_CALLBACK_MQ_ENABLED` | 支付回调消费开关 | `false` |
+| `OTEL_ENABLED` | OpenTelemetry 总开关 | `true` |
+| `OTEL_LOGS_EXPORTER_ENABLED` | 日志通过 OTLP 上报开关 | `true` |
+| `OTEL_LOGS_EXPORTER` | OTel 日志导出方式（`otlp`/`none`/`console`） | `otlp` |
+| `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | OTLP 日志上报地址 | `http://localhost:4317` |
+| `OTEL_RESOURCE_ATTRIBUTES` | 资源属性，如 `service.name=dextea-trade` | 无 |
+
+### 可观测性（OpenTelemetry）
+
+服务内置 OpenTelemetry，支持将 **Trace** 与 **日志** 通过 OTLP 协议上报到 Collector（如 OTel Collector、Grafana Alloy）。
+
+- **总开关**：`OTEL_ENABLED`（默认 `true`）。关闭后 OTel 全部走 no-op，日志照常只输出到控制台。
+- **日志上报开关**：`OTEL_LOGS_EXPORTER_ENABLED`（默认 `true`）。关闭后 logback 不再挂载 `OpenTelemetryAppender`，日志不对外上报；建议本地开发时设为 `false` 以减少无谓网络开销。
+- **上报目标**：由标准 `OTEL_*` 环境变量控制，例如：
+
+```bash
+OTEL_LOGS_EXPORTER=otlp \
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://otel-collector:4317 \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
+OTEL_RESOURCE_ATTRIBUTES=service.name=dextea-trade \
+java -jar target/trade-*.jar
+```
+
+上报的日志会自动携带当前链路的 `trace_id` / `span_id`，可在后端（Grafana/Loki/Jaeger 等）与 Trace 联动检索。HTTP 请求的 `traceId` 也会写入 MDC 并输出到控制台日志行（见 `logback-spring.xml`）。
 
 ### 接口文档
 

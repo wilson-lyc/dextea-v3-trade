@@ -108,3 +108,4 @@ order-timeout-mq:
 
 otel:
   enabled: ${OTEL_ENABLED:true}
+  logs-export-enabled: ${OTEL_LOGS_EXPORTER_ENABLED:true}

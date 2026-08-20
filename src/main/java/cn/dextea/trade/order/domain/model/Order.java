@@ -227,9 +227,7 @@ public class Order {
     }
 
     public void markPaid(LocalDateTime paidAt, String pickupCode) {
-        if (!canMarkPaid()) {
-            return;
-        }
+        ensureCanMarkPaid();
         if (pickupCode == null || pickupCode.isBlank()) {
             throw new BizError(OrderErrorCode.ORDER_PAYMENT_PICKUP_CODE_REQUIRED);
         }
@@ -244,9 +242,7 @@ public class Order {
     }
 
     public void markPaymentTimeout() {
-        if (!canMarkPaymentTimeout()) {
-            return;
-        }
+        ensureCanMarkPaymentTimeout();
         PaymentStatus paymentFrom = this.paymentStatus;
         MakingStatus makingFrom = this.makingStatus;
         this.paymentStatus = PaymentStatus.TIMEOUT;
@@ -256,18 +252,28 @@ public class Order {
     }
 
     public void markReady() {
-        if (!canMarkReady()) {
-            return;
-        }
+        ensureCanMarkReady();
         MakingStatus from = this.makingStatus;
         this.makingStatus = MakingStatus.READY;
         recordMakingStatusChange(from, MakingStatus.READY, "ORDER_READY");
     }
 
+    public void markRefunding() {
+        ensureCanMarkRefunding();
+        PaymentStatus from = this.paymentStatus;
+        this.paymentStatus = PaymentStatus.REFUNDING;
+        recordPaymentStatusChange(from, PaymentStatus.REFUNDING, "ORDER_REFUNDING");
+    }
+
+    public void markRefunded() {
+        ensureCanMarkRefunded();
+        PaymentStatus from = this.paymentStatus;
+        this.paymentStatus = PaymentStatus.REFUNDED;
+        recordPaymentStatusChange(from, PaymentStatus.REFUNDED, "ORDER_REFUNDED");
+    }
+
     public void markCollected() {
-        if (!canMarkCollected()) {
-            return;
-        }
+        ensureCanMarkCollected();
         MakingStatus from = this.makingStatus;
         this.makingStatus = MakingStatus.COLLECTED;
         recordMakingStatusChange(from, MakingStatus.COLLECTED, "ORDER_COLLECTED");
