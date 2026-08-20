@@ -4,6 +4,8 @@ import cn.dextea.trade.payment.application.dto.PaymentCallbackMessage;
 import cn.dextea.trade.payment.application.service.PaymentCallbackApplicationService;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.error.RetryableException;
+import cn.dextea.trade.shared.error.SystemException;
+import cn.dextea.trade.shared.infrastructure.web.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -115,7 +117,7 @@ public class PaymentCallbackMqConsumer {
             handleMessage(message);
             ackQuietly(message, messageId);
             retryCounter.remove(messageId);
-        } catch (NonRetryableException | BizError e) {
+        } catch (NonRetryableException | BizError | SystemException e) {
             log.error("payment-callback 消息不可重试, 直接确认避免死循环, messageId={}, reason={}",
                     messageId, e.getMessage());
             ackQuietly(message, messageId);
@@ -153,9 +155,17 @@ public class PaymentCallbackMqConsumer {
         } catch (Exception e) {
             throw new NonRetryableException("支付回调消息反序列化失败", e);
         }
+        propagateTradeId(message);
         log.info("收到支付回调消息, messageId={}, topic={}, platform={}, data={}",
                 message.getMessageId(), message.getTopic(), callbackMessage.platform(), callbackMessage.data());
         paymentCallbackApplicationService.handle(callbackMessage);
+    }
+
+    private void propagateTradeId(MessageView message) {
+        String tradeId = message.getProperties() == null ? null : message.getProperties().get(ResponseUtils.TRADE_ID_HEADER);
+        if (tradeId != null && !tradeId.isBlank()) {
+            org.slf4j.MDC.put(ResponseUtils.TRADE_ID_HEADER, tradeId);
+        }
     }
 
     private static final class NonRetryableException extends RuntimeException {

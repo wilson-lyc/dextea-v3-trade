@@ -1,5 +1,7 @@
 package cn.dextea.trade.payment.infrastructure.config;
 
+import cn.dextea.trade.shared.error.CommonErrorCode;
+import cn.dextea.trade.shared.error.SystemException;
 import com.alipay.v3.ApiClient;
 import com.alipay.v3.ApiException;
 import com.alipay.v3.util.model.AlipayConfig;
@@ -22,7 +24,7 @@ public class MyAlipayConfig {
         try {
             apiClient.setAlipayConfig(config);
         } catch (ApiException e) {
-            throw new IllegalStateException("初始化支付宝 API 客户端失败", e);
+            throw new SystemException(CommonErrorCode.SYSTEM_ERROR, "初始化支付宝 API 客户端失败", e);
         }
         return apiClient;
     }

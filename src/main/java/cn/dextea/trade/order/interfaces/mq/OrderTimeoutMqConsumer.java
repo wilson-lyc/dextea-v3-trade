@@ -5,6 +5,8 @@ import cn.dextea.trade.order.application.dto.command.MarkOrderTimeoutCommand;
 import cn.dextea.trade.order.application.usecase.MarkOrderTimeoutUseCase;
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.error.RetryableException;
+import cn.dextea.trade.shared.error.SystemException;
+import cn.dextea.trade.shared.infrastructure.web.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -116,7 +118,7 @@ public class OrderTimeoutMqConsumer {
             handleMessage(message);
             ackQuietly(message, messageId);
             retryCounter.remove(messageId);
-        } catch (NonRetryableException | BizError e) {
+        } catch (NonRetryableException | BizError | SystemException e) {
             log.error("order-timeout 消息不可重试, 直接确认避免死循环, messageId={}, reason={}",
                     messageId, e.getMessage());
             ackQuietly(message, messageId);
@@ -157,12 +159,20 @@ public class OrderTimeoutMqConsumer {
         if (timeoutMessage.orderNo() == null || timeoutMessage.orderNo().isBlank()) {
             throw new NonRetryableException("订单超时消息缺少订单号", null);
         }
+        propagateTradeId(message);
         log.info("收到订单超时消息, messageId={}, topic={}, orderNo={}, paymentExpiredAt={}",
                 message.getMessageId(), message.getTopic(), timeoutMessage.orderNo(), timeoutMessage.paymentExpiredAt());
         markOrderTimeoutUseCase.execute(MarkOrderTimeoutCommand.builder()
                 .orderNo(timeoutMessage.orderNo())
                 .paymentExpiredAt(timeoutMessage.paymentExpiredAt())
                 .build());
+    }
+
+    private void propagateTradeId(MessageView message) {
+        String tradeId = message.getProperties() == null ? null : message.getProperties().get(ResponseUtils.TRADE_ID_HEADER);
+        if (tradeId != null && !tradeId.isBlank()) {
+            org.slf4j.MDC.put(ResponseUtils.TRADE_ID_HEADER, tradeId);
+        }
     }
 
     private static final class NonRetryableException extends RuntimeException {
