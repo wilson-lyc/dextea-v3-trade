@@ -82,8 +82,11 @@ public class OrderCreationService {
         boolean hasUnavailableItem = order.getItems().stream()
                 .anyMatch(orderItem -> !Boolean.TRUE.equals(orderItem.getAvailable()));
         if (hasUnavailableItem) {
-            log.warn("创建订单存在不可售商品, 终止下单, customerId={}, storeId={}, itemCount={}",
-                    customerId, storeId, items.size());
+            long unavailableCount = order.getItems().stream()
+                    .filter(orderItem -> !Boolean.TRUE.equals(orderItem.getAvailable()))
+                    .count();
+            log.warn("创建订单存在不可售商品, 终止下单, customerId={}, storeId={}, itemCount={}, unavailableCount={}",
+                    customerId, storeId, order.getItems().size(), unavailableCount);
             return order;
         }
 

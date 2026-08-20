@@ -104,6 +104,7 @@ public class Order {
 
     public void assignId(Long id) {
         this.id = id;
+        items.forEach(item -> item.assignOrderId(id));
     }
 
     // 状态判断
@@ -322,6 +323,7 @@ public class Order {
     }
 
     public void addItem(OrderItem orderItem) {
+        orderItem.assignOrderId(this.id);
         items.add(orderItem);
     }
 

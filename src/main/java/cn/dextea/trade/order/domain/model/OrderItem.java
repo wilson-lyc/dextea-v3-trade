@@ -23,6 +23,15 @@ public class OrderItem {
 
     public static OrderItem create(Long productId, String productName, String skuId, String customization,
             String coverUrl, Quantity quantity, Money unitPrice, Boolean available) {
+        if (productId == null) {
+            throw new IllegalArgumentException("productId 不能为空");
+        }
+        if (quantity == null || quantity.getValue() <= 0) {
+            throw new IllegalArgumentException("商品数量必须大于 0");
+        }
+        if (unitPrice == null || unitPrice.isNegative()) {
+            throw new IllegalArgumentException("单价不能为空且不能为负");
+        }
         OrderItem orderItem = new OrderItem();
         orderItem.productId = productId;
         orderItem.productName = productName;
@@ -38,6 +47,15 @@ public class OrderItem {
     public static OrderItem reconstruct(Long id, Long orderId, Long productId, String productName,
             String skuId, String customization, String coverUrl,
             Quantity quantity, Money unitPrice, Boolean available) {
+        if (productId == null) {
+            throw new IllegalArgumentException("productId 不能为空");
+        }
+        if (quantity == null || quantity.getValue() <= 0) {
+            throw new IllegalArgumentException("商品数量必须大于 0");
+        }
+        if (unitPrice == null || unitPrice.isNegative()) {
+            throw new IllegalArgumentException("单价不能为空且不能为负");
+        }
         OrderItem orderItem = new OrderItem();
         orderItem.id = id;
         orderItem.orderId = orderId;
@@ -56,10 +74,11 @@ public class OrderItem {
         this.orderId = orderId;
     }
 
+    public boolean isAvailable() {
+        return Boolean.TRUE.equals(available);
+    }
+
     public Money getTotalPrice() {
-        if (quantity == null || unitPrice == null) {
-            return Money.ZERO;
-        }
         return unitPrice.multiply(quantity);
     }
 }
