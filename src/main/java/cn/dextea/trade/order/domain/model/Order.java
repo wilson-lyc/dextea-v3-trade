@@ -7,6 +7,7 @@ import cn.dextea.trade.order.domain.enumeration.OrderSource;
 import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.shared.error.BizError;
+import cn.dextea.trade.shared.error.SystemException;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
 
@@ -229,7 +230,7 @@ public class Order {
     public void markPaid(LocalDateTime paidAt, String pickupCode) {
         ensureCanMarkPaid();
         if (pickupCode == null || pickupCode.isBlank()) {
-            throw new BizError(OrderErrorCode.ORDER_PAYMENT_PICKUP_CODE_REQUIRED);
+            throw new SystemException(OrderErrorCode.ORDER_PAYMENT_PICKUP_CODE_REQUIRED);
         }
         this.pickupCode = pickupCode;
         this.paymentPaidAt = paidAt;
