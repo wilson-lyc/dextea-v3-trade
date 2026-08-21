@@ -16,11 +16,6 @@ import com.alipay.v3.model.AlipayTradeCreateResponseModel;
 import com.alipay.v3.model.AlipayTradeQueryDefaultResponse;
 import com.alipay.v3.model.AlipayTradeQueryModel;
 import com.alipay.v3.model.AlipayTradeQueryResponseModel;
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -43,7 +38,6 @@ public class AlipayPaymentAdapter implements PaymentPort {
 
     private final AlipayProperties alipayProperties;
     private final ApiClient alipayApiClient;
-    private static final Tracer TRACER = GlobalOpenTelemetry.getTracer("alipay-adapter");
 
     @Override
     public String createTradeNo(CreateTradeRequest request) {
@@ -61,35 +55,22 @@ public class AlipayPaymentAdapter implements PaymentPort {
         }
 
         AlipayTradeApi api = new AlipayTradeApi(alipayApiClient);
-        Span span = TRACER.spanBuilder("alipay.trade.create").startSpan();
-        try (Scope ignored = span.makeCurrent()) {
-            String traceId = span.getSpanContext().getTraceId();
-            if (traceId != null && !traceId.isEmpty()) {
-                model.setPassbackParams(traceId);
+        log.info("调用支付宝创建交易, outTradeNo={}, subject={}, totalAmount={}, buyerOpenId={}, notifyUrl={}",
+                request.getOrderNo(), alipayProperties.getSubject(), resolveAmount(request),
+                request.getBuyerOpenId(), alipayProperties.getNotifyUrl());
+        try {
+            AlipayTradeCreateResponseModel response = api.create(model, null);
+            if (response == null || response.getTradeNo() == null) {
+                throw new BizError(PayErrorCode.ALIPAY_CREATE_TRADE_FAILED, "支付宝未返回交易号");
             }
-            span.setAttribute("alipay.out_trade_no", request.getOrderNo());
-            log.info("调用支付宝创建交易, outTradeNo={}, subject={}, totalAmount={}, buyerOpenId={}, notifyUrl={}",
-                    request.getOrderNo(), alipayProperties.getSubject(), resolveAmount(request),
-                    request.getBuyerOpenId(), alipayProperties.getNotifyUrl());
-            try {
-                AlipayTradeCreateResponseModel response = api.create(model, null);
-                if (response == null || response.getTradeNo() == null) {
-                    throw new BizError(PayErrorCode.ALIPAY_CREATE_TRADE_FAILED, "支付宝未返回交易号");
-                }
-                span.setAttribute("alipay.trade_no", response.getTradeNo());
-                log.info("支付宝创建交易成功, outTradeNo={}, tradeNo={}", request.getOrderNo(), response.getTradeNo());
-                return response.getTradeNo();
-            } catch (ApiException e) {
-                AlipayTradeCreateDefaultResponse errorObject =
-                        (AlipayTradeCreateDefaultResponse) e.getErrorObject();
-                span.recordException(e);
-                span.setStatus(StatusCode.ERROR);
-                log.error("支付宝创建交易失败, outTradeNo={}, error={}", request.getOrderNo(), errorObject, e);
-                throw new BizError(PayErrorCode.ALIPAY_CREATE_TRADE_FAILED,
-                        "支付宝创建交易失败: " + errorObject);
-            }
-        } finally {
-            span.end();
+            log.info("支付宝创建交易成功, outTradeNo={}, tradeNo={}", request.getOrderNo(), response.getTradeNo());
+            return response.getTradeNo();
+        } catch (ApiException e) {
+            AlipayTradeCreateDefaultResponse errorObject =
+                    (AlipayTradeCreateDefaultResponse) e.getErrorObject();
+            log.error("支付宝创建交易失败, outTradeNo={}, error={}", request.getOrderNo(), errorObject, e);
+            throw new BizError(PayErrorCode.ALIPAY_CREATE_TRADE_FAILED,
+                    "支付宝创建交易失败: " + errorObject);
         }
     }
 
@@ -106,41 +87,30 @@ public class AlipayPaymentAdapter implements PaymentPort {
         model.setOutTradeNo(outTradeNo);
 
         AlipayTradeApi api = new AlipayTradeApi(alipayApiClient);
-        Span span = TRACER.spanBuilder("alipay.trade.query").startSpan();
-        try (Scope ignored = span.makeCurrent()) {
-            span.setAttribute("alipay.out_trade_no", outTradeNo);
-            log.info("调用支付宝交易查询, outTradeNo={}", outTradeNo);
-            try {
-                AlipayTradeQueryResponseModel response = api.query(model, null);
-                if (response == null) {
-                    throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED, "支付宝未返回查询结果");
-                }
-                if (response.getTradeNo() != null) {
-                    span.setAttribute("alipay.trade_no", response.getTradeNo());
-                }
-                log.info("支付宝交易查询成功, outTradeNo={}, tradeNo={}, tradeStatus={}",
-                        outTradeNo, response.getTradeNo(), response.getTradeStatus());
-                return QueryTradeResult.builder()
-                        .outTradeNo(response.getOutTradeNo())
-                        .tradeNo(response.getTradeNo())
-                        .tradeStatus(response.getTradeStatus())
-                        .totalAmount(response.getTotalAmount() == null
-                                ? null : Money.of(new java.math.BigDecimal(response.getTotalAmount())))
-                        .buyerUserId(response.getBuyerUserId())
-                        .buyerOpenId(response.getBuyerOpenId())
-                        .paidAt(parseAlipayDateTime(response.getSendPayDate()))
-                        .build();
-            } catch (ApiException e) {
-                AlipayTradeQueryDefaultResponse errorObject =
-                        (AlipayTradeQueryDefaultResponse) e.getErrorObject();
-                span.recordException(e);
-                span.setStatus(StatusCode.ERROR);
-                log.error("支付宝交易查询失败, outTradeNo={}, error={}", outTradeNo, errorObject, e);
-                throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED,
-                        "支付宝交易查询失败: " + errorObject);
+        log.info("调用支付宝交易查询, outTradeNo={}", outTradeNo);
+        try {
+            AlipayTradeQueryResponseModel response = api.query(model, null);
+            if (response == null) {
+                throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED, "支付宝未返回查询结果");
             }
-        } finally {
-            span.end();
+            log.info("支付宝交易查询成功, outTradeNo={}, tradeNo={}, tradeStatus={}",
+                    outTradeNo, response.getTradeNo(), response.getTradeStatus());
+            return QueryTradeResult.builder()
+                    .outTradeNo(response.getOutTradeNo())
+                    .tradeNo(response.getTradeNo())
+                    .tradeStatus(response.getTradeStatus())
+                    .totalAmount(response.getTotalAmount() == null
+                            ? null : Money.of(new java.math.BigDecimal(response.getTotalAmount())))
+                    .buyerUserId(response.getBuyerUserId())
+                    .buyerOpenId(response.getBuyerOpenId())
+                    .paidAt(parseAlipayDateTime(response.getSendPayDate()))
+                    .build();
+        } catch (ApiException e) {
+            AlipayTradeQueryDefaultResponse errorObject =
+                    (AlipayTradeQueryDefaultResponse) e.getErrorObject();
+            log.error("支付宝交易查询失败, outTradeNo={}, error={}", outTradeNo, errorObject, e);
+            throw new BizError(PayErrorCode.ALIPAY_QUERY_TRADE_FAILED,
+                    "支付宝交易查询失败: " + errorObject);
         }
     }
 
