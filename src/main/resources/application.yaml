@@ -61,8 +61,14 @@ springdoc:
     enabled: true
     path: /docs/ui
     disable-swagger-default-url: true
-  packages-to-scan: cn.dextea.trade.order.interfaces.http.controller
-  paths-to-match: /api/**
+  packages-to-scan: cn.dextea.trade.order.interfaces.http.controller,cn.dextea.trade.console.interfaces.http.controller
+  paths-to-match: /api/**,/console/**
+
+auth:
+  enabled: ${AUTH_ENABLED:false}
+  console:
+    username: ${AUTH_CONSOLE_USERNAME:admin}
+    password: ${AUTH_CONSOLE_PASSWORD:admin}
 
 order:
   payment_ttl: ${ORDER_PAYMENT_TTL:15}

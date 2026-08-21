@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dextea-trade 控制台</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif; }
+        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); }
+        .grad-bg { background: radial-gradient(1200px 600px at 10% -10%, #1e3a8a 0%, transparent 50%), radial-gradient(1000px 500px at 110% 10%, #0ea5e9 0%, transparent 45%), #0F172A; }
+        .btn-primary { background: linear-gradient(135deg, #1F6FEB, #2563EB); transition: all .2s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(37,99,235,.35); }
+        .input-field { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); transition: all .2s ease; }
+        .input-field:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,.25); }
+        .row-hover:hover { background: rgba(255,255,255,0.04); }
+        .fade-in { animation: fadeIn .4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .toggle-on { background: #16A34A; }
+        .toggle-off { background: #475569; }
+    </style>
+</head>
+<body class="grad-bg min-h-screen text-slate-100">
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <header class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl btn-primary flex items-center justify-center font-bold text-lg">D</div>
+            <div>
+                <h1 class="text-2xl font-semibold">dextea-trade 控制台</h1>
+                <p class="text-sm text-slate-400">令牌鉴权管理</p>
+            </div>
+        </div>
+        <div id="status-bar" class="hidden items-center gap-3">
+            <span class="text-sm text-emerald-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>已登录</span>
+            <button onclick="logout()" class="text-sm px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition">登出</button>
+        </div>
+    </header>
+
+    <section id="login-card" class="glass rounded-2xl p-8 max-w-md mx-auto fade-in">
+        <h2 class="text-xl font-semibold mb-6 text-center">控制台登录</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-slate-300 mb-1">账号</label>
+                <input id="username" type="text" class="input-field w-full rounded-lg px-3 py-2.5 text-sm" placeholder="请输入账号">
+            </div>
+            <div>
+                <label class="block text-sm text-slate-300 mb-1">密码</label>
+                <input id="password" type="password" class="input-field w-full rounded-lg px-3 py-2.5 text-sm" placeholder="请输入密码">
+            </div>
+            <p id="login-error" class="text-sm text-red-400 hidden"></p>
+            <button onclick="login()" class="btn-primary w-full rounded-lg py-2.5 text-sm font-medium">登录</button>
+        </div>
+    </section>
+
+    <section id="manage-card" class="hidden fade-in">
+        <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">新建 / 编辑令牌</h2>
+                <button onclick="resetForm()" class="text-sm px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition">重置</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-sm text-slate-300 mb-1">名称</label>
+                    <input id="token-name" type="text" class="input-field w-full rounded-lg px-3 py-2 text-sm" placeholder="如：渠道A">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-1">过期时间</label>
+                    <input id="token-expire" type="datetime-local" class="input-field w-full rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div class="flex items-center gap-2 pb-2">
+                    <input id="token-enabled" type="checkbox" checked class="w-4 h-4 accent-blue-500">
+                    <label class="text-sm text-slate-300">启用</label>
+                </div>
+                <button onclick="saveToken()" class="btn-primary rounded-lg py-2 text-sm font-medium">保存</button>
+            </div>
+        </div>
+
+        <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">令牌列表</h2>
+                <button onclick="loadTokens()" class="text-sm px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition">刷新</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                    <tr class="text-slate-400 text-left border-b border-white/10">
+                        <th class="py-3 px-2">名称</th>
+                        <th class="py-3 px-2">状态</th>
+                        <th class="py-3 px-2">过期时间</th>
+                        <th class="py-3 px-2">创建时间</th>
+                        <th class="py-3 px-2 text-right">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="token-tbody"></tbody>
+                </table>
+            </div>
+            <p id="empty-hint" class="text-center text-slate-400 py-8 hidden">暂无令牌</p>
+        </div>
+    </section>
+</div>
+
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 hidden px-4 py-2.5 rounded-lg text-sm glass"></div>
+
+<script>
+    const SESSION_KEY = 'dextea_console_session';
+    const BASE = '/console';
+
+    function getSession() { return localStorage.getItem(SESSION_KEY); }
+    function setSession(s) { localStorage.setItem(SESSION_KEY, s); }
+    function clearSession() { localStorage.removeItem(SESSION_KEY); }
+
+    function toast(msg, type) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = 'fixed top-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-lg text-sm glass ' +
+            (type === 'error' ? 'text-red-400' : 'text-emerald-400');
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 2600);
+    }
+
+    async function api(path, options = {}) {
+        const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+        const session = getSession();
+        if (session) headers['X-Console-Session'] = session;
+        const res = await fetch(BASE + path, Object.assign({ headers }, options));
+        const body = await res.json().catch(() => ({}));
+        return { ok: res.ok, body };
+    }
+
+    function fmt(dt) {
+        if (!dt) return '—';
+        return dt.replace('T', ' ').slice(0, 19);
+    }
+
+    async function login() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        document.getElementById('login-error').classList.add('hidden');
+        try {
+            const { ok, body } = await api('/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            if (!ok || body.code !== 0) {
+                const err = document.getElementById('login-error');
+                err.textContent = body.message || '登录失败';
+                err.classList.remove('hidden');
+                return;
+            }
+            setSession(body.data.session);
+            enterConsole();
+        } catch (e) {
+            toast('网络错误', 'error');
+        }
+    }
+
+    function logout() {
+        api('/logout', { method: 'POST' });
+        clearSession();
+        enterLogin();
+    }
+
+    function enterLogin() {
+        document.getElementById('login-card').classList.remove('hidden');
+        document.getElementById('manage-card').classList.add('hidden');
+        document.getElementById('status-bar').classList.add('hidden');
+        document.getElementById('status-bar').classList.remove('flex');
+    }
+
+    function enterConsole() {
+        document.getElementById('login-card').classList.add('hidden');
+        document.getElementById('manage-card').classList.remove('hidden');
+        const bar = document.getElementById('status-bar');
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        loadTokens();
+    }
+
+    async function loadTokens() {
+        try {
+            const { ok, body } = await api('/tokens');
+            if (!ok || body.code !== 0) {
+                if (body.code === 40104) { clearSession(); enterLogin(); }
+                toast(body.message || '加载失败', 'error');
+                return;
+            }
+            renderTokens(body.data || []);
+        } catch (e) {
+            toast('网络错误', 'error');
+        }
+    }
+
+    function renderTokens(list) {
+        const tbody = document.getElementById('token-tbody');
+        const hint = document.getElementById('empty-hint');
+        tbody.innerHTML = '';
+        if (!list.length) { hint.classList.remove('hidden'); return; }
+        hint.classList.add('hidden');
+        list.forEach(t => {
+            const tr = document.createElement('tr');
+            tr.className = 'row-hover border-b border-white/5';
+            const status = t.enabled
+                ? '<span class="text-emerald-400">启用</span>'
+                : '<span class="text-red-400">禁用</span>';
+            tr.innerHTML = `
+                <td class="py-3 px-2">${escapeHtml(t.name)}</td>
+                <td class="py-3 px-2">${status}</td>
+                <td class="py-3 px-2">${fmt(t.expireAt)}</td>
+                <td class="py-3 px-2">${fmt(t.createdAt)}</td>
+                <td class="py-3 px-2 text-right whitespace-nowrap">
+                    <button onclick="editToken(${t.id},'${escapeHtml(t.name)}',${t.enabled},'${t.expireAt||''}')" class="text-blue-400 hover:underline mr-3">编辑</button>
+                    <button onclick="toggleToken(${t.id},${!t.enabled})" class="text-amber-400 hover:underline mr-3">${t.enabled?'禁用':'启用'}</button>
+                    <button onclick="removeToken(${t.id})" class="text-red-400 hover:underline">删除</button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function escapeHtml(s) {
+        return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function resetForm() {
+        document.getElementById('edit-id').value = '';
+        document.getElementById('token-name').value = '';
+        document.getElementById('token-expire').value = '';
+        document.getElementById('token-enabled').checked = true;
+    }
+
+    function editToken(id, name, enabled, expire) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('token-name').value = name;
+        document.getElementById('token-enabled').checked = enabled;
+        document.getElementById('token-expire').value = expire ? expire.slice(0, 16) : '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function saveToken() {
+        const id = document.getElementById('edit-id').value;
+        const name = document.getElementById('token-name').value.trim();
+        const expire = document.getElementById('token-expire').value;
+        const enabled = document.getElementById('token-enabled').checked;
+        if (!name) { toast('请填写名称', 'error'); return; }
+        const payload = {
+            name,
+            enabled,
+            expireAt: expire ? new Date(expire).toISOString().slice(0, 19) : null
+        };
+        const isEdit = !!id;
+        if (isEdit) payload.id = Number(id);
+        try {
+            const { ok, body } = await api('/tokens', {
+                method: isEdit ? 'PUT' : 'POST',
+                body: JSON.stringify(payload)
+            });
+            if (!ok || body.code !== 0) { toast(body.message || '保存失败', 'error'); return; }
+            if (!isEdit && body.data && body.data.token) {
+                showNewToken(body.data.token);
+            }
+            resetForm();
+            loadTokens();
+            toast('已保存');
+        } catch (e) {
+            toast('网络错误', 'error');
+        }
+    }
+
+    function showNewToken(token) {
+        const ok = confirm('令牌已创建，仅此展示一次，请妥善保存：\n\n' + token + '\n\n点击确定已复制（如支持）');
+        if (ok && navigator.clipboard) navigator.clipboard.writeText(token).catch(() => {});
+    }
+
+    async function toggleToken(id, enabled) {
+        try {
+            const { ok, body } = await api(`/tokens/enabled?id=${id}&enabled=${enabled}`, { method: 'PUT' });
+            if (!ok || body.code !== 0) { toast(body.message || '操作失败', 'error'); return; }
+            loadTokens();
+            toast(enabled ? '已启用' : '已禁用');
+        } catch (e) {
+            toast('网络错误', 'error');
+        }
+    }
+
+    async function removeToken(id) {
+        if (!confirm('确认删除该令牌？此操作不可恢复。')) return;
+        try {
+            const { ok, body } = await api(`/tokens?id=${id}`, { method: 'DELETE' });
+            if (!ok || body.code !== 0) { toast(body.message || '删除失败', 'error'); return; }
+            loadTokens();
+            toast('已删除');
+        } catch (e) {
+            toast('网络错误', 'error');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if (getSession()) enterConsole(); else enterLogin();
+    });
+</script>
+</body>
+</html>
