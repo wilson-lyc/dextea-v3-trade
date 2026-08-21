@@ -65,7 +65,7 @@ springdoc:
   paths-to-match: /api/**,/console/**
 
 auth:
-  enabled: ${AUTH_ENABLED:false}
+  enabled: ${AUTH_ENABLED:true}
   console:
     username: ${AUTH_CONSOLE_USERNAME:admin}
     password: ${AUTH_CONSOLE_PASSWORD:admin}
