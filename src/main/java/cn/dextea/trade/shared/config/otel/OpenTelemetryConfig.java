@@ -18,9 +18,6 @@ public class OpenTelemetryConfig {
     @Value("${otel.enabled:true}")
     private boolean enabled;
 
-    @Value("${otel.logs-export-enabled:true}")
-    private boolean logsExportEnabled;
-
     private AutoConfiguredOpenTelemetrySdk autoConfiguredSdk;
 
     @Bean
@@ -34,8 +31,6 @@ public class OpenTelemetryConfig {
         OpenTelemetry openTelemetry = autoConfiguredSdk.getOpenTelemetrySdk();
         GlobalOpenTelemetry.set(openTelemetry);
         log.info("OpenTelemetry 已按 OTEL_* 标准环境变量自动配置完成");
-        log.info("日志 OTLP 上报{} (otel.logs-export-enabled={})",
-                logsExportEnabled ? "已开启" : "已关闭", logsExportEnabled);
         return openTelemetry;
     }
 

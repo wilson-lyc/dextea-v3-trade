@@ -26,7 +26,7 @@ public class GetStoreOrderDetailUseCase {
 
         order.ensureBelongsToStore(command.getStoreId());
 
-        StoreOrderDetailResult result = StoreOrderDetailAssembler.toResult(order);
+        StoreOrderDetailResult result = StoreOrderDetailAssembler.toResult(order, order.getItems());
         log.info("查询门店订单详情成功, storeId={}, orderId={}, itemCount={}",
                 command.getStoreId(), command.getOrderId(),
                 result.getItems() == null ? 0 : result.getItems().size());

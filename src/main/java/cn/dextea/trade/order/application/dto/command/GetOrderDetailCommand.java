@@ -9,5 +9,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class GetOrderDetailCommand {
 
+    private Long customerId;
+
     private Long orderId;
 }

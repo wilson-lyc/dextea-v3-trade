@@ -1,5 +1,6 @@
 package cn.dextea.trade.order.application.dto.result;
 
+import cn.dextea.trade.order.application.assembler.OrderItemAssembler;
 import cn.dextea.trade.order.domain.model.OrderItem;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
@@ -7,8 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @Getter
 @Setter
@@ -24,7 +23,7 @@ public class CustomerOrderDetailItem {
 
     private String skuId;
 
-    private List<String> customization;
+    private String customization;
 
     private String coverUrl;
 
@@ -45,7 +44,7 @@ public class CustomerOrderDetailItem {
                 .productId(source.getProductId())
                 .productName(source.getProductName())
                 .skuId(source.getSkuId())
-                .customization(source.getCustomization())
+                .customization(OrderItemAssembler.toOptionLabels(source.getCustomization()))
                 .coverUrl(source.getCoverUrl())
                 .quantity(source.getQuantity())
                 .unitPrice(source.getUnitPrice())
