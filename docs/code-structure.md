@@ -13,17 +13,16 @@
 | `domain` | 领域层：领域模型、领域服务、端口（port）、仓储接口（repository），业务核心 |
 | `infrastructure` | 基础设施层：仓储实现、外部适配器（adapter）、持久化（persistence）、MQ 发送端 |
 
-横切能力收敛到 `shared`（通用件）与 `platform`（可插拔外部集成）两个非业务模块。
+横切能力收敛到 `shared`（通用件）一个非业务模块；Nacos 注册发现由 Spring Cloud Alibaba starter 提供，项目内无自研代码。
 
 ## 2. 目录总览
 
 ```
 cn/dextea/trade/
-├── DexteaTradeApplication.java          # 启动类（默认扫描 cn.dextea.trade 全包）
+├── DexteaTradeApplication.java          # 启动类（默认扫描 cn.dextea.trade 全包，@EnableDiscoveryClient）
 ├── order/                               # 订单域（核心业务）
 ├── payment/                             # 支付域
-├── shared/                              # 横切通用能力
-└── platform/                            # 可插拔外部集成（Nacos）
+└── shared/                              # 横切通用能力
 ```
 
 ## 3. 订单域 order
@@ -112,19 +111,13 @@ shared/
 
 约定：所有跨业务模块的领域事件定义统一放在 `shared/event`，业务模块内的监听器引用该事件，但不得在其中定义跨域事件。
 
-## 6. 可插拔集成 platform
+## 6. Nacos 注册与发现
 
-```
-platform/
-└── nacos/                               # Nacos 服务发现集成（可插拔外部依赖）
-    ├── NacosDiscoveryAutoConfiguration.java   # 自动配置（@ConditionalOnProperty 控制启用）
-    ├── NacosDiscoveryProperties.java          # 配置属性
-    └── NacosDiscoveryRegistrar.java           # 注册逻辑
-```
+不自研注册代码，直接使用 `spring-cloud-starter-alibaba-nacos-discovery`（Spring Cloud Alibaba 2025.0.0.0，配 Spring Boot 3.5.x / Spring Cloud 2025.0.0）：
 
-要点：
-- 与业务无关，靠 Spring 自动扫描与条件注解生效，本地无 Nacos 亦可启动。
-- 不属于核心业务路径，故独立于 `shared`，作为可选集成存在。
+- 启动类标注 `@EnableDiscoveryClient`，服务名取 `spring.application.name`；
+- 配置键为 `spring.cloud.nacos.discovery.*`（见 application.yaml），支持 `NACOS_SERVER_ADDR` 等环境变量覆盖；
+- Nacos 为必选依赖：注册失败即启动失败，应用关闭时自动注销实例。
 
 ## 7. 模块依赖方向
 
@@ -133,12 +126,10 @@ order   → payment   （仅经 order.domain.port.PaymentPort 出端口，单向
 order   → shared    （任意）
 payment → shared    （任意）
 payment → order     （仅经 PaymentPort 契约与 OrderPaidEventPublisher，单向）
-*       → platform  （仅当启用 Nacos 时；platform 不反向依赖任何业务模块）
-shared  → 不依赖 order / payment / platform
-platform→ 不依赖 order / payment / shared
+shared  → 不依赖 order / payment
 ```
 
-依赖原则：业务模块之间仅通过对方定义的「出端口」或 `shared` 中的公共契约交互；横切与集成模块永不直接依赖业务模块，保证领域边界清晰、未来可按模块独立拆微服务。
+依赖原则：业务模块之间仅通过对方定义的「出端口」或 `shared` 中的公共契约交互；横切模块永不直接依赖业务模块，保证领域边界清晰、未来可按模块独立拆微服务。
 
 ---
 

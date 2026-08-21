@@ -20,7 +20,7 @@
 | 消息队列 | 阿里云 RocketMQ 5.x |
 | 支付 | 支付宝开放平台（JSAPI） |
 | 分布式 ID | CosId（Snowflake，机器号由 Redis 分配） |
-| 配置 / 注册 | Nacos（可选） |
+| 注册与发现 | Nacos（必选） |
 | 文档 | SpringDoc OpenAPI（Swagger） |
 | 可观测性 | OpenTelemetry（Trace + Log 上报 OTLP，可选） |
 
@@ -35,8 +35,7 @@
 - **Redis**（承载幂等键、分布式锁、缓存及 CosId 机器号）
 - **阿里云 RocketMQ 5.x**（承载支付回调、制作状态、超时关单三个消息通道）
 - **支付宝开放平台**应用（JSAPI 支付与异步通知回调）
-
-Nacos 为可选的配置源与注册中心，未连接时不阻塞服务启动。
+- **Nacos**（服务注册与发现，须通过 `NACOS_SERVER_ADDR` 指定服务端地址，注册失败则启动失败）
 
 ### 构建与运行
 
