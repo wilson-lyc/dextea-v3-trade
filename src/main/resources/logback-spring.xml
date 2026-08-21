@@ -6,7 +6,13 @@
     <property name="CONSOLE_LOG_PATTERN"
               value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(%-40.40logger{39}){cyan} %clr([%X{traceId:-}]){yellow} %clr(:){faint} %m%n"/>
 
+    <appender name="OTEL" class="io.opentelemetry.sdk.extension.logback.OpenTelemetryAppender">
+        <captureLogsAttributes>true</captureLogsAttributes>
+        <captureMarkerAttribute>true</captureMarkerAttribute>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="OTEL"/>
     </root>
 </configuration>
