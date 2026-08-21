@@ -3,120 +3,583 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>dextea-trade 控制台</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232e7a56'/%3E%3C/svg%3E">
     <style>
-        body { font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif; }
-        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); }
-        .grad-bg { background: radial-gradient(1200px 600px at 10% -10%, #1e3a8a 0%, transparent 50%), radial-gradient(1000px 500px at 110% 10%, #0ea5e9 0%, transparent 45%), #0F172A; }
-        .btn-primary { background: linear-gradient(135deg, #1F6FEB, #2563EB); transition: all .2s ease; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(37,99,235,.35); }
-        .input-field { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); transition: all .2s ease; }
-        .input-field:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,.25); }
-        .row-hover:hover { background: rgba(255,255,255,0.04); }
-        .fade-in { animation: fadeIn .4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .toggle-on { background: #16A34A; }
-        .toggle-off { background: #475569; }
+        :root {
+            color-scheme: light;
+            /* 中性色：暖纸白，向茶色轻微偏色，不用纯黑白 */
+            --bg: oklch(97.7% 0.004 100);
+            --surface: oklch(99.4% 0.002 100);
+            --hover: oklch(97% 0.005 100);
+            --hover-strong: oklch(94.5% 0.007 100);
+            --ink: oklch(25% 0.012 155);
+            --ink-2: oklch(44% 0.014 155);
+            --ink-3: oklch(52% 0.012 155);
+            --line: oklch(91.5% 0.006 100);
+            --line-strong: oklch(87% 0.008 100);
+            /* 强调色：茶绿，唯一强调色 */
+            --accent: oklch(48% 0.095 155);
+            --accent-strong: oklch(42% 0.09 155);
+            --accent-deep: oklch(37% 0.08 155);
+            --on-accent: oklch(98.5% 0.004 155);
+            --ring: oklch(48% 0.095 155 / 0.22);
+            /* 语义色 */
+            --danger: oklch(51% 0.17 27);
+            --danger-strong: oklch(44% 0.16 27);
+            --danger-soft: oklch(96.5% 0.018 27);
+            --ok: oklch(56% 0.11 152);
+            --off: oklch(65% 0.01 100);
+            /* 形状与阴影 */
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 2px oklch(25% 0.012 155 / 0.04), 0 3px 14px oklch(25% 0.012 155 / 0.04);
+            --shadow-pop: 0 4px 12px oklch(25% 0.012 155 / 0.08), 0 16px 48px oklch(25% 0.012 155 / 0.12);
+            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { margin: 0; }
+
+        body {
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--ink);
+            background: var(--bg);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .hidden { display: none !important; }
+
+        .shell {
+            max-width: 880px;
+            margin: 0 auto;
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+
+        /* ---------- 顶栏 ---------- */
+        .topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .topbar-inner {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--accent);
+            color: var(--on-accent);
+            display: grid;
+            place-items: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .brand-text { display: flex; flex-direction: column; line-height: 1.35; }
+        .brand-title { font-size: 15px; font-weight: 600; }
+        .brand-sub { font-size: 12px; color: var(--ink-3); }
+
+        .session { display: flex; align-items: center; gap: 12px; }
+        .session-state {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--ink-2);
+        }
+
+        /* ---------- 通用元素 ---------- */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            flex: none;
+        }
+
+        .dot-on { background: var(--ok); }
+        .dot-off { background: var(--off); }
+        .dot-err { background: var(--danger); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font: inherit;
+            font-size: 13.5px;
+            font-weight: 500;
+            line-height: 1;
+            height: 38px;
+            padding: 0 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background-color .15s ease-out, border-color .15s ease-out, color .15s ease-out, box-shadow .15s ease-out;
+        }
+
+        .btn:disabled { opacity: .55; cursor: default; }
+        .btn-sm { height: 30px; padding: 0 12px; font-size: 12.5px; }
+        .btn-block { width: 100%; }
+
+        .btn-primary { background: var(--accent); color: var(--on-accent); }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-strong); }
+        .btn-primary:active:not(:disabled) { background: var(--accent-deep); }
+
+        .btn-ghost { background: transparent; border-color: var(--line-strong); color: var(--ink-2); }
+        .btn-ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); border-color: var(--ink-3); }
+
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            font: inherit;
+            font-size: 14px;
+            color: var(--ink);
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius-sm);
+            transition: border-color .15s ease-out, box-shadow .15s ease-out;
+        }
+
+        .input::placeholder { color: var(--ink-3); }
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
+        .label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink-2);
+            margin-bottom: 6px;
+        }
+
+        /* ---------- 登录 ---------- */
+        .auth {
+            display: flex;
+            justify-content: center;
+            padding: 9vh 0 64px;
+        }
+
+        .auth-card { width: 100%; max-width: 380px; padding: 32px; }
+
+        .auth-title {
+            margin: 0 0 4px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .auth-sub {
+            margin: 0 0 24px;
+            font-size: 13px;
+            color: var(--ink-3);
+            text-align: center;
+        }
+
+        .stack { display: flex; flex-direction: column; gap: 16px; }
+
+        .form-error { margin: 0; font-size: 13px; color: var(--danger); }
+
+        /* ---------- 管理视图 ---------- */
+        .main { padding-top: 28px; padding-bottom: 64px; }
+
+        .page-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .page-title { margin: 0; font-size: 20px; font-weight: 600; }
+        .page-sub { margin: 2px 0 0; font-size: 13px; color: var(--ink-3); }
+
+        .section-card { padding: 24px; margin-bottom: 20px; }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .section-title { margin: 0; font-size: 15px; font-weight: 600; }
+
+        .token-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr) auto auto;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            height: 38px;
+            font-size: 13.5px;
+            color: var(--ink-2);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .check input {
+            width: 15px;
+            height: 15px;
+            margin: 0;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        /* ---------- 表格 ---------- */
+        .table-wrap { overflow-x: auto; margin: 0 -24px -24px; }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        .table th {
+            text-align: left;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ink-3);
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line-strong);
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--line);
+            color: var(--ink-2);
+            white-space: nowrap;
+        }
+
+        .table th:first-child, .table td:first-child { padding-left: 24px; }
+        .table th:last-child, .table td:last-child { padding-right: 24px; }
+        .table tbody tr:last-child td { border-bottom: none; }
+
+        .table tbody tr { transition: background-color .12s ease-out; }
+        .table tbody tr:hover { background: var(--hover); }
+
+        .cell-name { color: var(--ink) !important; font-weight: 500; }
+        .cell-time { font-variant-numeric: tabular-nums; }
+        .th-right, .cell-actions { text-align: right; }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--ink-2);
+        }
+
+        .act {
+            background: none;
+            border: none;
+            padding: 4px 6px;
+            font: inherit;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--ink-2);
+            transition: background-color .12s ease-out, color .12s ease-out;
+        }
+
+        .act + .act { margin-left: 2px; }
+        .act:hover { background: var(--hover-strong); }
+        .act-edit { color: var(--accent); }
+        .act-edit:hover { color: var(--accent-strong); }
+        .act-toggle:hover { color: var(--ink); }
+        .act-danger { color: var(--danger); }
+        .act-danger:hover { background: var(--danger-soft); color: var(--danger-strong); }
+
+        .loading-cell {
+            text-align: center;
+            color: var(--ink-3) !important;
+            padding: 28px !important;
+        }
+
+        .empty { padding: 40px 24px 44px; text-align: center; }
+        .empty-title { margin: 0; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+        .empty-sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-3); }
+
+        /* ---------- 新令牌对话框 ---------- */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: oklch(25% 0.012 155 / 0.4);
+            animation: fade .18s ease-out;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface);
+            border-radius: 14px;
+            box-shadow: var(--shadow-pop);
+            padding: 24px;
+            animation: rise .18s ease-out;
+        }
+
+        .modal-title { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+        .modal-sub { margin: 0 0 16px; font-size: 13px; color: var(--ink-2); }
+
+        .token-value {
+            display: block;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.6;
+            word-break: break-all;
+            user-select: all;
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            color: var(--ink);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* ---------- 提示 ---------- */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-pop);
+            padding: 10px 16px;
+            font-size: 13.5px;
+            color: var(--ink);
+            animation: toast-in .18s ease-out;
+        }
+
+        /* ---------- 动效 ---------- */
+        .view-enter { animation: view-in .2s ease-out; }
+
+        @keyframes view-in {
+            from { opacity: 0; transform: translateY(4px); }
+        }
+
+        @keyframes fade {
+            from { opacity: 0; }
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(6px); }
+        }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translate(-50%, -6px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 640px) {
+            .shell { padding-left: 16px; padding-right: 16px; }
+            .brand-sub { display: none; }
+            .auth { padding-top: 6vh; }
+            .auth-card { padding: 24px; }
+            .section-card { padding: 20px; }
+            .table-wrap { margin: 0 -20px -20px; }
+            .table th:first-child, .table td:first-child { padding-left: 20px; }
+            .table th:last-child, .table td:last-child { padding-right: 20px; }
+            .token-form { grid-template-columns: 1fr; }
+            .field-submit .btn { width: 100%; }
+        }
     </style>
 </head>
-<body class="grad-bg min-h-screen text-slate-100">
-<div class="max-w-5xl mx-auto px-4 py-8">
-    <header class="flex items-center justify-between mb-8">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl btn-primary flex items-center justify-center font-bold text-lg">D</div>
-            <div>
-                <h1 class="text-2xl font-semibold">dextea-trade 控制台</h1>
-                <p class="text-sm text-slate-400">令牌鉴权管理</p>
-            </div>
-        </div>
-        <div id="status-bar" class="hidden items-center gap-3">
-            <span class="text-sm text-emerald-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>已登录</span>
-            <button onclick="logout()" class="text-sm px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition">登出</button>
-        </div>
-    </header>
+<body>
 
-    <section id="login-card" class="glass rounded-2xl p-8 max-w-md mx-auto fade-in">
-        <h2 class="text-xl font-semibold mb-6 text-center">控制台登录</h2>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm text-slate-300 mb-1">账号</label>
-                <input id="username" type="text" class="input-field w-full rounded-lg px-3 py-2.5 text-sm" placeholder="请输入账号">
+<header class="topbar">
+    <div class="shell topbar-inner">
+        <div class="brand">
+            <div class="brand-mark">德</div>
+            <div class="brand-text">
+                <span class="brand-title">dextea-trade 控制台</span>
+                <span class="brand-sub">令牌鉴权管理</span>
             </div>
-            <div>
-                <label class="block text-sm text-slate-300 mb-1">密码</label>
-                <input id="password" type="password" class="input-field w-full rounded-lg px-3 py-2.5 text-sm" placeholder="请输入密码">
-            </div>
-            <p id="login-error" class="text-sm text-red-400 hidden"></p>
-            <button onclick="login()" class="btn-primary w-full rounded-lg py-2.5 text-sm font-medium">登录</button>
+        </div>
+        <div id="status-bar" class="session hidden">
+            <span class="session-state"><i class="dot dot-on"></i>已登录</span>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">登出</button>
+        </div>
+    </div>
+</header>
+
+<main class="shell main">
+
+    <!-- 登录 -->
+    <section id="login-card" class="auth">
+        <div class="card auth-card">
+            <h1 class="auth-title">控制台登录</h1>
+            <p class="auth-sub">登录后管理对外 API 令牌</p>
+            <form id="login-form" class="stack" autocomplete="off">
+                <div class="field">
+                    <label class="label" for="username">账号</label>
+                    <input class="input" id="username" type="text" placeholder="请输入账号">
+                </div>
+                <div class="field">
+                    <label class="label" for="password">密码</label>
+                    <input class="input" id="password" type="password" placeholder="请输入密码">
+                </div>
+                <p id="login-error" class="form-error hidden"></p>
+                <button type="submit" id="login-btn" class="btn btn-primary btn-block">登录</button>
+            </form>
         </div>
     </section>
 
-    <section id="manage-card" class="hidden fade-in">
-        <div class="glass rounded-2xl p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold">新建 / 编辑令牌</h2>
-                <button onclick="resetForm()" class="text-sm px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition">重置</button>
+    <!-- 令牌管理 -->
+    <section id="manage-card" class="main-view hidden">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title">令牌管理</h1>
+                <p class="page-sub">外部系统调用交易 API 所用的鉴权令牌</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <input type="hidden" id="edit-id">
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">名称</label>
-                    <input id="token-name" type="text" class="input-field w-full rounded-lg px-3 py-2 text-sm" placeholder="如：渠道A">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">过期时间</label>
-                    <input id="token-expire" type="datetime-local" class="input-field w-full rounded-lg px-3 py-2 text-sm">
-                </div>
-                <div class="flex items-center gap-2 pb-2">
-                    <input id="token-enabled" type="checkbox" checked class="w-4 h-4 accent-blue-500">
-                    <label class="text-sm text-slate-300">启用</label>
-                </div>
-                <button onclick="saveToken()" class="btn-primary rounded-lg py-2 text-sm font-medium">保存</button>
-            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="loadTokens()">刷新</button>
         </div>
 
-        <div class="glass rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold">令牌列表</h2>
-                <button onclick="loadTokens()" class="text-sm px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition">刷新</button>
+        <div class="card section-card">
+            <div class="section-head">
+                <h2 class="section-title" id="form-title">新建令牌</h2>
+                <button type="button" id="form-reset" class="btn btn-ghost btn-sm" onclick="resetForm()">重置</button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+            <form id="token-form" class="token-form">
+                <input type="hidden" id="edit-id">
+                <div class="field">
+                    <label class="label" for="token-name">名称</label>
+                    <input class="input" id="token-name" type="text" placeholder="如：渠道A">
+                </div>
+                <div class="field">
+                    <label class="label" for="token-expire">过期时间</label>
+                    <input class="input" id="token-expire" type="datetime-local">
+                </div>
+                <div class="field">
+                    <label class="label">状态</label>
+                    <label class="check"><input id="token-enabled" type="checkbox" checked> 启用</label>
+                </div>
+                <div class="field field-submit">
+                    <button type="submit" id="save-btn" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card section-card">
+            <div class="table-wrap">
+                <table class="table">
                     <thead>
-                    <tr class="text-slate-400 text-left border-b border-white/10">
-                        <th class="py-3 px-2">名称</th>
-                        <th class="py-3 px-2">状态</th>
-                        <th class="py-3 px-2">过期时间</th>
-                        <th class="py-3 px-2">创建时间</th>
-                        <th class="py-3 px-2 text-right">操作</th>
+                    <tr>
+                        <th>名称</th>
+                        <th>状态</th>
+                        <th>过期时间</th>
+                        <th>创建时间</th>
+                        <th class="th-right">操作</th>
                     </tr>
                     </thead>
                     <tbody id="token-tbody"></tbody>
                 </table>
             </div>
-            <p id="empty-hint" class="text-center text-slate-400 py-8 hidden">暂无令牌</p>
+            <div id="empty-hint" class="empty hidden">
+                <p class="empty-title">暂无令牌</p>
+                <p class="empty-sub">通过上方表单创建第一个令牌</p>
+            </div>
         </div>
     </section>
+
+</main>
+
+<!-- 新令牌展示 -->
+<div id="token-modal" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
+        <h2 class="modal-title" id="token-modal-title">令牌已创建</h2>
+        <p class="modal-sub">仅此展示一次，请立即保存：</p>
+        <code class="token-value" id="token-value"></code>
+        <div class="modal-actions">
+            <button type="button" id="copy-token" class="btn btn-ghost" onclick="copyToken()">复制</button>
+            <button type="button" id="close-token" class="btn btn-primary" onclick="closeTokenModal()">完成</button>
+        </div>
+    </div>
 </div>
 
-<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 hidden px-4 py-2.5 rounded-lg text-sm glass"></div>
+<div id="toast" class="toast hidden">
+    <i class="dot dot-on" id="toast-dot"></i>
+    <span id="toast-msg"></span>
+</div>
 
 <script>
     const SESSION_KEY = 'dextea_console_session';
     const BASE = '/console';
 
+    const $ = (id) => document.getElementById(id);
+    const tokenIndex = new Map();
+    let modalToken = '';
+    let toastTimer = null;
+
     function getSession() { return localStorage.getItem(SESSION_KEY); }
     function setSession(s) { localStorage.setItem(SESSION_KEY, s); }
     function clearSession() { localStorage.removeItem(SESSION_KEY); }
 
-    function toast(msg, type) {
-        const el = document.getElementById('toast');
-        el.textContent = msg;
-        el.className = 'fixed top-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-lg text-sm glass ' +
-            (type === 'error' ? 'text-red-400' : 'text-emerald-400');
+    function toast(msg, type = 'ok') {
+        const el = $('toast');
+        $('toast-msg').textContent = msg;
+        $('toast-dot').className = 'dot ' + (type === 'error' ? 'dot-err' : 'dot-on');
         el.classList.remove('hidden');
-        setTimeout(() => el.classList.add('hidden'), 2600);
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = '';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
     }
 
     async function api(path, options = {}) {
@@ -133,17 +596,32 @@
         return dt.replace('T', ' ').slice(0, 19);
     }
 
+    function escapeHtml(s) {
+        return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function switchView(showEl, hideEls) {
+        hideEls.forEach(el => el.classList.add('hidden'));
+        showEl.classList.remove('hidden');
+        showEl.classList.remove('view-enter');
+        void showEl.offsetWidth;
+        showEl.classList.add('view-enter');
+    }
+
     async function login() {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        document.getElementById('login-error').classList.add('hidden');
+        const username = $('username').value.trim();
+        const password = $('password').value;
+        $('login-error').classList.add('hidden');
+        const btn = $('login-btn');
+        btn.disabled = true;
+        btn.textContent = '登录中…';
         try {
             const { ok, body } = await api('/login', {
                 method: 'POST',
                 body: JSON.stringify({ username, password })
             });
             if (!ok || body.code !== 0) {
-                const err = document.getElementById('login-error');
+                const err = $('login-error');
                 err.textContent = body.message || '登录失败';
                 err.classList.remove('hidden');
                 return;
@@ -152,95 +630,109 @@
             enterConsole();
         } catch (e) {
             toast('网络错误', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '登录';
         }
     }
 
     function logout() {
         api('/logout', { method: 'POST' });
         clearSession();
+        resetForm();
         enterLogin();
     }
 
     function enterLogin() {
-        document.getElementById('login-card').classList.remove('hidden');
-        document.getElementById('manage-card').classList.add('hidden');
-        document.getElementById('status-bar').classList.add('hidden');
-        document.getElementById('status-bar').classList.remove('flex');
+        switchView($('login-card'), [$('manage-card')]);
+        $('status-bar').classList.add('hidden');
+        $('username').focus();
     }
 
     function enterConsole() {
-        document.getElementById('login-card').classList.add('hidden');
-        document.getElementById('manage-card').classList.remove('hidden');
-        const bar = document.getElementById('status-bar');
-        bar.classList.remove('hidden');
-        bar.classList.add('flex');
+        switchView($('manage-card'), [$('login-card')]);
+        $('status-bar').classList.remove('hidden');
         loadTokens();
     }
 
     async function loadTokens() {
+        const tbody = $('token-tbody');
+        $('empty-hint').classList.add('hidden');
+        tbody.innerHTML = '<tr><td class="loading-cell" colspan="5">加载中…</td></tr>';
         try {
             const { ok, body } = await api('/tokens');
             if (!ok || body.code !== 0) {
+                tbody.innerHTML = '';
                 if (body.code === 40104) { clearSession(); enterLogin(); }
                 toast(body.message || '加载失败', 'error');
                 return;
             }
             renderTokens(body.data || []);
         } catch (e) {
+            tbody.innerHTML = '';
             toast('网络错误', 'error');
         }
     }
 
     function renderTokens(list) {
-        const tbody = document.getElementById('token-tbody');
-        const hint = document.getElementById('empty-hint');
+        const tbody = $('token-tbody');
+        const hint = $('empty-hint');
         tbody.innerHTML = '';
+        tokenIndex.clear();
+        list.forEach(t => tokenIndex.set(t.id, t));
         if (!list.length) { hint.classList.remove('hidden'); return; }
         hint.classList.add('hidden');
         list.forEach(t => {
             const tr = document.createElement('tr');
-            tr.className = 'row-hover border-b border-white/5';
-            const status = t.enabled
-                ? '<span class="text-emerald-400">启用</span>'
-                : '<span class="text-red-400">禁用</span>';
             tr.innerHTML = `
-                <td class="py-3 px-2">${escapeHtml(t.name)}</td>
-                <td class="py-3 px-2">${status}</td>
-                <td class="py-3 px-2">${fmt(t.expireAt)}</td>
-                <td class="py-3 px-2">${fmt(t.createdAt)}</td>
-                <td class="py-3 px-2 text-right whitespace-nowrap">
-                    <button onclick="editToken(${t.id},'${escapeHtml(t.name)}',${t.enabled},'${t.expireAt||''}')" class="text-blue-400 hover:underline mr-3">编辑</button>
-                    <button onclick="toggleToken(${t.id},${!t.enabled})" class="text-amber-400 hover:underline mr-3">${t.enabled?'禁用':'启用'}</button>
-                    <button onclick="removeToken(${t.id})" class="text-red-400 hover:underline">删除</button>
+                <td class="cell-name">${escapeHtml(t.name)}</td>
+                <td><span class="status"><i class="dot ${t.enabled ? 'dot-on' : 'dot-off'}"></i>${t.enabled ? '启用' : '禁用'}</span></td>
+                <td class="cell-time">${fmt(t.expireAt)}</td>
+                <td class="cell-time">${fmt(t.createdAt)}</td>
+                <td class="cell-actions">
+                    <button type="button" class="act act-edit" data-action="edit" data-id="${t.id}">编辑</button>
+                    <button type="button" class="act act-toggle" data-action="toggle" data-id="${t.id}">${t.enabled ? '禁用' : '启用'}</button>
+                    <button type="button" class="act act-danger" data-action="delete" data-id="${t.id}">删除</button>
                 </td>`;
             tbody.appendChild(tr);
         });
     }
 
-    function escapeHtml(s) {
-        return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    $('token-tbody').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const t = tokenIndex.get(Number(btn.dataset.id));
+        if (!t) return;
+        if (btn.dataset.action === 'edit') startEdit(t);
+        if (btn.dataset.action === 'toggle') toggleToken(t.id, !t.enabled);
+        if (btn.dataset.action === 'delete') removeToken(t.id);
+    });
 
-    function resetForm() {
-        document.getElementById('edit-id').value = '';
-        document.getElementById('token-name').value = '';
-        document.getElementById('token-expire').value = '';
-        document.getElementById('token-enabled').checked = true;
-    }
-
-    function editToken(id, name, enabled, expire) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('token-name').value = name;
-        document.getElementById('token-enabled').checked = enabled;
-        document.getElementById('token-expire').value = expire ? expire.slice(0, 16) : '';
+    function startEdit(t) {
+        $('edit-id').value = t.id;
+        $('token-name').value = t.name;
+        $('token-enabled').checked = t.enabled;
+        $('token-expire').value = t.expireAt ? t.expireAt.slice(0, 16) : '';
+        $('form-title').textContent = '编辑令牌';
+        $('form-reset').textContent = '取消编辑';
+        $('token-name').focus();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function resetForm() {
+        $('edit-id').value = '';
+        $('token-name').value = '';
+        $('token-expire').value = '';
+        $('token-enabled').checked = true;
+        $('form-title').textContent = '新建令牌';
+        $('form-reset').textContent = '重置';
+    }
+
     async function saveToken() {
-        const id = document.getElementById('edit-id').value;
-        const name = document.getElementById('token-name').value.trim();
-        const expire = document.getElementById('token-expire').value;
-        const enabled = document.getElementById('token-enabled').checked;
+        const id = $('edit-id').value;
+        const name = $('token-name').value.trim();
+        const expire = $('token-expire').value;
+        const enabled = $('token-enabled').checked;
         if (!name) { toast('请填写名称', 'error'); return; }
         const payload = {
             name,
@@ -249,6 +741,9 @@
         };
         const isEdit = !!id;
         if (isEdit) payload.id = Number(id);
+        const btn = $('save-btn');
+        btn.disabled = true;
+        btn.textContent = '保存中…';
         try {
             const { ok, body } = await api('/tokens', {
                 method: isEdit ? 'PUT' : 'POST',
@@ -256,20 +751,57 @@
             });
             if (!ok || body.code !== 0) { toast(body.message || '保存失败', 'error'); return; }
             if (!isEdit && body.data && body.data.token) {
-                showNewToken(body.data.token);
+                showTokenModal(body.data.token);
+            } else {
+                toast('已保存');
             }
             resetForm();
             loadTokens();
-            toast('已保存');
         } catch (e) {
             toast('网络错误', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '保存';
         }
     }
 
-    function showNewToken(token) {
-        const ok = confirm('令牌已创建，仅此展示一次，请妥善保存：\n\n' + token + '\n\n点击确定已复制（如支持）');
-        if (ok && navigator.clipboard) navigator.clipboard.writeText(token).catch(() => {});
+    function showTokenModal(token) {
+        modalToken = token;
+        $('token-value').textContent = token;
+        const copyBtn = $('copy-token');
+        copyBtn.textContent = '复制';
+        copyBtn.disabled = false;
+        $('token-modal').classList.remove('hidden');
+        $('close-token').focus();
     }
+
+    function closeTokenModal() {
+        $('token-modal').classList.add('hidden');
+        modalToken = '';
+    }
+
+    async function copyToken() {
+        const btn = $('copy-token');
+        try {
+            if (!navigator.clipboard) throw new Error('clipboard unavailable');
+            await navigator.clipboard.writeText(modalToken);
+            btn.textContent = '已复制';
+            btn.disabled = true;
+        } catch (e) {
+            toast('复制失败，请手动选择复制', 'error');
+        }
+    }
+
+    $('token-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeTokenModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !$('token-modal').classList.contains('hidden')) closeTokenModal();
+    });
+
+    $('login-form').addEventListener('submit', (e) => { e.preventDefault(); login(); });
+    $('token-form').addEventListener('submit', (e) => { e.preventDefault(); saveToken(); });
 
     async function toggleToken(id, enabled) {
         try {
