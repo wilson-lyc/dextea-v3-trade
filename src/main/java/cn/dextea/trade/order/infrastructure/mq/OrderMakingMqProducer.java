@@ -6,15 +6,12 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.port.MakingStatusPublisher;
 import cn.dextea.trade.order.interfaces.mq.OrderMakingMqProperties;
 import cn.dextea.trade.shared.enumeration.CodeEnum;
+import cn.dextea.trade.shared.infrastructure.mq.RocketMqClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.apis.ClientConfiguration;
-import org.apache.rocketmq.client.apis.ClientConfigurationBuilder;
 import org.apache.rocketmq.client.apis.ClientException;
-import org.apache.rocketmq.client.apis.ClientServiceProvider;
-import org.apache.rocketmq.client.apis.StaticSessionCredentialsProvider;
 import org.apache.rocketmq.client.apis.message.Message;
 import org.apache.rocketmq.client.apis.producer.Producer;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;
@@ -31,17 +28,25 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
     private static final int UNKNOWN_STATUS_CODE = -1;
 
     private final OrderMakingMqProperties properties;
+    private final RocketMqClientFactory clientFactory;
     private final ObjectMapper objectMapper;
 
     private Producer producer;
 
-    public OrderMakingMqProducer(OrderMakingMqProperties properties, ObjectMapper objectMapper) {
+    public OrderMakingMqProducer(OrderMakingMqProperties properties,
+                                 RocketMqClientFactory clientFactory,
+                                 ObjectMapper objectMapper) {
         this.properties = properties;
+        this.clientFactory = clientFactory;
         this.objectMapper = objectMapper;
     }
 
     @PostConstruct
     public void start() {
+        if (!clientFactory.isEnabled()) {
+            log.info("rocketmq 总开关未启用，跳过生产者初始化");
+            return;
+        }
         if (!properties.isActive()) {
             log.info("order-making-mq 未启用，跳过生产者初始化");
             return;
@@ -55,18 +60,8 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
     }
 
     private Producer buildProducer() throws ClientException {
-        ClientServiceProvider provider = ClientServiceProvider.loadService();
-
-        ClientConfigurationBuilder configBuilder = ClientConfiguration.newBuilder()
-                .setEndpoints(properties.getEndpoints())
-                .setCredentialProvider(new StaticSessionCredentialsProvider(
-                        properties.getAccessKey(), properties.getSecretKey()));
-        if (hasText(properties.getNamespace())) {
-            configBuilder.setNamespace(properties.getNamespace());
-        }
-
-        return provider.newProducerBuilder()
-                .setClientConfiguration(configBuilder.build())
+        return clientFactory.provider().newProducerBuilder()
+                .setClientConfiguration(clientFactory.clientConfiguration())
                 .setTopics(properties.getTopic())
                 .build();
     }
@@ -74,7 +69,7 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
     @Override
     public void publishMakingStatusChange(Order order, MakingStatus fromStatus, MakingStatus toStatus) {
         Long orderId = order.getId();
-        if (!properties.isActive()) {
+        if (!clientFactory.isEnabled() || !properties.isActive()) {
             log.debug("order-making-mq 未启用，跳过发送制作状态消息, orderId={}", orderId);
             return;
         }
@@ -119,8 +114,7 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
     private void send(OrderMakingStatusMessage message) {
         String orderId = String.valueOf(message.orderId());
         try {
-            ClientServiceProvider provider = ClientServiceProvider.loadService();
-            Message rocketMessage = provider.newMessageBuilder()
+            Message rocketMessage = clientFactory.provider().newMessageBuilder()
                     .setTopic(properties.getTopic())
                     .setTag(message.toTag())
                     .setKeys(orderId)
@@ -145,9 +139,5 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
             }
         }
         log.info("order-making-mq 生产者已关闭");
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
     }
 }

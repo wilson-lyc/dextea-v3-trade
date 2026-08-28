@@ -9,10 +9,10 @@
 支付回调 MQ 用于接收第三方支付渠道（如支付宝）落地到 RocketMQ 的支付结果回调消息。本系统作为**消费者**订阅该 Topic，并在确认支付成功后驱动订单进入"已支付/制作中"状态。
 
 - **消息中间件**：RocketMQ（使用官方 Java SDK 的 `SimpleConsumer` 模式，主动轮询拉取）
-- **Topic（默认）**：`payment_callback`（可通过配置 `PAYMENT_CALLBACK_MQ_TOPIC` 覆盖）
-- **消费组（默认）**：`payment_callback`（可通过配置 `PAYMENT_CALLBACK_MQ_CONSUMER_GROUP` 覆盖）
-- **Tag（默认）**：`*`（接收全部 Tag，可通过 `PAYMENT_CALLBACK_MQ_TAG` 覆盖）
-- **是否启用**：由配置项 `PAYMENT_CALLBACK_MQ_ENABLED` 控制，默认 **关闭**。关闭时不初始化消费者。
+- **Topic（默认）**：`payment_callback`（可通过配置 `PAYMENT_CALLBACK_MQ_TOPIC` 覆盖，对应 `rocketmq.payment-callback-mq.topic`）
+- **消费组（默认）**：`payment_callback`（可通过配置 `PAYMENT_CALLBACK_MQ_CONSUMER_GROUP` 覆盖，对应 `rocketmq.payment-callback-mq.consumer-group`）
+- **Tag（默认）**：`*`（接收全部 Tag，可通过 `PAYMENT_CALLBACK_MQ_TAG` 覆盖，对应 `rocketmq.payment-callback-mq.tag`）
+- **是否启用**：由配置项 `PAYMENT_CALLBACK_MQ_ENABLED` 控制，默认 **关闭**。关闭时不初始化消费者。另受 RocketMQ 总开关 `ROCKETMQ_ENABLED` 约束，两者需同时为 `true` 才生效。
 
 > 说明：本系统的 Alipay 网关在收到支付宝异步通知（notify）后，将回调内容投递到该 Topic；本消费链路只负责"消费"这些消息，不直接对接支付宝的 HTTP 通知接口。
 
@@ -20,18 +20,28 @@
 
 ## 2. 配置项
 
-以下配置位于 `application.yaml` 的 `payment-callback-mq` 节点，均可经环境变量覆盖：
+本系统只有一个 RocketMQ 集群，支付回调、制单、订单超时三个队列共用同一套连接配置（接入点、命名空间、鉴权），各自仅单独配置 Topic / 消费组等队列级参数。
+
+### 2.1 共用连接配置（`rocketmq` 节点）
 
 | 配置项 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `enabled` | `PAYMENT_CALLBACK_MQ_ENABLED` | `false` | 总开关，关闭则跳过消费者初始化 |
-| `endpoints` | `PAYMENT_CALLBACK_MQ_ENDPOINTS` | 无 | RocketMQ 接入点 |
-| `namespace` | `PAYMENT_CALLBACK_MQ_NAMESPACE` | 空 | 命名空间（可选） |
-| `access-key` | `PAYMENT_CALLBACK_MQ_ACCESS_KEY` | 空 | 鉴权 AccessKey |
-| `secret-key` | `PAYMENT_CALLBACK_MQ_SECRET_KEY` | 空 | 鉴权 SecretKey |
+| `enabled` | `ROCKETMQ_ENABLED` | `true` | RocketMQ 总开关，关闭则所有队列的生产者与消费者均不启动 |
+| `endpoints` | `ROCKETMQ_ENDPOINTS` | 无 | RocketMQ 接入点（三个队列共用） |
+| `namespace` | `ROCKETMQ_NAMESPACE` | 空 | 命名空间（实例 ID，阿里云，可选） |
+| `access-key` | `ROCKETMQ_ACCESS_KEY` | 空 | 鉴权 AccessKey |
+| `secret-key` | `ROCKETMQ_SECRET_KEY` | 空 | 鉴权 SecretKey |
+
+### 2.2 支付回调 MQ 配置（`rocketmq.payment-callback-mq` 节点）
+
+| 配置项 | 环境变量 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `enabled` | `PAYMENT_CALLBACK_MQ_ENABLED` | `false` | 队列开关，关闭则跳过消费者初始化 |
 | `topic` | `PAYMENT_CALLBACK_MQ_TOPIC` | `payment_callback` | 订阅的 Topic |
 | `consumer-group` | `PAYMENT_CALLBACK_MQ_CONSUMER_GROUP` | `payment_callback` | 消费组 |
 | `tag` | `PAYMENT_CALLBACK_MQ_TAG` | `*` | 订阅 Tag 过滤表达式 |
+
+以上配置位于 `application.yaml` 的 `rocketmq` 节点，均可经环境变量覆盖。
 
 ---
 
@@ -40,7 +50,7 @@
 代码位置：`cn.dextea.trade.payment.interfaces.mq.PaymentCallbackMqConsumer`
 
 - 由 `@Configuration` + `@PostConstruct` 在 Spring 容器启动后调用 `start()` 初始化。
-- 若 `enabled=false`，仅打印日志并跳过初始化，不创建任何 RocketMQ 连接。
+- 若 RocketMQ 总开关或队列开关关闭，仅打印日志并跳过初始化，不创建任何 RocketMQ 连接。
 - 使用 `SimpleConsumer`（而非 PushConsumer），由独立单线程 `consumeExecutor` 在 `consumeLoop()` 中**轮询拉取**：
   - 单次最多拉取 `MAX_RECEIVE_NUM = 16` 条；
   - 拉取等待超时 `RECEIVE_TIMEOUT = 20s`；

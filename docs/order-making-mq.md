@@ -9,9 +9,10 @@
 制单 MQ 用于通知下游系统（如厨显、门店终端、第三方制单系统）**订单制作状态发生的关键变化**。下游可据此驱动出餐屏、打印小票、推送取餐提醒等动作。
 
 - **消息中间件**：RocketMQ
-- **Topic（默认）**：`order_making_status`（可通过配置 `ORDER_MAKING_MQ_TOPIC` 覆盖）
+- **Topic（默认）**：`order_making_status`（可通过配置 `ORDER_MAKING_MQ_TOPIC` 覆盖，对应 `rocketmq.order-making-mq.topic`）
 - **角色**：本服务**仅作为生产者**投递消息，不消费本 Topic。消费组由消费端团队自行定义，不在此配置。
-- **是否启用**：由配置项 `ORDER_MAKING_MQ_ENABLED` 控制，默认 **关闭**。该开关同时控制生产者初始化与消息发送，只有开启后才会向 Topic 投递消息。
+- **是否启用**：由配置项 `ORDER_MAKING_MQ_ENABLED` 控制，默认 **关闭**。该开关同时控制生产者初始化与消息发送，只有开启后才会向 Topic 投递消息。另受 RocketMQ 总开关 `ROCKETMQ_ENABLED` 约束，两者需同时为 `true` 才生效。
+- **连接配置**：本队列与支付回调、订单超时队列共用同一套 RocketMQ 连接配置（`rocketmq.endpoints` 等），仅 Topic 单独配置（`rocketmq.order-making-mq.topic`）。
 
 > 注意：本 Topic 仅承载"制作状态"维度的变化。订单的支付状态、取消、超时等变化不属于本 MQ 范畴（例如取消/支付超时虽会变更制作状态为"已取消"，但**不会**向本 Topic 发消息）。
 

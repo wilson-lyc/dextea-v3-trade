@@ -4,11 +4,6 @@ server:
 spring:
   application:
     name: ${SPRING_APPLICATION_NAME:dextea-trade}
-  # ============================================================
-  # Nacos 注册与发现（必选，Spring Cloud Alibaba）
-  # 服务名自动取 spring.application.name，注册 IP/端口自动探测，
-  # 注册失败则启动失败；应用关闭时自动注销。
-  # ============================================================
   cloud:
     nacos:
       discovery:
@@ -20,14 +15,14 @@ spring:
         cluster-name: ${NACOS_DISCOVERY_CLUSTER:DEFAULT}
         ip: ${NACOS_DISCOVERY_IP:}
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:dextea}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD:}
 
 cosid:
@@ -79,30 +74,22 @@ alipay:
   force-amount: ${ALIPAY_FORCE_AMOUNT:}
   notify-url: ${ALIPAY_NOTIFY_URL}
 
-payment-callback-mq:
-  enabled: ${PAYMENT_CALLBACK_MQ_ENABLED:false}
-  endpoints: ${PAYMENT_CALLBACK_MQ_ENDPOINTS}
-  namespace: ${PAYMENT_CALLBACK_MQ_NAMESPACE:}
-  access-key: ${PAYMENT_CALLBACK_MQ_ACCESS_KEY:}
-  secret-key: ${PAYMENT_CALLBACK_MQ_SECRET_KEY:}
-  topic: ${PAYMENT_CALLBACK_MQ_TOPIC:payment_callback}
-  consumer-group: ${PAYMENT_CALLBACK_MQ_CONSUMER_GROUP:payment_callback}
-  tag: ${PAYMENT_CALLBACK_MQ_TAG:*}
-
-order-making-mq:
-  enabled: ${ORDER_MAKING_MQ_ENABLED:false}
-  endpoints: ${ORDER_MAKING_MQ_ENDPOINTS}
-  namespace: ${ORDER_MAKING_MQ_NAMESPACE:}
-  access-key: ${ORDER_MAKING_MQ_ACCESS_KEY:}
-  secret-key: ${ORDER_MAKING_MQ_SECRET_KEY:}
-  topic: ${ORDER_MAKING_MQ_TOPIC:order_making_status}
-
-order-timeout-mq:
-  enabled: ${ORDER_TIMEOUT_MQ_ENABLED:false}
-  endpoints: ${ORDER_TIMEOUT_MQ_ENDPOINTS}
-  namespace: ${ORDER_TIMEOUT_MQ_NAMESPACE:}
-  access-key: ${ORDER_TIMEOUT_MQ_ACCESS_KEY:}
-  secret-key: ${ORDER_TIMEOUT_MQ_SECRET_KEY:}
-  topic: ${ORDER_TIMEOUT_MQ_TOPIC:order_timeout}
-  consumer-group: ${ORDER_TIMEOUT_MQ_CONSUMER_GROUP:order_timeout}
-  delay-minutes: ${ORDER_TIMEOUT_MQ_DELAY_MINUTES:16}
+rocketmq:
+  enabled: ${ROCKETMQ_ENABLED:true}
+  endpoints: ${ROCKETMQ_ENDPOINTS}
+  namespace: ${ROCKETMQ_NAMESPACE:}
+  access-key: ${ROCKETMQ_ACCESS_KEY:}
+  secret-key: ${ROCKETMQ_SECRET_KEY:}
+  payment-callback-mq:
+    enabled: ${PAYMENT_CALLBACK_MQ_ENABLED:false}
+    topic: ${PAYMENT_CALLBACK_MQ_TOPIC:payment_callback}
+    consumer-group: ${PAYMENT_CALLBACK_MQ_CONSUMER_GROUP:payment_callback}
+    tag: ${PAYMENT_CALLBACK_MQ_TAG:*}
+  order-making-mq:
+    enabled: ${ORDER_MAKING_MQ_ENABLED:false}
+    topic: ${ORDER_MAKING_MQ_TOPIC:order_making_status}
+  order-timeout-mq:
+    enabled: ${ORDER_TIMEOUT_MQ_ENABLED:false}
+    topic: ${ORDER_TIMEOUT_MQ_TOPIC:order_timeout}
+    consumer-group: ${ORDER_TIMEOUT_MQ_CONSUMER_GROUP:order_timeout}
+    delay-minutes: ${ORDER_TIMEOUT_MQ_DELAY_MINUTES:16}

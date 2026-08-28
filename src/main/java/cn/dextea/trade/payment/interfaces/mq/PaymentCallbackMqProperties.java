@@ -6,18 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "payment-callback-mq")
+@ConfigurationProperties(prefix = "rocketmq.payment-callback-mq")
 public class PaymentCallbackMqProperties {
 
     private boolean enabled;
-
-    private String endpoints;
-
-    private String namespace;
-
-    private String accessKey;
-
-    private String secretKey;
 
     private String topic;
 

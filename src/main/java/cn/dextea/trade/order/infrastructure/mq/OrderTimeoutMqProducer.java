@@ -4,15 +4,12 @@ import cn.dextea.trade.order.application.dto.OrderTimeoutMessage;
 import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.port.OrderTimeoutDelayPort;
 import cn.dextea.trade.order.interfaces.mq.OrderTimeoutMqProperties;
+import cn.dextea.trade.shared.infrastructure.mq.RocketMqClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.apis.ClientConfiguration;
-import org.apache.rocketmq.client.apis.ClientConfigurationBuilder;
 import org.apache.rocketmq.client.apis.ClientException;
-import org.apache.rocketmq.client.apis.ClientServiceProvider;
-import org.apache.rocketmq.client.apis.StaticSessionCredentialsProvider;
 import org.apache.rocketmq.client.apis.message.Message;
 import org.apache.rocketmq.client.apis.producer.Producer;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;
@@ -32,17 +29,25 @@ import java.time.ZoneId;
 public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
 
     private final OrderTimeoutMqProperties properties;
+    private final RocketMqClientFactory clientFactory;
     private final ObjectMapper objectMapper;
 
     private Producer producer;
 
-    public OrderTimeoutMqProducer(OrderTimeoutMqProperties properties, ObjectMapper objectMapper) {
+    public OrderTimeoutMqProducer(OrderTimeoutMqProperties properties,
+                                  RocketMqClientFactory clientFactory,
+                                  ObjectMapper objectMapper) {
         this.properties = properties;
+        this.clientFactory = clientFactory;
         this.objectMapper = objectMapper;
     }
 
     @PostConstruct
     public void start() {
+        if (!clientFactory.isEnabled()) {
+            log.info("rocketmq 总开关未启用，跳过生产者初始化");
+            return;
+        }
         if (!properties.isEnabled()) {
             log.info("order-timeout-mq 生产未启用，跳过生产者初始化");
             return;
@@ -57,25 +62,15 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
     }
 
     private Producer buildProducer() throws ClientException {
-        ClientServiceProvider provider = ClientServiceProvider.loadService();
-
-        ClientConfigurationBuilder configBuilder = ClientConfiguration.newBuilder()
-                .setEndpoints(properties.getEndpoints())
-                .setCredentialProvider(new StaticSessionCredentialsProvider(
-                        properties.getAccessKey(), properties.getSecretKey()));
-        if (hasText(properties.getNamespace())) {
-            configBuilder.setNamespace(properties.getNamespace());
-        }
-
-        return provider.newProducerBuilder()
-                .setClientConfiguration(configBuilder.build())
+        return clientFactory.provider().newProducerBuilder()
+                .setClientConfiguration(clientFactory.clientConfiguration())
                 .setTopics(properties.getTopic())
                 .build();
     }
 
     @Override
     public void scheduleTimeout(Order order) {
-        if (!properties.isEnabled() || producer == null) {
+        if (!clientFactory.isEnabled() || !properties.isEnabled() || producer == null) {
             log.debug("order-timeout-mq 生产未启用，跳过发送超时延迟消息, orderNo={}", order.getOrderNo());
             return;
         }
@@ -105,8 +100,7 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
             long deliveryTimestamp = System.currentTimeMillis()
                     + Duration.ofMinutes(properties.getDelayMinutes()).toMillis();
 
-            ClientServiceProvider provider = ClientServiceProvider.loadService();
-            Message message = provider.newMessageBuilder()
+            Message message = clientFactory.provider().newMessageBuilder()
                     .setTopic(properties.getTopic())
                     .setTag("order-timeout")
                     .setKeys(orderNo)
@@ -133,9 +127,5 @@ public class OrderTimeoutMqProducer implements OrderTimeoutDelayPort {
             }
         }
         log.info("order-timeout-mq 生产者已关闭");
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
     }
 }

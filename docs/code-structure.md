@@ -106,8 +106,12 @@ shared/
 ├── event/                               # 跨域领域事件：OrderPaidEvent（统一事件出口）
 ├── config/                              # 通用技术配置：OpenApiConfig 等
 ├── infrastructure/web/                  # Web 相关基础设施
+├── infrastructure/mq/                   # RocketMqProperties（共用连接配置）/ RocketMqClientFactory
 └── util/                                # 工具类
 ```
+
+要点：
+- 三个 MQ 队列（支付回调、制单、订单超时）共用同一 RocketMQ 集群，连接配置统一收敛在 `shared/infrastructure/mq`，各队列仅保留 `topic` / `consumer-group` 等队列级配置（位于各业务模块的 `interfaces/mq`）。
 
 约定：所有跨业务模块的领域事件定义统一放在 `shared/event`，业务模块内的监听器引用该事件，但不得在其中定义跨域事件。
 

@@ -53,10 +53,14 @@ java -jar target/trade-*.jar
 | --- | --- | --- |
 | `SERVER_PORT` | HTTP 端口 | `9090` |
 | `SPRING_APPLICATION_NAME` | 应用名 | `dextea-trade` |
-| `DB_HOST` / `DB_PORT` / `DB_NAME` | MySQL 连接 | `localhost` / `3306` / `dextea` |
-| `REDIS_HOST` / `REDIS_PORT` | Redis 连接 | `localhost` / `6379` |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` | MySQL 连接（必填，无默认值） | 无 |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis 连接（必填，无默认值；无密码时 `REDIS_PASSWORD` 留空） | 无 |
 | `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_NOTIFY_URL` | 支付宝对接参数 | 无 |
+| `ROCKETMQ_ENABLED` | RocketMQ 总开关，关闭后所有队列的生产者与消费者均不启动 | `true` |
+| `ROCKETMQ_ENDPOINTS` / `ROCKETMQ_NAMESPACE` / `ROCKETMQ_ACCESS_KEY` / `ROCKETMQ_SECRET_KEY` | RocketMQ 连接配置，支付回调、制单、订单超时三个队列共用同一集群 | 无 |
 | `PAYMENT_CALLBACK_MQ_ENABLED` | 支付回调消费开关 | `false` |
+| `ORDER_MAKING_MQ_ENABLED` | 制单消息生产开关 | `false` |
+| `ORDER_TIMEOUT_MQ_ENABLED` | 订单超时消息生产与消费开关 | `false` |
 | `OTEL_ENABLED` | OpenTelemetry 总开关 | `true` |
 | `OTEL_LOGS_EXPORTER_ENABLED` | 日志通过 OTLP 上报开关 | `true` |
 | `OTEL_LOGS_EXPORTER` | OTel 日志导出方式（`otlp`/`none`/`console`） | `otlp` |

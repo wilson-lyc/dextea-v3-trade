@@ -5,16 +5,13 @@ import cn.dextea.trade.payment.application.service.PaymentCallbackApplicationSer
 import cn.dextea.trade.shared.error.BizError;
 import cn.dextea.trade.shared.error.RetryableException;
 import cn.dextea.trade.shared.error.SystemException;
+import cn.dextea.trade.shared.infrastructure.mq.RocketMqClientFactory;
 import cn.dextea.trade.shared.infrastructure.web.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.apis.ClientConfiguration;
-import org.apache.rocketmq.client.apis.ClientConfigurationBuilder;
 import org.apache.rocketmq.client.apis.ClientException;
-import org.apache.rocketmq.client.apis.ClientServiceProvider;
-import org.apache.rocketmq.client.apis.StaticSessionCredentialsProvider;
 import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.FilterExpressionType;
 import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
@@ -43,6 +40,7 @@ public class PaymentCallbackMqConsumer {
     private static final int MAX_RETRY_TIMES = 5;
 
     private final PaymentCallbackMqProperties properties;
+    private final RocketMqClientFactory clientFactory;
     private final PaymentCallbackApplicationService paymentCallbackApplicationService;
     private final ObjectMapper objectMapper;
 
@@ -52,15 +50,21 @@ public class PaymentCallbackMqConsumer {
     private final Map<String, Integer> retryCounter = new ConcurrentHashMap<>();
 
     public PaymentCallbackMqConsumer(PaymentCallbackMqProperties properties,
+                                     RocketMqClientFactory clientFactory,
                                      PaymentCallbackApplicationService paymentCallbackApplicationService,
                                      ObjectMapper objectMapper) {
         this.properties = properties;
+        this.clientFactory = clientFactory;
         this.paymentCallbackApplicationService = paymentCallbackApplicationService;
         this.objectMapper = objectMapper;
     }
 
     @PostConstruct
     public void start() {
+        if (!clientFactory.isEnabled()) {
+            log.info("rocketmq 总开关未启用，跳过消费者初始化");
+            return;
+        }
         if (!properties.isEnabled()) {
             log.info("payment-callback-mq 消费未启用，跳过消费者初始化");
             return;
@@ -78,19 +82,9 @@ public class PaymentCallbackMqConsumer {
     }
 
     private SimpleConsumer buildConsumer() throws ClientException {
-        ClientServiceProvider provider = ClientServiceProvider.loadService();
-
-        ClientConfigurationBuilder configBuilder = ClientConfiguration.newBuilder()
-                .setEndpoints(properties.getEndpoints())
-                .setCredentialProvider(new StaticSessionCredentialsProvider(
-                        properties.getAccessKey(), properties.getSecretKey()));
-        if (hasText(properties.getNamespace())) {
-            configBuilder.setNamespace(properties.getNamespace());
-        }
-
         FilterExpression filterExpression = new FilterExpression(properties.getTag(), FilterExpressionType.TAG);
-        return provider.newSimpleConsumerBuilder()
-                .setClientConfiguration(configBuilder.build())
+        return clientFactory.provider().newSimpleConsumerBuilder()
+                .setClientConfiguration(clientFactory.clientConfiguration())
                 .setConsumerGroup(properties.getConsumerGroup())
                 .setSubscriptionExpressions(Collections.singletonMap(properties.getTopic(), filterExpression))
                 .setAwaitDuration(RECEIVE_TIMEOUT)
@@ -188,10 +182,6 @@ public class PaymentCallbackMqConsumer {
             }
         }
         log.info("payment-callback-mq 消费者已关闭");
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
     }
 
     private void sleepQuietly(Duration duration) {
