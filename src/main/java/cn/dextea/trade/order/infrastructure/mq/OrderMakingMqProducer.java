@@ -2,8 +2,10 @@ package cn.dextea.trade.order.infrastructure.mq;
 
 import cn.dextea.trade.order.application.dto.OrderMakingStatusMessage;
 import cn.dextea.trade.order.domain.enumeration.MakingStatus;
+import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.port.MakingStatusPublisher;
 import cn.dextea.trade.order.interfaces.mq.OrderMakingMqProperties;
+import cn.dextea.trade.shared.enumeration.CodeEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -25,6 +27,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Configuration
 @EnableConfigurationProperties(OrderMakingMqProperties.class)
 public class OrderMakingMqProducer implements MakingStatusPublisher {
+
+    private static final int UNKNOWN_STATUS_CODE = -1;
 
     private final OrderMakingMqProperties properties;
     private final ObjectMapper objectMapper;
@@ -67,7 +71,9 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
                 .build();
     }
 
-    public void publishMakingStatusChange(Long orderId, Long storeId, MakingStatus fromStatus, MakingStatus toStatus) {
+    @Override
+    public void publishMakingStatusChange(Order order, MakingStatus fromStatus, MakingStatus toStatus) {
+        Long orderId = order.getId();
         if (!properties.isActive()) {
             log.debug("order-making-mq 未启用，跳过发送制作状态消息, orderId={}", orderId);
             return;
@@ -75,8 +81,26 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
         if (producer == null) {
             throw new IllegalStateException("order-making-mq 生产者未初始化, 无法发送制作状态消息, orderId=" + orderId);
         }
-        OrderMakingStatusMessage message = new OrderMakingStatusMessage(orderId, storeId, fromStatus.getCode(), toStatus.getCode());
-        sendAfterCommit(message);
+        sendAfterCommit(buildMessage(order, fromStatus, toStatus));
+    }
+
+    private OrderMakingStatusMessage buildMessage(Order order, MakingStatus fromStatus, MakingStatus toStatus) {
+        return new OrderMakingStatusMessage(
+                order.getId(),
+                order.getOrderNo(),
+                order.getStoreId(),
+                fromStatus.getCode(),
+                toStatus.getCode(),
+                toCode(order.getMakingStatus()),
+                toCode(order.getPaymentStatus()),
+                order.getPickupCode(),
+                order.getTotalPrice().getValue(),
+                order.getTotalQuantity().getValue(),
+                order.getCreatedAt());
+    }
+
+    private int toCode(CodeEnum codeEnum) {
+        return codeEnum == null ? UNKNOWN_STATUS_CODE : codeEnum.getCode();
     }
 
     private void sendAfterCommit(OrderMakingStatusMessage message) {

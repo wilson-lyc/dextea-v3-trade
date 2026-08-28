@@ -32,7 +32,7 @@ public class OrderStatusService {
         }
         orderRepository.updateMakingStatus(order);
         if (fromMakingStatus == MakingStatus.PENDING) {
-            makingStatusPublisher.publishMakingStatusChange(order.getId(), order.getStoreId(), fromMakingStatus, MakingStatus.PREPARING);
+            makingStatusPublisher.publishMakingStatusChange(order, fromMakingStatus, MakingStatus.PREPARING);
         }
         log.info("订单进入制作中, orderNo={}, fromMakingStatus={}", order.getOrderNo(), fromMakingStatus);
     }
@@ -52,7 +52,7 @@ public class OrderStatusService {
         order.markReady();
         orderRepository.updateMakingStatus(order);
         if (fromMakingStatus == MakingStatus.PREPARING) {
-            makingStatusPublisher.publishMakingStatusChange(order.getId(), order.getStoreId(), fromMakingStatus, MakingStatus.READY);
+            makingStatusPublisher.publishMakingStatusChange(order, fromMakingStatus, MakingStatus.READY);
         }
         log.info("订单制作完成, orderNo={}, fromMakingStatus={}", order.getOrderNo(), fromMakingStatus);
     }
