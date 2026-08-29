@@ -54,7 +54,7 @@ java -jar target/trade-*.jar
 | `SERVER_PORT` | HTTP 端口 | `9090` |
 | `SPRING_APPLICATION_NAME` | 应用名 | `dextea-trade` |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` | MySQL 连接（必填，无默认值） | 无 |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis 连接（必填，无默认值；无密码时 `REDIS_PASSWORD` 留空） | 无 |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_DATABASE` | Redis 连接（host/port 必填；无密码时 `REDIS_PASSWORD` 留空；`REDIS_DATABASE` 为库编号，默认 0） | 无 / 0 |
 | `AUTH_ENABLED` | 是否开启 API 令牌鉴权 | `true` |
 | `AUTH_TOKENS` | 合法 API 令牌列表（逗号分隔，命中其一即可通过校验） | 无 |
 | `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_NOTIFY_URL` | 支付宝对接参数 | 无 |

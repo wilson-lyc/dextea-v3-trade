@@ -59,7 +59,7 @@ public class PaymentReconciliationService {
     }
 
     private void reconcileClosed(Order order) {
-        // 支付渠道侧交易关闭：订单不再提供手动取消, 统一按支付超时处理
+        // 渠道侧交易已关闭，按支付超时关单处理
         orderStatusService.markTimeout(order);
     }
 }

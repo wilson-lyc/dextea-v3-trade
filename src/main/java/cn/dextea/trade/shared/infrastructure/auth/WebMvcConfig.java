@@ -1,4 +1,4 @@
-package cn.dextea.trade.console.interfaces.http;
+package cn.dextea.trade.shared.infrastructure.auth;
 
 import cn.dextea.trade.shared.config.AuthConfig;
 import lombok.RequiredArgsConstructor;

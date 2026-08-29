@@ -1,6 +1,5 @@
-package cn.dextea.trade.console.interfaces.http;
+package cn.dextea.trade.shared.infrastructure.auth;
 
-import cn.dextea.trade.console.infrastructure.adapter.ApiTokenStore;
 import cn.dextea.trade.shared.config.AuthConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
