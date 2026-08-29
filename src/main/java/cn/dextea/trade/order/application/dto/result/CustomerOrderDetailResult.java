@@ -7,6 +7,7 @@ import cn.dextea.trade.shared.enumeration.PaymentMethod;
 import cn.dextea.trade.order.domain.enumeration.PaymentStatus;
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

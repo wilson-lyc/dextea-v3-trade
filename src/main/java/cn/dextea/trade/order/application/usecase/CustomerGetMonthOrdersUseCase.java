@@ -1,0 +1,70 @@
+package cn.dextea.trade.order.application.usecase;
+
+import cn.dextea.trade.order.application.assembler.CustomerMonthOrderAssembler;
+import cn.dextea.trade.order.application.dto.command.CustomerGetMonthOrdersCommand;
+import cn.dextea.trade.order.application.dto.result.CustomerGetMonthOrdersResult;
+import cn.dextea.trade.order.application.dto.result.CustomerMonthOrderItem;
+import cn.dextea.trade.order.domain.model.Order;
+import cn.dextea.trade.order.domain.model.Store;
+import cn.dextea.trade.order.domain.repository.OrderRepository;
+import cn.dextea.trade.order.domain.repository.StoreRepository;
+import cn.dextea.trade.shared.model.Money;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class CustomerGetMonthOrdersUseCase {
+
+    private static final String UNKNOWN_STORE_NAME = "未知门店";
+
+    private final OrderRepository orderRepository;
+    private final StoreRepository storeRepository;
+
+    public CustomerGetMonthOrdersResult execute(CustomerGetMonthOrdersCommand command) {
+        log.info("查询月订单, customerId={}, year={}, month={}",
+                command.getCustomerId(), command.getYear(), command.getMonth());
+        List<Order> orders = orderRepository.getMonthOrders(
+                command.getCustomerId(), command.getStartAt(), command.getEndAt());
+
+        Set<Long> storeIds = orders.stream()
+                .map(Order::getStoreId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Store> storeById = storeRepository.getStoresByIds(storeIds);
+        Map<Long, String> storeNames = orders.stream().collect(Collectors.toMap(
+                Order::getId,
+                order -> resolveStoreName(storeById.get(order.getStoreId()))));
+
+        List<CustomerMonthOrderItem> items = CustomerMonthOrderAssembler.toItems(orders, storeNames);
+
+        Money totalAmount = Money.ZERO;
+        for (CustomerMonthOrderItem order : items) {
+            if (order.getTotalPrice() != null) {
+                totalAmount = totalAmount.add(order.getTotalPrice());
+            }
+        }
+
+        CustomerGetMonthOrdersResult result = CustomerGetMonthOrdersResult.builder()
+                .orders(items)
+                .orderCount(items.size())
+                .totalAmount(totalAmount)
+                .build();
+        log.info("查询月订单完成, customerId={}, year={}, month={}, orderCount={}, totalAmount={}",
+                command.getCustomerId(), command.getYear(), command.getMonth(),
+                result.getOrderCount(), result.getTotalAmount());
+        return result;
+    }
+
+    private String resolveStoreName(Store store) {
+        return store == null || store.getName() == null ? UNKNOWN_STORE_NAME : store.getName();
+    }
+}

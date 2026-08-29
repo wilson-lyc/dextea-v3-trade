@@ -1,0 +1,19 @@
+package cn.dextea.trade.order.application.dto.command;
+import cn.dextea.trade.order.application.dto.shared.CustomerCreateOrderItem;
+import cn.dextea.trade.order.domain.enumeration.DiningMethod;
+import cn.dextea.trade.order.domain.enumeration.OrderSource;
+import cn.dextea.trade.shared.enumeration.PaymentMethod;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@SuperBuilder
+@NoArgsConstructor
+public class CustomerCreateOrderCommand extends AbstractCustomerOrderCommand<CustomerCreateOrderItem> {
+    private String idempotencyKey;
+    private OrderSource source;
+    private PaymentMethod paymentMethod;
+    private DiningMethod diningMethod;
+    private String note;
+}

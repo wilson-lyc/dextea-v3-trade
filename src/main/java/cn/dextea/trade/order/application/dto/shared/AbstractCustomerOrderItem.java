@@ -1,35 +1,23 @@
-package cn.dextea.trade.order.application.dto.result;
+package cn.dextea.trade.order.application.dto.shared;
 
 import cn.dextea.trade.shared.model.Money;
 import cn.dextea.trade.shared.model.Quantity;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@Getter
-@Setter
+@Data
 @SuperBuilder
 @NoArgsConstructor
-public class CustomerOrderDetailItem {
-
-    private Long id;
-
-    private Long productId;
-
-    private String productName;
-
+@AllArgsConstructor
+public class AbstractCustomerOrderItem {
     private String skuId;
-
-    private String customization;
-
-    private String coverUrl;
-
     private Quantity quantity;
-
+    private String product;
+    private String customization;
+    private String cover;
     private Money unitPrice;
-
     private Money totalPrice;
-
     private Boolean available;
 }
