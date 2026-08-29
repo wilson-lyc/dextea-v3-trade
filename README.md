@@ -55,6 +55,8 @@ java -jar target/trade-*.jar
 | `SPRING_APPLICATION_NAME` | 应用名 | `dextea-trade` |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` | MySQL 连接（必填，无默认值） | 无 |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis 连接（必填，无默认值；无密码时 `REDIS_PASSWORD` 留空） | 无 |
+| `AUTH_ENABLED` | 是否开启 API 令牌鉴权 | `true` |
+| `AUTH_TOKENS` | 合法 API 令牌列表（逗号分隔，命中其一即可通过校验） | 无 |
 | `ALIPAY_APP_ID` / `ALIPAY_PRIVATE_KEY` / `ALIPAY_PUBLIC_KEY` / `ALIPAY_NOTIFY_URL` | 支付宝对接参数 | 无 |
 | `ROCKETMQ_ENABLED` | RocketMQ 总开关，关闭后所有队列的生产者与消费者均不启动 | `true` |
 | `ROCKETMQ_ENDPOINTS` / `ROCKETMQ_NAMESPACE` / `ROCKETMQ_ACCESS_KEY` / `ROCKETMQ_SECRET_KEY` | RocketMQ 连接配置，支付回调、制单、订单超时三个队列共用同一集群 | 无 |
@@ -84,6 +86,12 @@ java -jar target/trade-*.jar
 ```
 
 上报的日志会自动携带当前链路的 `trace_id` / `span_id`，可在后端（Grafana/Loki/Jaeger 等）与 Trace 联动检索。HTTP 请求的 `traceId` 也会写入 MDC 并输出到控制台日志行（见 `logback-spring.xml`）。
+
+### 接口鉴权
+
+所有 `/api/**` 请求默认需要令牌鉴权（`AUTH_ENABLED=true` 时生效）。合法令牌通过环境变量 `AUTH_TOKENS` 配置，多个令牌用逗号分隔，命中其一即可；服务启动时加载进内存，不落数据库。
+
+请求头携带 `Authorization: Bearer <token>`（或直接传裸 token）即可通过校验，未携带或不匹配返回 401。轮换令牌只需修改环境变量并重启服务。
 
 ### 接口文档
 

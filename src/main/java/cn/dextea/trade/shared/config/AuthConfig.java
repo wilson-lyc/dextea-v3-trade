@@ -2,6 +2,8 @@ package cn.dextea.trade.shared.config;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,12 +13,5 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "auth")
 public class AuthConfig {
     private boolean enabled = false;
-    private Console console = new Console();
-
-    @Getter
-    @Setter
-    public static class Console {
-        private String username = "admin";
-        private String password = "admin";
-    }
+    private List<String> tokens = List.of();
 }

@@ -1,6 +1,6 @@
 package cn.dextea.trade.console.interfaces.http;
 
-import cn.dextea.trade.console.application.usecase.TokenManageUseCase;
+import cn.dextea.trade.console.infrastructure.adapter.ApiTokenStore;
 import cn.dextea.trade.shared.config.AuthConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +22,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final AuthConfig authConfig;
-    private final TokenManageUseCase tokenManageUseCase;
+    private final ApiTokenStore apiTokenStore;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -40,13 +40,11 @@ public class AuthInterceptor implements HandlerInterceptor {
             writeUnauthorized(response, "请求未携带令牌");
             return false;
         }
-        try {
-            tokenManageUseCase.verify(token);
-            return true;
-        } catch (Exception e) {
+        if (!apiTokenStore.contains(token)) {
             writeUnauthorized(response, "令牌校验失败");
             return false;
         }
+        return true;
     }
 
     private void writeUnauthorized(HttpServletResponse response, String message) {
