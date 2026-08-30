@@ -1,6 +1,5 @@
 package cn.dextea.trade.order.interfaces.http.dto.request;
 import cn.dextea.trade.order.interfaces.http.dto.shared.CustomerPreBuildOrderItem;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +12,5 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@Schema(description = "预构建订单请求")
 public class CustomerPreBuildOrderRequest extends AbstractCustomerCreateOrderRequest<CustomerPreBuildOrderItem> {
 }

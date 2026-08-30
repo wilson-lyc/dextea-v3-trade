@@ -21,7 +21,6 @@
 | 支付 | 支付宝开放平台（JSAPI） |
 | 分布式 ID | CosId（Snowflake，机器号由 Redis 分配） |
 | 注册与发现 | Nacos（必选） |
-| 文档 | SpringDoc OpenAPI（Swagger） |
 | 可观测性 | OpenTelemetry（Trace + Log 上报 OTLP，可选） |
 
 ## 部署与运行
@@ -95,12 +94,13 @@ java -jar target/trade-*.jar
 
 ### 接口文档
 
-服务启动后，可通过 Swagger UI 查阅接口定义：`http://localhost:9090/swagger-ui.html`
+接口文档以 Markdown 形式手动维护于 `docs/api/` 目录，入口见 [docs/api/README.md](docs/api/README.md)，格式规范见 [docs/api/example.md](docs/api/example.md)。
 
 ## 文档
 
 详细的设计与实现说明请参阅 `docs/` 目录下的文档：
 
+- [接口文档索引](docs/api/README.md)
 - [项目代码结构](docs/code-structure.md)
 - [创建订单逻辑](docs/order-creation.md)
 - [订单 ID 生成逻辑](docs/order-id-generation.md)

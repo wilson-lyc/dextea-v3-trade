@@ -16,8 +16,6 @@ import cn.dextea.trade.order.interfaces.http.dto.request.GetStoreWindowOrdersReq
 import cn.dextea.trade.order.interfaces.http.dto.response.GetStoreWindowOrdersResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.StoreOrderDetailResponse;
 import cn.dextea.trade.shared.api.APIResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/store/orders")
 @Validated
-@Tag(name = "门店订单服务")
 @RequiredArgsConstructor
 @Slf4j
 public class StoreOrderController {
@@ -47,7 +44,6 @@ public class StoreOrderController {
     private final StoreOrderHttpAssembler storeOrderHttpAssembler;
 
     @GetMapping("/window")
-    @Operation(summary = "获取门店时间窗口内订单", description = "返回门店最近 hours 小时内的订单列表")
     public APIResponse<GetStoreWindowOrdersResponse> getStoreWindowOrders(
             @RequestHeader(STORE_ID_HEADER) @NotNull(message = "storeId 不能为空") Long storeId,
             @Valid GetStoreWindowOrdersRequest request) {
@@ -60,7 +56,6 @@ public class StoreOrderController {
     }
 
     @GetMapping("/{orderId}")
-    @Operation(summary = "获取门店订单详情", description = "仅能查看归属本门店的订单，客制化返回原始值不做格式转换")
     public APIResponse<StoreOrderDetailResponse> getStoreOrderDetail(
             @RequestHeader(STORE_ID_HEADER) @NotNull(message = "storeId 不能为空") Long storeId,
             @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
@@ -72,7 +67,6 @@ public class StoreOrderController {
     }
 
     @PostMapping("/{orderId}/ready")
-    @Operation(summary = "标记订单制作完成", description = "制作中 -> 制作完成")
     public APIResponse<Void> markReady(
             @RequestHeader(STORE_ID_HEADER) @NotNull(message = "storeId 不能为空") Long storeId,
             @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
@@ -87,7 +81,6 @@ public class StoreOrderController {
     }
 
     @PostMapping("/{orderId}/collect")
-    @Operation(summary = "标记订单已取餐", description = "制作完成 -> 已取餐")
     public APIResponse<Void> markCollected(
             @RequestHeader(STORE_ID_HEADER) @NotNull(message = "storeId 不能为空") Long storeId,
             @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {

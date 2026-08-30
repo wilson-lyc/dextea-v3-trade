@@ -1,6 +1,5 @@
 package cn.dextea.trade.order.interfaces.http.dto.response;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,15 +12,11 @@ import java.util.List;
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-@Schema(description = "获取月订单列表响应")
 public class CustomerGetMonthOrdersResponse {
 
-    @Schema(description = "月份订单列表")
     private List<CustomerMonthOrderItem> orders;
 
-    @Schema(description = "当月订单总数", example = "12")
     private Integer totalCount;
 
-    @Schema(description = "当月订单总金额（元）", example = "320.00")
     private BigDecimal totalAmount;
 }

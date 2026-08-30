@@ -28,8 +28,6 @@ import cn.dextea.trade.order.interfaces.http.dto.response.CustomerOrderDetailRes
 import cn.dextea.trade.order.interfaces.http.dto.response.CustomerOrderPaymentStatusResponse;
 import cn.dextea.trade.order.interfaces.http.assembler.CustomerOrderDetailHttpAssembler;
 import cn.dextea.trade.order.interfaces.http.assembler.CustomerOrderPaymentStatusHttpAssembler;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +42,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/orders")
+@RequestMapping("/api/v1/customer/orders")
 @Validated
-@Tag(name = "顾客订单服务")
 @RequiredArgsConstructor
 @Slf4j
 public class CustomerOrderController {
@@ -60,7 +57,6 @@ public class CustomerOrderController {
     private final CustomerGetOrderPaymentStatusUseCase getOrderPaymentStatusUseCase;
 
     @PostMapping("/pre-build")
-    @Operation(summary = "订单预构建")
     public APIResponse<CustomerPreBuildOrderResponse> preBuildOrder(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody CustomerPreBuildOrderRequest request) {
@@ -74,7 +70,6 @@ public class CustomerOrderController {
     }
 
     @PostMapping
-    @Operation(summary = "创建订单")
     public APIResponse<CustomerCreateOrderResponse> create(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid @RequestBody CustomerCreateOrderRequest request) {
@@ -88,7 +83,6 @@ public class CustomerOrderController {
     }
 
     @GetMapping("/monthly")
-    @Operation(summary = "获取月订单列表")
     public APIResponse<CustomerGetMonthOrdersResponse> getMonthOrders(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @Valid CustomerGetMonthOrdersRequest request) {
@@ -102,7 +96,6 @@ public class CustomerOrderController {
     }
 
     @GetMapping("/{orderId}")
-    @Operation(summary = "获取订单详情")
     public APIResponse<CustomerOrderDetailResponse> getOrderDetail(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {
@@ -114,7 +107,6 @@ public class CustomerOrderController {
     }
 
     @GetMapping("/{orderId}/payment-status")
-    @Operation(summary = "获取订单支付状态", description = "轻量接口，仅返回支付状态；本地为支付中时会主动向支付渠道查询一次并回写")
     public APIResponse<CustomerOrderPaymentStatusResponse> getOrderPaymentStatus(
             @RequestHeader(CUSTOMER_ID_HEADER) @NotNull(message = "customerId 不能为空") Long customerId,
             @PathVariable("orderId") @NotNull(message = "orderId 不能为空") Long orderId) {

@@ -104,7 +104,7 @@ shared/
 ├── enumeration/                         # 跨域公共枚举
 ├── error/                               # 全局异常处理 / 错误码
 ├── event/                               # 跨域领域事件：OrderPaidEvent（统一事件出口）
-├── config/                              # 通用技术配置：OpenApiConfig 等
+├── config/                              # 通用技术配置：AuthConfig 等
 ├── infrastructure/web/                  # Web 相关基础设施
 ├── infrastructure/mq/                   # RocketMqProperties（共用连接配置）/ RocketMqClientFactory
 └── util/                                # 工具类

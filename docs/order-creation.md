@@ -11,10 +11,10 @@
 ```text
 顾客选品
    │
-   ├─ 预构建 POST /api/v1/orders/pre-build
+   ├─ 预构建 POST /api/v1/customer/orders/pre-build
    │     └─ 校验商品可售 + 算价，返回 available/unavailable/totalPrice（不落库、不付款）
    │
-   └─ 正式下单 POST /api/v1/orders
+   └─ 正式下单 POST /api/v1/customer/orders
          ├─ 幂等校验（三重防护）
          ├─ 复用同一商品校验，若存在不可售 → 降级为预构建结果返回
          └─ 全部可售 → 生成订单号/交易号 → 落库 → 发支付超时延迟消息
@@ -33,7 +33,7 @@
 
 代码位置：`cn.dextea.trade.order.interfaces.http.controller.OrderController#preBuild` → `PreBuildOrderUseCase` → `OrderCreationService.preBuildOrder`
 
-- 路径：`POST /api/v1/orders/pre-build`
+- 路径：`POST /api/v1/customer/orders/pre-build`
 - 请求头：`X-Customer-Id`（必填）
 - 请求体：`PreBuildOrderRequest`（`storeId` + `items` 等，继承自 `AbstractCreateOrderRequest`；**无** `idempotencyKey`）
 
@@ -62,7 +62,7 @@
 
 代码位置：`OrderController#create` → `CreateOrderUseCase` → `OrderCreationService.createOrder` → `Order.place(...)`
 
-- 路径：`POST /api/v1/orders`
+- 路径：`POST /api/v1/customer/orders`
 - 请求头：`X-Customer-Id`（必填）
 - 请求体：`CreateOrderRequest`
 
