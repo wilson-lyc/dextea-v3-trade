@@ -155,12 +155,25 @@ public class GlobalExceptionHandler {
                 CommonErrorCode.SYSTEM_ERROR.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
+    /**
+     * 按错误码段推导 HTTP 状态码，规范见 docs/api/README.md：
+     * 4xxxx 客户端错误（小段与 HTTP 4xx 对齐）/ 2xxxx 业务错误 / 3xxxx、5xxxx 服务端与系统错误。
+     */
     private static HttpStatus resolveHttpStatus(int code) {
+        if (code >= 40100 && code < 40200) {
+            return HttpStatus.UNAUTHORIZED;
+        }
+        if (code >= 40400 && code < 40500) {
+            return HttpStatus.NOT_FOUND;
+        }
+        if (code >= 40900 && code < 41000) {
+            return HttpStatus.CONFLICT;
+        }
+        if (code >= 42900 && code < 43000) {
+            return HttpStatus.TOO_MANY_REQUESTS;
+        }
         if (code >= 40000 && code < 50000) {
             return HttpStatus.BAD_REQUEST;
-        }
-        if (code >= 50000 && code < 60000) {
-            return HttpStatus.TOO_MANY_REQUESTS;
         }
         if (code >= 20000 && code < 30000) {
             return HttpStatus.BAD_REQUEST;

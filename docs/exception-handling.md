@@ -67,37 +67,20 @@ Throwable
 
 ### 4.2 错误码规范
 
-采用 **5 位数字**，按首段区分错误大类，与 HTTP 状态码完全解耦（业务码不取 404/500 这类 HTTP 值）。首段即错误性质，便于监控聚合、网关路由与前端文案映射：
+采用 **5 位数字**，格式为「首位大类 + 第 2-3 位模块码 + 第 4-5 位具体错误」，完整规范见 `docs/api/README.md`：
 
-| 段位 | 大类 | 含义 | 示例 |
-| --- | --- | --- | --- |
-| `1xxxxx` | 系统错误 | 基础设施故障、未知 panic、未预期的底层异常 | 10000 内部错误、10300 数据库未启用 |
-| `2xxxxx` | 业务错误 | 领域规则不满足（订单/支付等业务校验） | 20001 订单已取消不可支付 |
-| `3xxxxx` | 下游依赖错误 | 调用外部/中台服务失败 | 30001 下游服务未配置、30002 下游不可用 |
-| `4xxxxx` | 参数 / 校验错误 | 入参缺失、格式非法、鉴权缺失 | 40001 参数缺失、40100 未登录 |
-| `5xxxxx` | 限流 / 幂等 / 熔断 | 请求过于频繁、重复提交、熔断降级 | 50001 请求过于频繁、50002 重复提交 |
-
-子类段（第 2–3 位）按业务域细分，规则建议：
-
-| 子类段 | 归属 | 对应枚举 |
-| --- | --- | --- |
-| `10xxx` | 通用系统 | `CommonErrorCode` |
-| `11xxx` | 订单域系统 | `OrderErrorCode`（系统类） |
-| `12xxx` | 支付域系统 | `PayErrorCode`（系统类） |
-| `20xxx` | 订单域业务 | `OrderErrorCode`（业务类） |
-| `21xxx` | 支付域业务 | `PayErrorCode`（业务类） |
-| `30xxx` | 下游依赖（订单中台等） | `DownstreamErrorCode`（新增） |
-| `40xxx` | 通用参数/鉴权 | `CommonErrorCode` |
-| `50xxx` | 限流/幂等/熔断 | `CommonErrorCode` |
+| 首位 | 大类 | HTTP 状态码 | 说明 | 示例 |
+| --- | --- | --- | --- | --- |
+| `2` | 业务错误 | 400 | 统一业务前缀，第 2-3 位为模块码（`21` 订单、`22` 支付，新模块向 `23` 递增） | 21001 顾客不存在、22001 支付宝创建交易失败 |
+| `3` | 第三方/下游错误 | 500 | 第 2-3 位为渠道码（`30` 通用，新渠道向 `31` 递增） | 30001 下游服务未配置、30002 下游不可用 |
+| `4` | 客户端错误 | 小段与 HTTP 4xx 对齐 | `400xx` 参数、`401xx` 鉴权、`404xx` 资源不存在、`409xx` 冲突幂等、`429xx` 限流 | 40002 参数缺失、40100 未登录、40901 重复提交、42901 请求过于频繁 |
+| `5` | 系统错误 | 500 | `500xx` 通用系统、`501xx` 存储类 | 50000 系统繁忙、50101 数据库访问异常 |
 
 约定：
 
-- 业务码与 HTTP 状态码是两套独立体系。HTTP 状态码仅表达传输层语义（2xx/4xx/5xx），`APIResponse.code` 表达业务语义。
-- 首段决定异常性质与处理策略：`1xxxxx`/`3xxxxx` 通常归 `SystemException` 兜底并脱敏；`2xxxxx`/`4xxxxx` 由 `BizError` 携带；`5xxxxx` 通常可重试（如 50002 重复提交应转 `RetryableException`）。
-- `CommonErrorCode.NOT_FOUND` 等占位 HTTP 值（404）应改为独立业务码（如 40001），不再复用 HTTP 数字。
+- `4` 段小分类与 HTTP 4xx 语义对齐，HTTP 状态码由 `GlobalExceptionHandler.resolveHttpStatus` 按段推导；业务错误（`2`）统一返回 400；`3`/`5` 段返回 500。
+- 首段决定异常性质与处理策略：`3`/`5` 段通常归 `SystemException` 兜底并脱敏；`2`/`4` 段由 `BizError` 携带；`409xx`/`429xx` 等冲突限流类可转 `RetryableException`。
 - 新增业务错误必须登记到对应 `XxxErrorCode` 枚举，禁止在业务代码里硬编码魔法数字。
-
-> 迁移说明：现有码为 6 位（100xxx 通用、101xxx 订单、102xxx 支付）。重构时将整体迁移到 5 位首段方案——原 `101xxx` 订单业务码并入 `2xxxxx`，原 `102xxx` 支付业务码并入 `2xxxxx`（支付子类 `21xxx`），系统/下游/参数/限流类按上表重新分配。迁移期间两套码并存需在响应 Header 中透传上游 `tradeid` 以便比对。
 
 ### 4.3 统一响应结构
 
@@ -105,8 +88,8 @@ Throwable
 
 ```json
 {
-  "code": 20001,
-  "message": "订单已取消不可支付",
+  "code": 21016,
+  "message": "订单不存在",
   "data": null
 }
 ```
@@ -114,9 +97,9 @@ Throwable
 链路 ID（`tradeid`）不在 JSON 体内，而是通过响应 Header 原样透传（如 `tradeid: a1b2c3...`）。本系统作为中台，不从自身生成该 ID：仅从上游转发的请求 Header 中读取；读到了就写入响应 Header 并向 otel 记录链路，读不到就跳过（不补、不生成），后续日志/链路即无该关联键。客户端/网关据此关联日志排障。
 
 - 成功：`code = 0`，`message = "成功"`（沿用现状，不破坏已有契约）。
-- 业务异常（`2xxxxx`/`4xxxxx`）：返回 `BizError` 携带的 `code` 与 `message`。
-- 可重试异常（`5xxxxx` 等）：HTTP 侧返回对应业务码；MQ 侧不脱敏、交给重试框架。
-- 系统异常（`1xxxxx`/`3xxxxx`）：`code` 用系统级兜底码（如 10000），`message` 返回脱敏后的"系统繁忙，请稍后重试"，真实原因只在日志/链路中可见。
+- 业务异常（`2`）/客户端错误（`4`）：返回 `BizError` 携带的 `code` 与 `message`。
+- 可重试异常（`409xx`/`429xx` 等）：HTTP 侧返回对应业务码；MQ 侧不脱敏、交给重试框架。
+- 系统异常（`3`/`5` 段）：`code` 用系统级兜底码（如 50000），`message` 返回脱敏后的"系统繁忙，请稍后重试"，真实原因只在日志/链路中可见。
 
 ## 5. 改造清单
 
@@ -138,40 +121,36 @@ Throwable
 ### 5.3 错误码枚举
 
 - 新增 `DownstreamErrorCode`（3xxxxx）承载下游依赖错误。
-- `CommonErrorCode` 按首段重组：系统类 `1xxxxx`（如 `SYSTEM_ERROR = 10000`、`MYBATIS_SYSTEM_EXCEPTION = 10300`）、参数/鉴权类 `4xxxxx`（如 `MISSING_REQUEST_HEADER = 40001`）、限流/幂等类 `5xxxxx`（如 `RETRY_LATER = 50002`）；移除与 HTTP 码混淆的项（如 404）。
-- 各域 `XxxErrorCode` 按业务类 `2xxxxx` 重组：订单业务 `20xxx`、支付业务 `21xxx`；新增域沿用首段规则并登记到本文档"错误码分配表"。
+- `CommonErrorCode` 按首段重组：客户端错误类 `4xxxxx`（参数 `400xx`、鉴权 `401xx`、冲突幂等 `409xx`、限流 `429xx`）、系统类 `5xxxxx`（如 `SYSTEM_ERROR = 50000`、`MYBATIS_SYSTEM_EXCEPTION = 50101`）。
+- 各域 `XxxErrorCode` 按业务类 `2xxxxx` 重组：订单业务 `21xxx`、支付业务 `22xxx`；新增域沿用模块码规则并登记到本文档「错误码分配表」。
 
 ### 5.4 可观测性
 
 - 链路 ID（`tradeid`）策略：作为中台，仅消费上游转发的 `tradeid` Header，有则用、无则不补；拿到后由 `TraceInterceptor` 透传至响应 Header 并向 otel 上报链路。
 - 日志统一以 `tradeid` 作为 MDC 键（接入现有 otel `TraceInterceptor`），无该 Header 时该键为空，日志仍可正常输出。
-- 按首段聚合监控：对 `1xxxxx`/`3xxxxx` 系统/下游错误与高频 `5xxxxx` 限流错误增加告警钩子（Metrics 计数），便于发现系统性问题。
+- 按首段聚合监控：对 `3`/`5` 段系统/下游错误与高频 `429xx` 限流错误增加告警钩子（Metrics 计数），便于发现系统性问题。
 
 ## 6. 错误码分配表（维护）
 
 | 码 | 名称 | 大类 | 域 | 说明 |
 | --- | --- | --- | --- | --- |
-| 10000 | SYSTEM_ERROR | 系统 | common | 未知系统错误（脱敏文案） |
-| 10300 | DB_NOT_ENABLED | 系统 | common | 数据库/缓存未启用或不可用 |
-| 10301 | MYBATIS_SYSTEM_EXCEPTION | 系统 | common | 数据库访问异常（脱敏文案） |
-| 20001 | CUSTOMER_NOT_FOUND | 业务 | order | 顾客不存在 |
-| 20014 | IDEMPOTENCY_KEY_CONFLICT | 业务 | order | 重复提交（幂等冲突） |
-| 20018 | ORDER_UPDATE_CONFLICT | 业务 | order | 状态更新冲突（可重试） |
-| 20028 | ORDER_PAYMENT_PICKUP_CODE_REQUIRED | 业务 | order | 订单支付必须含取餐码 |
-| 21001 | ALIPAY_CREATE_TRADE_FAILED | 业务 | payment | 支付宝创建交易失败 |
+| 码 | 名称 | 大类 | 域 | 说明 |
+| --- | --- | --- | --- | --- |
+| 50000 | SYSTEM_ERROR | 系统 | common | 未知系统错误（脱敏文案） |
+| 50100 | DB_NOT_ENABLED | 系统 | common | 数据库/缓存未启用或不可用 |
+| 50101 | MYBATIS_SYSTEM_EXCEPTION | 系统 | common | 数据库访问异常（脱敏文案） |
+| 21xxx | OrderErrorCode | 业务 | order | 订单模块业务错误（21001 顾客不存在、21014 幂等冲突、21018 状态更新冲突等） |
+| 22xxx | PayErrorCode | 业务 | payment | 支付模块业务错误（22001 支付宝创建交易失败等） |
 | 30001 | DOWNSTREAM_NOT_CONFIGURED | 下游 | common | 下游服务未配置 |
 | 30002 | DOWNSTREAM_UNAVAILABLE | 下游 | common | 下游不可用 |
-| 40001 | NOT_FOUND / MISSING_REQUEST_HEADER | 参数 | common | 资源/请求头缺失 |
-| 40002 | PARAM_MISSING | 参数 | common | 参数缺失 |
-| 40100 | UNAUTHORIZED | 参数 | common | 未登录 |
-| 50001 | TOO_FREQUENT | 限流 | common | 请求过于频繁 |
-| 50002 | DUPLICATE_SUBMIT | 限流 | common | 重复提交 |
-| 40001 | MISSING_REQUEST_HEADER | 参数 | common | 参数缺失（迁移自 100001，移除 404 混用） |
-| 40100 | UNAUTHORIZED（建议新增） | 参数 | common | 未登录 |
-| 50001 | TOO_FREQUENT（建议新增） | 限流 | common | 请求过于频繁 |
-| 50002 | DUPLICATE_SUBMIT | 限流 | common | 重复提交（可重试，迁移自 101014 幂等语义） |
+| 40001 | MISSING_REQUEST_HEADER | 客户端 | common | 缺少请求头 |
+| 40002 | PARAM_MISSING | 客户端 | common | 参数缺失 |
+| 40100 | UNAUTHORIZED | 客户端 | common | 未登录 |
+| 40400 | NOT_FOUND | 客户端 | common | 资源不存在 |
+| 40901 | DUPLICATE_SUBMIT | 客户端 | common | 重复提交（可重试） |
+| 42901 | TOO_FREQUENT | 客户端 | common | 请求过于频繁 |
 
-> 完整码见各 `XxxErrorCode` 枚举；新增码须在此表登记并避免首段/子类段冲突。迁移期旧 6 位码逐步下线。
+> 完整码见各 `XxxErrorCode` 枚举与 `docs/api/README.md` 全站错误码总表；新增码须同步登记，避免模块码冲突。
 
 ## 7. 落地建议（分阶段）
 
