@@ -1,5 +1,7 @@
 package cn.dextea.trade.order.application.dto;
 
+import cn.dextea.trade.order.domain.enumeration.MakingStatus;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -17,6 +19,11 @@ public record OrderMakingStatusMessage(
         LocalDateTime createdAt) {
 
     public String toTag() {
-        return fromStatus + "To" + toStatus;
+        return nameOf(fromStatus) + "_TO_" + nameOf(toStatus);
+    }
+
+    private String nameOf(int status) {
+        MakingStatus makingStatus = MakingStatus.of(status);
+        return makingStatus == null ? "UNKNOWN_" + status : makingStatus.name();
     }
 }

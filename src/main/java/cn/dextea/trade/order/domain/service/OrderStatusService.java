@@ -21,16 +21,13 @@ public class OrderStatusService {
     public void markPaid(Order order, LocalDateTime paidAt, String tradeNo, String pickupCode) {
         MakingStatus fromMakingStatus = order.getMakingStatus();
         order.markPaid(paidAt, pickupCode);
-        try {
-            orderRepository.updatePaymentStatus(order);
-            log.info("订单已标记为已支付, orderNo={}, paidAt={}, pickupCode={}, tradeNo={}",
-                    order.getOrderNo(), paidAt, pickupCode, order.getTradeNo());
-        } catch (RuntimeException e) {
-            // 与支付回调/对账并发更新导致乐观锁冲突：本地已被对方更新为已支付，结果一致，无需重试
-            log.warn("回写支付状态冲突, 视为已被并发更新, orderNo={}", order.getOrderNo());
+        // 单条 SQL 原子更新支付状态与制作状态；返回 false 表示另一条路线（回调/主动查询）已完成流转，幂等跳过
+        if (!orderRepository.markPaid(order)) {
+            log.info("订单已被并发标记为已支付, 跳过本次流转, orderNo={}", order.getOrderNo());
             return;
         }
-        orderRepository.updateMakingStatus(order);
+        log.info("订单已标记为已支付, orderNo={}, paidAt={}, pickupCode={}, tradeNo={}",
+                order.getOrderNo(), paidAt, order.getPickupCode(), tradeNo);
         if (fromMakingStatus == MakingStatus.PENDING) {
             makingStatusPublisher.publishMakingStatusChange(order, fromMakingStatus, MakingStatus.PREPARING);
         }

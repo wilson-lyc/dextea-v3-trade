@@ -105,14 +105,15 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     @Transactional
-    public void updatePaymentStatus(Order order) {
+    public boolean markPaid(Order order) {
         OrderPO orderPO = orderConverter.toOrderPO(order);
-        int updated = orderMapper.updatePaymentStatus(orderPO);
+        int updated = orderMapper.markPaid(orderPO);
         if (updated == 0) {
-            throw new BizError(OrderErrorCode.ORDER_UPDATE_CONFLICT);
+            return false;
         }
         savePaymentStatusLogs(order);
         saveMakingStatusLogs(order);
+        return true;
     }
 
     @Override

@@ -18,7 +18,7 @@ public interface OrderRepository {
 
     List<Order> getStoreWindowOrders(Long storeId, LocalDateTime startAt, LocalDateTime endAt);
 
-    void updatePaymentStatus(Order order);
+    boolean markPaid(Order order);
 
     void updateMakingStatus(Order order);
 
