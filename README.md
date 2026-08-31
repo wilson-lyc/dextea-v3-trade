@@ -94,13 +94,14 @@ java -jar target/trade-*.jar
 
 ### 接口文档
 
-接口文档以 Markdown 形式手动维护于 `docs/api/` 目录，入口见 [docs/api/README.md](docs/api/README.md)，格式规范见 [docs/api/example.md](docs/api/example.md)。
+接口文档以 Markdown 形式手动维护于 `docs/api/` 目录，入口见 [docs/api/README.md](docs/api/README.md)，格式规范见 [docs/api/example.md](docs/api/example.md)，全站错误码总表见 [docs/api/error-codes.md](docs/api/error-codes.md)。
 
 ## 文档
 
 详细的设计与实现说明请参阅 `docs/` 目录下的文档：
 
 - [接口文档索引](docs/api/README.md)
+- [全站错误码总表](docs/api/error-codes.md)
 - [项目代码结构](docs/code-structure.md)
 - [创建订单逻辑](docs/order-creation.md)
 - [订单 ID 生成逻辑](docs/order-id-generation.md)

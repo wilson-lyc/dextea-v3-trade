@@ -2,9 +2,10 @@ package cn.dextea.trade.shared.error;
 
 /**
  * 跨模块通用错误码，按首位区分错误大类：
- * 2xxxxx 业务错误 / 3xxxxx 第三方下游错误 / 4xxxxx 客户端错误 / 5xxxxx 系统错误。
- * 4 段内小分类与 HTTP 4xx 语义对齐：400xx 参数 / 401xx 鉴权 / 404xx 资源不存在 / 409xx 冲突幂等 / 429xx 限流。
- * 完整规范见 docs/api/README.md。
+ * 2xxxx 业务错误 / 3xxxx 第三方下游错误 / 4xxxx 客户端错误 / 5xxxx 系统错误。
+ * 4 段的第 2-3 位写 HTTP 状态码后两位，即错误码前 3 位就是返回的 HTTP 状态码：
+ * 400xx 参数 / 401xx 鉴权 / 404xx 资源不存在 / 409xx 冲突幂等 / 429xx 限流。
+ * 完整规范见 docs/api/error-codes.md。
  */
 public enum CommonErrorCode implements BizErrorCode {
     // 4xxxx 客户端错误

@@ -156,8 +156,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 按错误码段推导 HTTP 状态码，规范见 docs/api/README.md：
-     * 4xxxx 客户端错误（小段与 HTTP 4xx 对齐）/ 2xxxx 业务错误 / 3xxxx、5xxxx 服务端与系统错误。
+     * 按错误码段推导 HTTP 状态码，规范见 docs/api/error-codes.md：
+     * 4xxxx 客户端错误取错误码前 3 位作为状态码（未列举的小段兜底 400）；
+     * 2xxxx 业务错误固定 400；3xxxx、5xxxx 服务端与系统错误固定 500。
      */
     private static HttpStatus resolveHttpStatus(int code) {
         if (code >= 40100 && code < 40200) {
