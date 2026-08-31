@@ -15,7 +15,7 @@ description: Writes and maintains the hand-written HTTP API docs under docs/api/
 
 | 文件 | 内容 |
 | ---- | ---- |
-| `docs/api/example.md` | 章节结构与逐节写法规范、完整示例 |
+| `docs/api-authoring/example.md` | 章节结构与逐节写法规范、完整示例 |
 | `docs/api/error-codes.md` | 错误码分段规范、全站错误码总表 |
 | `docs/api/README.md` | 接口索引、鉴权/身份标识/响应信封/枚举字典等公共约定 |
 | 同端的邻近文档 | 措辞与排版惯例的事实标准，如 `store-mark-order-ready.md` |
@@ -36,7 +36,7 @@ description: Writes and maintains the hand-written HTTP API docs under docs/api/
 
 ### 3. 成文
 
-- 复制 `assets/api-doc-template.md` 作为骨架，按 `docs/api/example.md` 的九章结构填写，章节顺序与标题不得增删改。
+- 复制 `assets/api-doc-template.md` 作为骨架，按 `docs/api-authoring/example.md` 的九章结构填写，章节顺序与标题不得增删改。
 - 文件名 `{端}-{资源}-{动作}.md`，小写中划线，如 `customer-create-order.md`。
 - 示例值贴近真实业务，禁止 `xxx` / `foo` 占位。
 - 枚举值逐一列出「值 - 含义」，与代码枚举一致；全站通用枚举同时核对 `README.md` 的枚举字典。

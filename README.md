@@ -94,7 +94,7 @@ java -jar target/trade-*.jar
 
 ### 接口文档
 
-接口文档以 Markdown 形式手动维护于 `docs/api/` 目录，入口见 [docs/api/README.md](docs/api/README.md)，格式规范见 [docs/api/example.md](docs/api/example.md)，全站错误码总表见 [docs/api/error-codes.md](docs/api/error-codes.md)。
+接口文档见 [docs/api/README.md](docs/api/README.md)，全站错误码总表见 [docs/api/error-codes.md](docs/api/error-codes.md)。
 
 ## 文档
 
