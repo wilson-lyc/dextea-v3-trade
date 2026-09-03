@@ -1,6 +1,5 @@
 package cn.dextea.trade.order.infrastructure.persistence.mapper;
 
-import cn.dextea.trade.order.infrastructure.persistence.po.PickupCodeCounterPO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
