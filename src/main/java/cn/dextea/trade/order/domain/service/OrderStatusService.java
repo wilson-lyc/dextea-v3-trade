@@ -38,7 +38,7 @@ public class OrderStatusService {
         order.markPaymentTimeout();
         boolean updated = orderRepository.timeoutOrder(order);
         if (!updated) {
-            log.info("订单支付状态已被并发变更, 放弃标记支付超时, orderNo={}", order.getOrderNo());
+            log.info("订单支付状态已被并发变更或超时时间未到, 放弃标记支付超时, orderNo={}", order.getOrderNo());
             return;
         }
         log.info("订单已标记为支付超时, orderNo={}, paymentExpiredAt={}", order.getOrderNo(), order.getPaymentExpiredAt());
