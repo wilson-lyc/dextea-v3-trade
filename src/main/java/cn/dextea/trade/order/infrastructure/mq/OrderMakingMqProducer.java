@@ -86,6 +86,7 @@ public class OrderMakingMqProducer implements MakingStatusPublisher {
                 order.getStoreId(),
                 fromStatus.getCode(),
                 toStatus.getCode(),
+                toCode(order.getDiningMethod()),
                 toCode(order.getMakingStatus()),
                 toCode(order.getPaymentStatus()),
                 order.getPickupCode(),

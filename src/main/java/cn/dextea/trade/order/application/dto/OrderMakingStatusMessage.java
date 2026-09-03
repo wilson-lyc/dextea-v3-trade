@@ -11,6 +11,7 @@ public record OrderMakingStatusMessage(
         Long storeId,
         int fromStatus,
         int toStatus,
+        int diningMethod,
         int makingStatus,
         int paymentStatus,
         String pickupCode,
