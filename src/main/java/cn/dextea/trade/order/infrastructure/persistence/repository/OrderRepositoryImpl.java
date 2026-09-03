@@ -24,6 +24,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -193,6 +194,20 @@ public class OrderRepositoryImpl implements OrderRepository {
         return orderPOs.stream()
                 .map(po -> orderConverter.toOrder(po,
                         itemsByOrderId.getOrDefault(po.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Order> getStoreOrdersByMakingStatuses(Long storeId, Collection<MakingStatus> makingStatuses) {
+        List<Integer> statusCodes = makingStatuses.stream()
+                .map(MakingStatus::getCode)
+                .collect(Collectors.toList());
+        List<OrderPO> orderPOs = orderMapper.selectByStoreAndMakingStatuses(storeId, statusCodes);
+        if (orderPOs == null || orderPOs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return orderPOs.stream()
+                .map(po -> orderConverter.toOrder(po, Collections.emptyList()))
                 .collect(Collectors.toList());
     }
 

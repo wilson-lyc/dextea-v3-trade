@@ -17,6 +17,7 @@
 | 接口 | 方法 | 路径 | 文档 |
 | ---- | ---- | ---- | ---- |
 | 查询门店时间窗口订单 | GET | /api/v1/store/orders/window | [store-list-window-orders.md](./store-list-window-orders.md) |
+| 查询门店制作看板 | GET | /api/v1/store/orders/making-board | [store-get-making-board.md](./store-get-making-board.md) |
 | 查询门店订单详情 | GET | /api/v1/store/orders/{orderId} | [store-get-order-detail.md](./store-get-order-detail.md) |
 | 标记订单制作完成 | POST | /api/v1/store/orders/{orderId}/ready | [store-mark-order-ready.md](./store-mark-order-ready.md) |
 | 标记订单已取餐 | POST | /api/v1/store/orders/{orderId}/collect | [store-mark-order-collected.md](./store-mark-order-collected.md) |

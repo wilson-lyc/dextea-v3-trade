@@ -1,11 +1,14 @@
 package cn.dextea.trade.order.interfaces.http.controller;
 
+import cn.dextea.trade.order.application.dto.command.GetStoreMakingBoardCommand;
 import cn.dextea.trade.order.application.dto.command.GetStoreOrderDetailCommand;
 import cn.dextea.trade.order.application.dto.command.GetStoreWindowOrdersCommand;
 import cn.dextea.trade.order.application.dto.command.MarkOrderReadyCommand;
 import cn.dextea.trade.order.application.dto.command.MarkOrderCollectedCommand;
+import cn.dextea.trade.order.application.dto.result.GetStoreMakingBoardResult;
 import cn.dextea.trade.order.application.dto.result.GetStoreWindowOrdersResult;
 import cn.dextea.trade.order.application.dto.result.StoreOrderDetailResult;
+import cn.dextea.trade.order.application.usecase.GetStoreMakingBoardUseCase;
 import cn.dextea.trade.order.application.usecase.GetStoreOrderDetailUseCase;
 import cn.dextea.trade.order.application.usecase.GetStoreWindowOrdersUseCase;
 import cn.dextea.trade.order.application.usecase.MarkOrderReadyUseCase;
@@ -13,6 +16,7 @@ import cn.dextea.trade.order.application.usecase.MarkOrderCollectedUseCase;
 import cn.dextea.trade.order.interfaces.http.assembler.StoreOrderDetailHttpAssembler;
 import cn.dextea.trade.order.interfaces.http.assembler.StoreOrderHttpAssembler;
 import cn.dextea.trade.order.interfaces.http.dto.request.GetStoreWindowOrdersRequest;
+import cn.dextea.trade.order.interfaces.http.dto.response.GetStoreMakingBoardResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.GetStoreWindowOrdersResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.StoreOrderDetailResponse;
 import cn.dextea.trade.shared.api.APIResponse;
@@ -38,6 +42,7 @@ public class StoreOrderController {
     private static final String STORE_ID_HEADER = "X-Store-Id";
 
     private final GetStoreWindowOrdersUseCase getStoreWindowOrdersUseCase;
+    private final GetStoreMakingBoardUseCase getStoreMakingBoardUseCase;
     private final MarkOrderReadyUseCase markOrderReadyUseCase;
     private final MarkOrderCollectedUseCase markOrderCollectedUseCase;
     private final GetStoreOrderDetailUseCase getStoreOrderDetailUseCase;
@@ -52,6 +57,19 @@ public class StoreOrderController {
         GetStoreWindowOrdersResult result = getStoreWindowOrdersUseCase.execute(command);
         log.info("查询门店窗口订单成功, storeId={}, hours={}, orderCount={}, total={}",
                 storeId, request.getHours(), result.getItems().size(), result.getTotal());
+        return APIResponse.success(storeOrderHttpAssembler.toResponse(result));
+    }
+
+    @GetMapping("/making-board")
+    public APIResponse<GetStoreMakingBoardResponse> getStoreMakingBoard(
+            @RequestHeader(STORE_ID_HEADER) @NotNull(message = "storeId 不能为空") Long storeId) {
+        log.info("查询门店制作看板请求, storeId={}", storeId);
+        GetStoreMakingBoardCommand command = GetStoreMakingBoardCommand.builder()
+                .storeId(storeId)
+                .build();
+        GetStoreMakingBoardResult result = getStoreMakingBoardUseCase.execute(command);
+        log.info("查询门店制作看板成功, storeId={}, preparingOrderCount={}, preparingProductQuantity={}",
+                storeId, result.getPreparingOrderCount(), result.getPreparingProductQuantity());
         return APIResponse.success(storeOrderHttpAssembler.toResponse(result));
     }
 

@@ -1,8 +1,10 @@
 package cn.dextea.trade.order.interfaces.http.assembler;
 
 import cn.dextea.trade.order.application.dto.command.GetStoreWindowOrdersCommand;
+import cn.dextea.trade.order.application.dto.result.GetStoreMakingBoardResult;
 import cn.dextea.trade.order.application.dto.result.GetStoreWindowOrdersResult;
 import cn.dextea.trade.order.interfaces.http.dto.request.GetStoreWindowOrdersRequest;
+import cn.dextea.trade.order.interfaces.http.dto.response.GetStoreMakingBoardResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.GetStoreWindowOrdersResponse;
 import cn.dextea.trade.order.interfaces.http.dto.response.StoreWindowOrderItem;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,15 @@ public class StoreOrderHttpAssembler {
         return GetStoreWindowOrdersResponse.builder()
                 .items(items)
                 .total(result.getTotal())
+                .build();
+    }
+
+    public GetStoreMakingBoardResponse toResponse(GetStoreMakingBoardResult result) {
+        return GetStoreMakingBoardResponse.builder()
+                .preparingPickupCodes(result.getPreparingPickupCodes())
+                .readyPickupCodes(result.getReadyPickupCodes())
+                .preparingOrderCount(result.getPreparingOrderCount())
+                .preparingProductQuantity(result.getPreparingProductQuantity().getValue())
                 .build();
     }
 

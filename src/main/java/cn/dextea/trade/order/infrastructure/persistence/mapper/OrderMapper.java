@@ -38,6 +38,14 @@ public interface OrderMapper {
                                              @Param("startAt") LocalDateTime startAt,
                                              @Param("endAt") LocalDateTime endAt);
 
+    @Select("<script>SELECT * FROM orders WHERE store_id = #{storeId} "
+            + "AND making_status IN "
+            + "<foreach collection='makingStatuses' item='makingStatus' open='(' separator=',' close=')'>"
+            + "#{makingStatus}</foreach> "
+            + "ORDER BY created_at ASC</script>")
+    List<OrderPO> selectByStoreAndMakingStatuses(@Param("storeId") Long storeId,
+                                                 @Param("makingStatuses") Collection<Integer> makingStatuses);
+
     @Select("<script>SELECT * FROM orders WHERE id IN "
             + "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>"
             + "</script>")
