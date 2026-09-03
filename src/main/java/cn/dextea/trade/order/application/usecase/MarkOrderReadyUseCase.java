@@ -9,6 +9,7 @@ import cn.dextea.trade.shared.error.BizError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -18,6 +19,7 @@ public class MarkOrderReadyUseCase {
     private final OrderRepository orderRepository;
     private final OrderStatusService orderStatusService;
 
+    @Transactional
     public void execute(MarkOrderReadyCommand command) {
         log.info("订单制作完成请求, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());
 

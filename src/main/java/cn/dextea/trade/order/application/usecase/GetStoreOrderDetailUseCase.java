@@ -10,6 +10,7 @@ import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -18,6 +19,7 @@ public class GetStoreOrderDetailUseCase {
 
     private final OrderRepository orderRepository;
 
+    @Transactional(readOnly = true)
     public StoreOrderDetailResult execute(GetStoreOrderDetailCommand command) {
         log.info("查询门店订单详情, storeId={}, orderId={}", command.getStoreId(), command.getOrderId());
 

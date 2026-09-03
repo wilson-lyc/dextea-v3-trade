@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class CustomerCreateOrderUseCase {
     private final OrderCreationService orderCreationService;
     private final IdempotencyStore idempotencyStore;
 
+    @Transactional
     public CustomerOrderCreateResult execute(CustomerCreateOrderCommand command) {
         String idempotencyKey = command.getIdempotencyKey();
         Long customerId = command.getCustomerId();

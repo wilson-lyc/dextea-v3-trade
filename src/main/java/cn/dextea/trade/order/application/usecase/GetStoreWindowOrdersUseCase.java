@@ -7,6 +7,7 @@ import cn.dextea.trade.order.domain.model.Order;
 import cn.dextea.trade.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +19,7 @@ public class GetStoreWindowOrdersUseCase {
     private final OrderRepository orderRepository;
     private final StoreWindowOrderAssembler storeWindowOrderAssembler;
 
+    @Transactional(readOnly = true)
     public GetStoreWindowOrdersResult execute(GetStoreWindowOrdersCommand command) {
         LocalDateTime endAt = LocalDateTime.now();
         LocalDateTime startAt = endAt.minusHours(command.getHours());

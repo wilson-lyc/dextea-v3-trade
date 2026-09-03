@@ -12,6 +12,7 @@ import cn.dextea.trade.shared.util.EnsureUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -21,6 +22,7 @@ public class CustomerGetOrderPaymentStatusUseCase {
     private final OrderRepository orderRepository;
     private final PaymentReconciliationService paymentReconciliationService;
 
+    @Transactional
     public CustomerOrderPaymentStatusResult execute(CustomerGetOrderPaymentStatusCommand command) {
         Long customerId = command.getCustomerId();
         Long orderId = command.getOrderId();

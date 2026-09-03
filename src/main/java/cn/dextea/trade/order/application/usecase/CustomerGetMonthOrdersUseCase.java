@@ -12,6 +12,7 @@ import cn.dextea.trade.shared.model.Money;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ public class CustomerGetMonthOrdersUseCase {
     private final OrderRepository orderRepository;
     private final StoreRepository storeRepository;
 
+    @Transactional(readOnly = true)
     public CustomerGetMonthOrdersResult execute(CustomerGetMonthOrdersCommand command) {
         log.info("查询月订单, customerId={}, year={}, month={}",
                 command.getCustomerId(), command.getYear(), command.getMonth());

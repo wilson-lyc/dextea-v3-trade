@@ -11,6 +11,7 @@ import cn.dextea.trade.order.domain.service.OrderCreationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class CustomerPreBuildOrderUseCase {
 
     private final OrderCreationService orderCreationService;
 
+    @Transactional(readOnly = true)
     public CustomerPreBuildOrderResult execute(CustomerPreBuildOrderCommand command) {
         log.info("开始预构建订单, customerId={}, storeId={}, itemCount={}",
                 command.getCustomerId(), command.getStoreId(), command.getItems().size());
