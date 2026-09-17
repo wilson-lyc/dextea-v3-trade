@@ -37,19 +37,13 @@ public class CustomerCreateOrderUseCase {
         log.info("收到创建订单请求, customerId={}, storeId={}, idempotencyKey={}, paymentMethod={}, items={}",
                 customerId, storeId, idempotencyKey, command.getPaymentMethod(), command.getItems().size());
 
-        // 第一次校验幂等键，快速失效重复请求
+        // 校验幂等键，快速失效重复请求；并发穿透由 MySQL 唯一索引兜底
         if (idempotencyStore.exists(idempotencyKey)) {
-            log.warn("创建订单幂等键已存在(首次校验), 拒绝重复请求, customerId={}, idempotencyKey={}",
+            log.warn("创建订单幂等键已存在, 拒绝重复请求, customerId={}, idempotencyKey={}",
                     customerId, idempotencyKey);
             throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
         }
 
-        // 二次校验幂等键，防止并发穿透
-        if (idempotencyStore.exists(idempotencyKey)) {
-            log.warn("创建订单幂等键已存在(二次校验), 拒绝重复请求, customerId={}, idempotencyKey={}",
-                    customerId, idempotencyKey);
-            throw new BizError(OrderErrorCode.IDEMPOTENCY_KEY_CONFLICT);
-        }
         return doCreate(command);
     }
 
