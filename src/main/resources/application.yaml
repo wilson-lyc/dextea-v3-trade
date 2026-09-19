@@ -67,7 +67,7 @@ order:
     # 当前端口承载 OrderAdminService；业务 RPC 待契约审计后加入同一服务端。
     port: ${ORDER_RPC_PORT:9091}
 
-# 商品 RPC 基础设施配置。当前仅创建客户端，不接入订单商品读写链路。
+# 商品 RPC 基础设施配置。
 product:
   rpc:
     target: ${PRODUCT_RPC_TARGET:127.0.0.1:9090}
@@ -77,6 +77,17 @@ product:
     keep-alive-time-seconds: ${PRODUCT_RPC_KEEP_ALIVE_TIME_SECONDS:30}
     keep-alive-timeout-seconds: ${PRODUCT_RPC_KEEP_ALIVE_TIMEOUT_SECONDS:10}
     keep-alive-without-calls: ${PRODUCT_RPC_KEEP_ALIVE_WITHOUT_CALLS:false}
+
+store:
+  rpc:
+    target: ${STORE_RPC_TARGET:127.0.0.1:9092}
+    service-name: ${STORE_RPC_SERVICE_NAME:dextea-store-service}
+    business-token: ${STORE_RPC_BUSINESS_TOKEN:}
+    plaintext: ${STORE_RPC_PLAINTEXT:true}
+    keep-alive-time-seconds: ${STORE_RPC_KEEP_ALIVE_TIME_SECONDS:30}
+    keep-alive-timeout-seconds: ${STORE_RPC_KEEP_ALIVE_TIMEOUT_SECONDS:10}
+    keep-alive-without-calls: ${STORE_RPC_KEEP_ALIVE_WITHOUT_CALLS:false}
+    deadline-millis: ${STORE_RPC_DEADLINE_MILLIS:3000}
 
 alipay:
   server-url: ${ALIPAY_GATEWAY:https://openapi.alipay.com}

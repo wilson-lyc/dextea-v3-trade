@@ -181,6 +181,7 @@
                     <protoSourceRoot>${project.basedir}/../dextea-proto/proto</protoSourceRoot>
                     <includes>
                         <include>product/v1/product.proto</include>
+                        <include>store/v1/store.proto</include>
                         <include>order/v1/order.proto</include>
                     </includes>
                     <protocArtifact>

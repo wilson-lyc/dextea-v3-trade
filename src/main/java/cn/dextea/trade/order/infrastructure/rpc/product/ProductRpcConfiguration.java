@@ -8,6 +8,7 @@ import io.grpc.stub.MetadataUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties(ProductRpcProperties.class)
 public class ProductRpcConfiguration {
 
-    @Bean(destroyMethod = "shutdownNow")
+    @Bean(name = "productRpcChannel", destroyMethod = "shutdownNow")
     public ManagedChannel productRpcChannel(ProductRpcProperties properties) {
         ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(properties.getTarget())
                 .keepAliveTime(properties.getKeepAliveTimeSeconds(), TimeUnit.SECONDS)
@@ -37,7 +38,8 @@ public class ProductRpcConfiguration {
 
     @Bean
     public ProductBusinessServiceGrpc.ProductBusinessServiceBlockingStub productServiceBlockingStub(
-            ManagedChannel productRpcChannel, ProductRpcProperties properties) {
+            @Qualifier("productRpcChannel") ManagedChannel productRpcChannel,
+            ProductRpcProperties properties) {
         ProductBusinessServiceGrpc.ProductBusinessServiceBlockingStub stub =
                 ProductBusinessServiceGrpc.newBlockingStub(productRpcChannel);
         String token = properties.getBusinessToken();
