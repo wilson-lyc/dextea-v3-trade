@@ -120,8 +120,8 @@ shared/
 不自研注册代码，直接使用 `spring-cloud-starter-alibaba-nacos-discovery`（Spring Cloud Alibaba 2025.0.0.0，配 Spring Boot 3.5.x / Spring Cloud 2025.0.0）：
 
 - 启动类标注 `@EnableDiscoveryClient`，服务名取 `spring.application.name`；
-- 配置键为 `spring.cloud.nacos.discovery.*`（见 application.yaml），支持 `NACOS_SERVER_ADDR` 等环境变量覆盖；
-- Nacos 为必选依赖：注册失败即启动失败，应用关闭时自动注销实例。
+- 配置键为 `spring.cloud.nacos.discovery.*`（见 application.yaml），统一支持 `NACOS_SERVER_ADDR`、`NACOS_NAMESPACE`、`NACOS_GROUP`、`NACOS_CLUSTER` 等环境变量；本项目由 IDEA 运行配置或部署环境注入变量；
+- Nacos 默认启用；设置 `NACOS_ENABLED=false` 可关闭发现，应用关闭时由 starter 自动注销实例。
 
 ## 7. 模块依赖方向
 
