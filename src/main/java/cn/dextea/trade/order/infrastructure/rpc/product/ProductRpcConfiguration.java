@@ -1,8 +1,10 @@
 package cn.dextea.trade.order.infrastructure.rpc.product;
 
-import dextea.product.v1.ProductServiceGrpc;
+import dextea.product.v1.ProductBusinessServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,26 +36,24 @@ public class ProductRpcConfiguration {
     }
 
     @Bean
-    public ProductServiceGrpc.ProductServiceBlockingStub productServiceBlockingStub(
-            ManagedChannel productRpcChannel) {
-        return ProductServiceGrpc.newBlockingStub(productRpcChannel);
+    public ProductBusinessServiceGrpc.ProductBusinessServiceBlockingStub productServiceBlockingStub(
+            ManagedChannel productRpcChannel, ProductRpcProperties properties) {
+        ProductBusinessServiceGrpc.ProductBusinessServiceBlockingStub stub =
+                ProductBusinessServiceGrpc.newBlockingStub(productRpcChannel);
+        String token = properties.getBusinessToken();
+        if (token == null || token.isBlank()) {
+            return stub;
+        }
+        Metadata headers = new Metadata();
+        headers.put(Metadata.Key.of("x-service-token", Metadata.ASCII_STRING_MARSHALLER), token);
+        return stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers));
     }
 
     @Bean
     public ProductRpcClient productRpcClient(
-            ProductServiceGrpc.ProductServiceBlockingStub productServiceBlockingStub,
+            ProductBusinessServiceGrpc.ProductBusinessServiceBlockingStub productServiceBlockingStub,
             ProductRpcProperties properties) {
         return new ProductRpcClient(productServiceBlockingStub, properties);
     }
 
-    @Bean
-    public ProductServiceGrpc.ProductServiceStub productServiceStub(ManagedChannel productRpcChannel) {
-        return ProductServiceGrpc.newStub(productRpcChannel);
-    }
-
-    @Bean
-    public ProductServiceGrpc.ProductServiceFutureStub productServiceFutureStub(
-            ManagedChannel productRpcChannel) {
-        return ProductServiceGrpc.newFutureStub(productRpcChannel);
-    }
 }

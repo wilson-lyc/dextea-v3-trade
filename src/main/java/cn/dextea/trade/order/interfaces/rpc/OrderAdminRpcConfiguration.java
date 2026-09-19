@@ -11,15 +11,15 @@ import org.springframework.context.annotation.Configuration;
 import java.io.IOException;
 
 @Configuration
-@EnableConfigurationProperties(OrderRpcConfiguration.Properties.class)
+@EnableConfigurationProperties(OrderAdminRpcConfiguration.Properties.class)
 @RequiredArgsConstructor
-public class OrderRpcConfiguration {
+public class OrderAdminRpcConfiguration {
     private final Properties properties;
-    private final OrderRpcService orderRpcService;
+    private final OrderAdminRpcService orderAdminRpcService;
 
     @Bean(destroyMethod = "shutdownNow")
-    public Server orderRpcServer() throws IOException {
-        Server server = NettyServerBuilder.forPort(properties.getPort()).addService(orderRpcService).build();
+    public Server orderAdminRpcServer() throws IOException {
+        Server server = NettyServerBuilder.forPort(properties.getPort()).addService(orderAdminRpcService).build();
         server.start();
         return server;
     }

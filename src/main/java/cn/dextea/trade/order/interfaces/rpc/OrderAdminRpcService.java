@@ -15,17 +15,15 @@ import cn.dextea.trade.order.application.usecase.GetStoreWindowOrdersUseCase;
 import cn.dextea.trade.order.application.usecase.MarkOrderCollectedUseCase;
 import cn.dextea.trade.order.application.usecase.MarkOrderReadyUseCase;
 import dextea.order.v1.Order;
-import dextea.order.v1.OrderServiceGrpc;
+import dextea.order.v1.OrderAdminServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 @Component
 @RequiredArgsConstructor
-public class OrderRpcService extends OrderServiceGrpc.OrderServiceImplBase {
+public class OrderAdminRpcService extends OrderAdminServiceGrpc.OrderAdminServiceImplBase {
 
     private final GetStoreWindowOrdersUseCase getStoreWindowOrdersUseCase;
     private final GetStoreMakingBoardUseCase getStoreMakingBoardUseCase;

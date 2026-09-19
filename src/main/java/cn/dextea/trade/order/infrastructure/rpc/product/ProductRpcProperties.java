@@ -21,6 +21,9 @@ public class ProductRpcProperties {
     /** 商品服务在 Nacos 中的服务名，供后续服务发现接入使用。 */
     private String serviceName = "dextea-product";
 
+    /** ProductBusinessService 的可选 x-service-token。 */
+    private String businessToken = "";
+
     /** 当前商品服务使用明文 gRPC；TLS 接入时再扩展 credentials 配置。 */
     private boolean plaintext = true;
 
